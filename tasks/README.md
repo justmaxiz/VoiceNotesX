@@ -19,9 +19,9 @@
 
 ## 🎙️ Блок 3. Аудио-движок и Нативный Голосовой Ввод
 * [TASK-09: Захват звука с микрофона (MediaRecorder API)](TASK-09-audio-recording.md)
-* [TASK-10: Анимированный визуализатор звуковой волны (Canvas Waveform)](TASK-10-live-waveform.md)
+* [TASK-10: Визуализатор живого аудиопотока (Live Waveform в Quick Capture)](TASK-10-live-waveform.md)
 * [TASK-11: Нативное распознавание речи (Web Speech API)](TASK-11-web-speech-stt.md)
-* [TASK-12: Компонент аудиоплеера с таймкодами и скраббингом](TASK-12-audio-player.md)
+* [TASK-12: Компактный мини-аудиоплеер (Mini Play Button)](TASK-12-audio-player.md)
 * [TASK-13: Хоткей быстрой записи пробелом (`Space` shortcut)](TASK-13-space-hotkey.md)
 
 ## 🧠 Блок 4. ИИ-модуль (Google AI Studio Gemini Flash)
@@ -31,20 +31,23 @@
 
 ## 🖥️ Блок 5. Главная Страница (Дашборд / Обзор)
 * [TASK-17: Шапка дашборда и динамическое приветствие](TASK-17-dashboard-header.md)
-* [TASK-18: Hero-карточка активной задачи («В фокусе»)](TASK-18-focus-hero-card.md)
+* [TASK-18: Динамический виджет «Текущая активная задача» (Focus Hero Widget)](TASK-18-focus-hero-card.md)
 * [TASK-19: Интерактивный список задач дня и фильтрация](TASK-19-task-list-filters.md)
-* [TASK-20: Командная строка быстрого ввода (Quick Input Bar)](TASK-20-quick-input-bar.md)
-* [TASK-21: Правый Bento-блок продуктивности (Счетчики метрик)](TASK-21-bento-metrics.md)
-* [TASK-22: Виджет «Недавние аудиозаписи»](TASK-22-recent-audio-widget.md)
+* [TASK-20: Единый плавающий Quick Capture Widget](TASK-20-quick-input-bar.md)
+* [TASK-21: Bento-блок продуктивности (Метрики дня)](TASK-21-bento-metrics.md)
+* [TASK-22: Модульный виджет «Недавние аудиозаписи»](TASK-22-recent-audio-widget.md)
 * [TASK-23: Виджет «AI Сводка дня» и генерация отчета](TASK-23-ai-daily-summary.md)
 
 ## 📑 Блок 6. Дополнительные Страницы Приложения
-* [TASK-24: Страница «Заметки и аудио» с карточками и тегами](TASK-24-notes-hub-page.md)
-* [TASK-25: Страница «Задачи» с Канбан-доской и drag-and-drop](TASK-25-tasks-kanban-page.md)
-* [TASK-26: Страница «Календарь» с временной шкалой](TASK-26-calendar-timeline-page.md)
+* [TASK-24: Страница «Заметки» (Notes Hub)](TASK-24-notes-hub-page.md)
+* [TASK-25: Страница «Задачи» с Канбан-доской и меню создания](TASK-25-tasks-kanban-page.md)
+* [TASK-26: Страница «Календарь» с контрастной цветовой схемой](TASK-26-calendar-timeline-page.md)
 * [TASK-27: Страница «AI Сводки» с аналитическими дайджестами](TASK-27-ai-summaries-page.md)
-* [TASK-28: Страница «Настройки и Профиль» (BYOK API-ключ)](TASK-28-settings-page.md)
+* [TASK-28: Страница «Настройки» (Профиль, Внешний вид, Язык, Устройства, AI и Данные)](TASK-28-settings-page.md)
 
 ## ⚡ Блок 7. Глобальный UX, Хоткеи и Экспорт
 * [TASK-29: Глобальная командная палитра поиска (`⌘K` Command Palette)](TASK-29-command-palette-cmdk.md)
 * [TASK-30: Экспорт заметки в Markdown (.md) и горячие клавиши](TASK-30-markdown-export.md)
+* [TASK-31: Микро-взаимодействия и анимации интерфейса (React Bits)](TASK-31-react-bits-microinteractions.md)
+* [TASK-32: Правая Панель Детального Просмотра (Slide-over Drawer)](TASK-32-slide-over-drawer.md)
+* [TASK-33: Модульный Дашборд и Пользовательская Настройка Блоков](TASK-33-modular-dashboard-customization.md)

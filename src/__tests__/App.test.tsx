@@ -18,8 +18,9 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     const notesBtn = screen.getByTestId('nav-item-notes-and-audio')
     fireEvent.click(notesBtn)
 
+    expect(screen.getByTestId('view-notes-and-audio')).toBeVisible()
     expect(screen.getByText('Библиотека записей')).toBeInTheDocument()
-    expect(screen.getByText('План редизайна мобильного экрана')).toBeInTheDocument()
+    expect(screen.getAllByText('План редизайна мобильного экрана').length).toBeGreaterThanOrEqual(1)
   })
 
   it('switches to Tasks Kanban view when clicked in sidebar', () => {
@@ -60,12 +61,32 @@ describe('VoiceNotes App - Client Routing Integration', () => {
 
   it('preserves state when returning to Overview', () => {
     render(<App />)
+    expect(screen.getByTestId('view-overview')).toBeVisible()
+
+    // Toggle first task on Overview
+    const firstCheckbox = screen.getByLabelText('Отметить задачу: Подготовить отчет по продуктовым метрикам Q3')
+    expect(firstCheckbox).not.toBeChecked()
+    fireEvent.click(firstCheckbox)
+    expect(firstCheckbox).toBeChecked()
+
+    // Enter text into quick input
+    const quickInput = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    fireEvent.change(quickInput, { target: { value: 'Черновик идеи для релиза' } })
+    expect(quickInput).toHaveValue('Черновик идеи для релиза')
+
     // Go to settings
     fireEvent.click(screen.getByTestId('nav-item-settings'))
-    expect(screen.getByText('Настройки и Профиль')).toBeInTheDocument()
+    expect(screen.getByTestId('view-settings')).toBeVisible()
+    expect(screen.getByTestId('view-overview')).not.toBeVisible()
 
     // Return to overview
     fireEvent.click(screen.getByTestId('nav-item-overview'))
-    expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
+    expect(screen.getByTestId('view-overview')).toBeVisible()
+    expect(screen.getByTestId('view-settings')).not.toBeVisible()
+
+    // Check that state is completely preserved!
+    expect(firstCheckbox).toBeChecked()
+    expect(quickInput).toHaveValue('Черновик идеи для релиза')
   })
 })
+

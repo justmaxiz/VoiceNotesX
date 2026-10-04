@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
-import { useNavigationStore } from '../../store/navigationStore'
-import { NavigationTab } from '../../types/navigation'
+import { RecordingModal } from '../audio/RecordingModal'
+import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -14,17 +14,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Sync state with browser hash navigation (e.g., back / forward history)
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '')
-      const validTabs: NavigationTab[] = [
-        'overview',
-        'notes-and-audio',
-        'tasks',
-        'calendar',
-        'ai-summaries',
-        'settings',
-      ]
-      if (validTabs.includes(hash as NavigationTab)) {
-        setActiveTab(hash as NavigationTab)
+      const target = normalizeTab(window.location.hash) || 'overview'
+      if (useNavigationStore.getState().activeTab !== target) {
+        setActiveTab(target)
       }
     }
 
@@ -58,6 +50,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Dynamic Page Views */}
         <div className="flex flex-col w-full pb-space-xl">{children}</div>
       </main>
+
+      {/* Quick Recording Modal Overlay */}
+      <RecordingModal />
     </div>
   )
 }

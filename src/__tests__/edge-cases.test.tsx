@@ -6,7 +6,7 @@ import { useNavigationStore } from '../store/navigationStore'
 
 describe('Edge Cases and Boundary Values', () => {
   beforeEach(() => {
-    useNavigationStore.setState({ activeTab: 'overview', searchQuery: '' })
+    useNavigationStore.setState({ activeTab: 'overview', searchQuery: '', isRecordingModalOpen: false })
   })
 
   it('gracefully handles unknown hash route by defaulting to overview', () => {
@@ -19,6 +19,20 @@ describe('Edge Cases and Boundary Values', () => {
 
     // Should still display Overview safely without crash
     expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
+    expect(screen.getByTestId('view-overview')).toBeVisible()
+  })
+
+  it('gracefully handles #notes hash route by routing to notes-and-audio', () => {
+    render(<App />)
+
+    act(() => {
+      window.location.hash = '#notes'
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    })
+
+    expect(useNavigationStore.getState().activeTab).toBe('notes-and-audio')
+    expect(screen.getByTestId('view-notes-and-audio')).toBeVisible()
+    expect(screen.getByTestId('view-overview')).not.toBeVisible()
   })
 
   it('rejects empty or whitespace-only submissions in quick input', () => {

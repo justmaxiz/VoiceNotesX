@@ -1,11 +1,11 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { AppLayout } from '../AppLayout'
 import { useNavigationStore } from '../../../store/navigationStore'
 
 describe('AppLayout Shell Component', () => {
   beforeEach(() => {
-    useNavigationStore.setState({ activeTab: 'overview' })
+    useNavigationStore.setState({ activeTab: 'overview', isRecordingModalOpen: false })
     window.location.hash = ''
   })
 
@@ -36,5 +36,42 @@ describe('AppLayout Shell Component', () => {
     })
 
     expect(useNavigationStore.getState().activeTab).toBe('settings')
+  })
+
+  it('normalizes #notes route alias to notes-and-audio', () => {
+    render(
+      <AppLayout>
+        <div>Контент</div>
+      </AppLayout>
+    )
+
+    act(() => {
+      window.location.hash = '#notes'
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    })
+
+    expect(useNavigationStore.getState().activeTab).toBe('notes-and-audio')
+  })
+
+  it('renders RecordingModal when isRecordingModalOpen is true and dismisses it', () => {
+    render(
+      <AppLayout>
+        <div>Контент</div>
+      </AppLayout>
+    )
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    act(() => {
+      useNavigationStore.setState({ isRecordingModalOpen: true })
+    })
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Быстрая голосовая запись')).toBeInTheDocument()
+
+    const closeBtn = screen.getByText('Закрыть')
+    fireEvent.click(closeBtn)
+
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 })

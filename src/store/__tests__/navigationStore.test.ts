@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useNavigationStore } from '../navigationStore'
+import { useNavigationStore, normalizeTab } from '../navigationStore'
 
 describe('navigationStore', () => {
   beforeEach(() => {
@@ -8,6 +8,7 @@ describe('navigationStore', () => {
       searchQuery: '',
       isRecordingModalOpen: false,
     })
+    window.location.hash = ''
   })
 
   it('initializes with default activeTab as overview', () => {
@@ -37,5 +38,19 @@ describe('navigationStore', () => {
 
     setRecordingModalOpen(false)
     expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
+  })
+
+  it('normalizes various hash patterns correctly', () => {
+    expect(normalizeTab('#notes')).toBe('notes-and-audio')
+    expect(normalizeTab('#notes-and-audio')).toBe('notes-and-audio')
+    expect(normalizeTab('#tasks')).toBe('tasks')
+    expect(normalizeTab('#calendar')).toBe('calendar')
+    expect(normalizeTab('#ai-summaries')).toBe('ai-summaries')
+    expect(normalizeTab('#summaries')).toBe('ai-summaries')
+    expect(normalizeTab('#settings')).toBe('settings')
+    expect(normalizeTab('#overview')).toBe('overview')
+    expect(normalizeTab('#home')).toBe('overview')
+    expect(normalizeTab('')).toBe('overview')
+    expect(normalizeTab('#unknown-slug')).toBeNull()
   })
 })

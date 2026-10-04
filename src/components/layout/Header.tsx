@@ -1,8 +1,24 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useNavigationStore } from '../../store/navigationStore'
 
 export const Header: React.FC = () => {
   const { searchQuery, setSearchQuery, setRecordingModalOpen } = useNavigationStore()
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Hotkey listener for ⌘K / Ctrl+K search focus
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      } else if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        searchInputRef.current?.blur()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   // Format today's date in Russian (e.g., "Сегодня, 24 Окт")
   const todayLabel = 'Сегодня, 24 Окт'
@@ -15,11 +31,15 @@ export const Header: React.FC = () => {
     >
       {/* Left: Global Search Input */}
       <div className="flex items-center gap-space-md">
-        <div className="flex items-center gap-space-sm px-space-md py-space-xs rounded-xl bg-surface-container-lowest text-on-surface-variant border border-surface-container-high/30 focus-within:border-primary/50 transition-colors">
+        <div
+          onClick={() => searchInputRef.current?.focus()}
+          className="flex items-center gap-space-sm px-space-md py-space-xs rounded-xl bg-surface-container-lowest text-on-surface-variant border border-surface-container-high/30 focus-within:border-primary/50 transition-colors cursor-text"
+        >
           <span className="material-symbols-outlined text-outline text-body-md select-none">
             search
           </span>
           <input
+            ref={searchInputRef}
             type="text"
             role="searchbox"
             aria-label="Поиск по заметкам и задачам"
@@ -28,13 +48,18 @@ export const Header: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="font-body-sm text-body-sm text-on-surface bg-transparent outline-none w-56 placeholder:text-outline"
           />
-          <div
-            className="flex items-center gap-0.5 px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm select-none"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              searchInputRef.current?.focus()
+            }}
+            className="flex items-center gap-0.5 px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm select-none hover:text-on-surface cursor-pointer"
             title="Горячая клавиша ⌘K"
           >
             <span>⌘</span>
             <span>K</span>
-          </div>
+          </button>
         </div>
       </div>
 

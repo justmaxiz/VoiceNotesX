@@ -12,9 +12,9 @@
   --color-surface-variant: #343439;
 
   --color-primary: #a078ff;
-  --color-primary-container: #340080;
-  --color-on-primary: #ffffff;
-  --color-on-primary-container: #d0bcff;
+  --color-primary-container: #a078ff;
+  --color-on-primary: #23005c;
+  --color-on-primary-container: #340080;
   --color-primary-fixed: #e9ddff;
   --color-primary-fixed-dim: #d0bcff;
   --color-on-primary-fixed: #23005c;
@@ -81,7 +81,9 @@
   --bg-surface-container-lowest: #0d0e12;
 
   --color-primary: #a078ff;
-  --color-primary-container: #340080;
+  --color-primary-container: #a078ff;
+  --color-on-primary: #23005c;
+  --color-on-primary-container: #340080;
   --color-secondary: #4edea3;
   --color-secondary-container: #00a572;
   --color-tertiary: #cebdff;

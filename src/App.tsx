@@ -11,26 +11,57 @@ import { SettingsPage } from './components/settings/SettingsPage'
 export const App: React.FC = () => {
   const { activeTab } = useNavigationStore()
 
-  const renderActiveView = () => {
-    switch (activeTab) {
-      case 'overview':
-        return <DashboardOverview />
-      case 'notes-and-audio':
-        return <NotesPage />
-      case 'tasks':
-        return <TasksPage />
-      case 'calendar':
-        return <CalendarPage />
-      case 'ai-summaries':
-        return <AiSummariesPage />
-      case 'settings':
-        return <SettingsPage />
-      default:
-        return <DashboardOverview />
-    }
-  }
+  return (
+    <AppLayout>
+      <div
+        data-testid="view-overview"
+        className={activeTab === 'overview' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'overview' ? 'block' : 'none' }}
+      >
+        <DashboardOverview />
+      </div>
 
-  return <AppLayout>{renderActiveView()}</AppLayout>
+      <div
+        data-testid="view-notes-and-audio"
+        className={activeTab === 'notes-and-audio' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'notes-and-audio' ? 'block' : 'none' }}
+      >
+        <NotesPage />
+      </div>
+
+      <div
+        data-testid="view-tasks"
+        className={activeTab === 'tasks' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'tasks' ? 'block' : 'none' }}
+      >
+        <TasksPage />
+      </div>
+
+      <div
+        data-testid="view-calendar"
+        className={activeTab === 'calendar' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'calendar' ? 'block' : 'none' }}
+      >
+        <CalendarPage />
+      </div>
+
+      <div
+        data-testid="view-ai-summaries"
+        className={activeTab === 'ai-summaries' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'ai-summaries' ? 'block' : 'none' }}
+      >
+        <AiSummariesPage />
+      </div>
+
+      <div
+        data-testid="view-settings"
+        className={activeTab === 'settings' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'settings' ? 'block' : 'none' }}
+      >
+        <SettingsPage />
+      </div>
+    </AppLayout>
+  )
 }
 
 export default App

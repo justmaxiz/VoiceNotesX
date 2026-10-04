@@ -33,4 +33,14 @@ describe('Header Component', () => {
 
     expect(useNavigationStore.getState().isRecordingModalOpen).toBe(true)
   })
+
+  it('focuses search input on Cmd+K / Ctrl+K shortcut', () => {
+    render(<Header />)
+    const input = screen.getByRole('searchbox')
+    expect(document.activeElement).not.toBe(input)
+
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+    expect(document.activeElement).toBe(input)
+  })
 })
+

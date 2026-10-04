@@ -9,7 +9,7 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { setActiveTab } = useNavigationStore()
+  const { setActiveTab, isSidebarCollapsed, toggleSidebar } = useNavigationStore()
 
   // Sync state with browser hash navigation (e.g., back / forward history)
   useEffect(() => {
@@ -24,18 +24,33 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [setActiveTab])
 
+  // Keyboard shortcut Ctrl+B / Cmd+B for sidebar toggle
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggleSidebar()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleSidebar])
+
   return (
     <div className="min-h-screen bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
-      {/* Fixed Sidebar */}
+      {/* Sidebar with separation border and collapse support */}
       <Sidebar />
 
-      {/* Fixed Header */}
+      {/* Header with sidebar toggle */}
       <Header />
 
-      {/* Main Content Area */}
+      {/* Main Content Area - pl-72 offset never conflicts with content padding */}
       <main
         role="main"
-        className="relative pl-0 md:pl-72 pt-16 bg-surface min-h-screen w-full px-space-md md:px-space-xl transition-all"
+        className={`relative ${
+          isSidebarCollapsed ? 'pl-0' : 'pl-0 md:pl-72'
+        } pt-16 bg-surface min-h-screen w-full transition-all duration-200`}
       >
         {/* Dynamic Ambient Auras */}
         <div
@@ -47,8 +62,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           className="absolute top-20 left-1/3 w-80 h-80 bg-secondary/5 rounded-full blur-3xl pointer-events-none -z-10"
         />
 
-        {/* Dynamic Page Views */}
-        <div className="flex flex-col w-full pb-space-xl">{children}</div>
+        {/* Dynamic Page Views with isolated horizontal padding */}
+        <div className="flex flex-col w-full pb-space-xl px-space-md md:px-space-xl">
+          {children}
+        </div>
       </main>
 
       {/* Quick Recording Modal Overlay */}

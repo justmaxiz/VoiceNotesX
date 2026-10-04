@@ -22,6 +22,9 @@ interface NavigationState {
   setRecordingModalOpen: (open: boolean) => void
   isMobileMenuOpen: boolean
   setMobileMenuOpen: (open: boolean) => void
+  isSidebarCollapsed: boolean
+  toggleSidebar: () => void
+  setSidebarCollapsed: (collapsed: boolean) => void
 }
 
 const getInitialTab = (): NavigationTab => {
@@ -46,4 +49,12 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setRecordingModalOpen: (open) => set({ isRecordingModalOpen: open }),
   isMobileMenuOpen: false,
   setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
+  isSidebarCollapsed: false,
+  toggleSidebar: () =>
+    set((state) => ({
+      isSidebarCollapsed: !state.isSidebarCollapsed,
+      // If expanding on mobile, open mobile menu
+      isMobileMenuOpen: false,
+    })),
+  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
 }))

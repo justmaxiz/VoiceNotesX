@@ -51,4 +51,16 @@ describe('Sidebar Component', () => {
     expect(screen.getByText('Алексей Орлов')).toBeInTheDocument()
     expect(screen.getByText('Pro Лицензия')).toBeInTheDocument()
   })
+
+  it('clicking collapse button toggles isSidebarCollapsed in store', () => {
+    render(<Sidebar />)
+    const collapseBtn = screen.getByLabelText('Скрыть боковую панель')
+    expect(collapseBtn).toBeInTheDocument()
+
+    fireEvent.click(collapseBtn)
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(true)
+
+    fireEvent.click(collapseBtn)
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
+  })
 })

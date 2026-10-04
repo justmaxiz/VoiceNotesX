@@ -74,4 +74,27 @@ describe('AppLayout Shell Component', () => {
 
     expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
+
+  it('toggles sidebar collapse state on Ctrl+B shortcut and updates main padding', () => {
+    render(
+      <AppLayout>
+        <div>Контент</div>
+      </AppLayout>
+    )
+
+    const main = screen.getByRole('main')
+    expect(main.className).toContain('pl-72')
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
+
+    // Trigger Ctrl+B
+    fireEvent.keyDown(window, { key: 'b', ctrlKey: true })
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(true)
+    expect(main.className).toContain('pl-0')
+    expect(main.className).not.toContain('pl-72')
+
+    // Trigger Ctrl+B again to expand
+    fireEvent.keyDown(window, { key: 'b', ctrlKey: true })
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
+    expect(main.className).toContain('pl-72')
+  })
 })

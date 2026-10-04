@@ -187,6 +187,24 @@
 .mb-space-lg { margin-bottom: 1.5rem; }
 .mb-space-xl { margin-bottom: 2rem; }
 
+.mt-space-xs { margin-top: 0.25rem; }
+.mt-space-sm { margin-top: 0.5rem; }
+.mt-space-md { margin-top: 1rem; }
+.mt-space-lg { margin-top: 1.5rem; }
+.mt-space-xl { margin-top: 2rem; }
+
+.pl-space-xs { padding-left: 0.25rem; }
+.pl-space-sm { padding-left: 0.5rem; }
+.pl-space-md { padding-left: 1rem; }
+.pl-space-lg { padding-left: 1.5rem; }
+.pl-space-xl { padding-left: 2rem; }
+
+.pr-space-xs { padding-right: 0.25rem; }
+.pr-space-sm { padding-right: 0.5rem; }
+.pr-space-md { padding-right: 1rem; }
+.pr-space-lg { padding-right: 1.5rem; }
+.pr-space-xl { padding-right: 2rem; }
+
 /* Obsidian Lumina Glassmorphism & Neon Glow Utilities */
 .glass-panel {
   background: rgba(26, 31, 44, 0.65);

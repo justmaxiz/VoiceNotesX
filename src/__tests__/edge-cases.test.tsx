@@ -75,4 +75,21 @@ describe('Edge Cases and Boundary Values', () => {
     fireEvent.keyUp(document.body, { code: 'Space' })
     expect(screen.getByText('Начать запись')).toBeInTheDocument()
   })
+
+  it('does not trigger spacebar recording when user is on a different tab', () => {
+    useNavigationStore.setState({ activeTab: 'settings' })
+    render(<DashboardOverview />)
+
+    fireEvent.keyDown(document.body, { code: 'Space' })
+    expect(screen.queryByText('Идет запись...')).not.toBeInTheDocument()
+  })
+
+  it('does not trigger spacebar recording when focused on an HTML button', () => {
+    render(<DashboardOverview />)
+    const newNoteBtn = screen.getByRole('button', { name: /Новая заметка/ })
+    newNoteBtn.focus()
+
+    fireEvent.keyDown(newNoteBtn, { code: 'Space' })
+    expect(screen.queryByText('Идет запись...')).not.toBeInTheDocument()
+  })
 })

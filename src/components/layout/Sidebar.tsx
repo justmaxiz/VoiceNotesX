@@ -41,13 +41,23 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab } = useNavigationStore()
+  const { activeTab, setActiveTab, isMobileMenuOpen, setMobileMenuOpen } = useNavigationStore()
 
   return (
-    <aside
-      aria-label="Боковая панель навигации"
-      className="fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between py-space-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none"
-    >
+    <>
+      {isMobileMenuOpen && (
+        <div
+          data-testid="sidebar-backdrop"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      <aside
+        aria-label="Боковая панель навигации"
+        className={`fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between py-space-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none transition-transform duration-200 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
       {/* Top Section */}
       <div className="flex flex-col gap-space-md">
         {/* Brand Header */}
@@ -190,5 +200,6 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
+    </>
   )
 }

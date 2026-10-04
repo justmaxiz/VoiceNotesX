@@ -32,3 +32,29 @@ export interface AudioSession {
   transcriptSnippet: string;
   tags: string[];
 }
+
+export type TaskFilter = 'all' | 'urgent' | 'voice' | 'summaries';
+export type ViewMode = 'list' | 'board';
+
+export interface TaskItemData {
+  id: string;
+  title: string;
+  category: string;
+  categoryClass: string;
+  time: string;
+  isCompleted: boolean;
+  hasAudio?: boolean;
+  audioDuration?: string;
+  isUrgent?: boolean;
+  noteSubtitle?: string;
+  completedTime?: string;
+}
+
+export interface AudioMemoData {
+  id: string;
+  title: string;
+  duration: string;
+  time: string;
+  waveform?: number[];
+  audioUrl?: string;
+}

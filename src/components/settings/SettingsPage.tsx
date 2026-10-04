@@ -1,15 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 export const SettingsPage: React.FC = () => {
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash')
   const [isSaved, setIsSaved] = useState(false)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 3000)
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      setIsSaved(false)
+    }, 3000)
   }
 
   return (
@@ -51,11 +65,16 @@ export const SettingsPage: React.FC = () => {
 
           <div className="flex items-center gap-space-sm">
             <div className="relative flex-1">
+              <label htmlFor="gemini-api-key" className="sr-only">
+                Google AI Studio API Key
+              </label>
               <input
+                id="gemini-api-key"
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="AIzaSy..."
+                aria-label="Google AI Studio API Key"
                 className="w-full px-space-md py-2.5 rounded-xl bg-surface-container text-on-surface placeholder:text-outline border border-surface-container-high/40 focus:border-primary/50 outline-none font-mono text-body-sm"
               />
               <button
@@ -72,7 +91,7 @@ export const SettingsPage: React.FC = () => {
 
             <button
               type="submit"
-              className="px-space-lg py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all shadow-[0_0_20px_-3px_rgba(160,120,255,0.4)] cursor-pointer shrink-0"
+              className="px-space-lg py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all glow-violet cursor-pointer shrink-0"
             >
               {isSaved ? 'Сохранено!' : 'Сохранить ключ'}
             </button>
@@ -80,12 +99,18 @@ export const SettingsPage: React.FC = () => {
 
           {/* Model Selector */}
           <div className="flex flex-col gap-space-xs mt-2">
-            <label className="font-label-sm text-label-sm text-outline">
+            <span id="model-selector-label" className="font-label-sm text-label-sm text-outline">
               Используемая языковая модель:
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+            </span>
+            <div
+              role="radiogroup"
+              aria-labelledby="model-selector-label"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm"
+            >
               <button
                 type="button"
+                role="radio"
+                aria-checked={selectedModel === 'gemini-2.0-flash'}
                 onClick={() => setSelectedModel('gemini-2.0-flash')}
                 className={`p-space-sm rounded-xl text-left border transition-all cursor-pointer ${
                   selectedModel === 'gemini-2.0-flash'
@@ -101,6 +126,8 @@ export const SettingsPage: React.FC = () => {
 
               <button
                 type="button"
+                role="radio"
+                aria-checked={selectedModel === 'gemini-2.5-flash'}
                 onClick={() => setSelectedModel('gemini-2.5-flash')}
                 className={`p-space-sm rounded-xl text-left border transition-all cursor-pointer ${
                   selectedModel === 'gemini-2.5-flash'

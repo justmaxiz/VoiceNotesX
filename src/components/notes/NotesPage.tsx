@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigationStore } from '../../store/navigationStore'
+import { EmptyState } from '../ui/EmptyState'
 
 interface NoteCard {
   id: string
@@ -46,6 +48,7 @@ const SAMPLE_NOTES: NoteCard[] = [
 export const NotesPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string>('all')
   const [search, setSearch] = useState('')
+  const { setRecordingModalOpen } = useNavigationStore()
 
   const allTags = ['all', '#Дизайн', '#Разработка', '#ИИ', '#Встречи', '#Архитектура']
 
@@ -79,7 +82,8 @@ export const NotesPage: React.FC = () => {
         {/* Action Button */}
         <button
           type="button"
-          className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all shadow-[0_0_20px_-3px_rgba(160,120,255,0.4)] cursor-pointer"
+          onClick={() => setRecordingModalOpen(true)}
+          className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all glow-violet cursor-pointer"
         >
           <span className="material-symbols-outlined text-body-lg">mic</span>
           <span>Новая голосовая запись</span>
@@ -100,12 +104,12 @@ export const NotesPage: React.FC = () => {
                   : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
               }`}
             >
-              {tag === 'all' ? 'Все теги' : tag}
+              {tag}
             </button>
           ))}
         </div>
 
-        <div className="relative">
+        <div className="flex items-center gap-space-xs">
           <input
             type="text"
             placeholder="Фильтр заметок..."
@@ -117,52 +121,61 @@ export const NotesPage: React.FC = () => {
       </div>
 
       {/* Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
-        {filteredNotes.map((note) => (
-          <div
-            key={note.id}
-            className="p-space-lg rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/30 transition-all flex flex-col justify-between gap-space-md shadow-sm group cursor-pointer"
-          >
-            <div className="flex flex-col gap-space-xs">
-              <div className="flex items-center justify-between text-outline font-label-sm text-label-sm">
-                <span>{note.date}</span>
-                {note.duration && (
-                  <span className="flex items-center gap-1 text-secondary bg-surface-container px-2 py-0.5 rounded-full">
-                    <span className="material-symbols-outlined text-sm">mic</span>
-                    {note.duration}
-                  </span>
-                )}
+      {filteredNotes.length === 0 ? (
+        <EmptyState
+          icon="mic_off"
+          title="Заметки не найдены"
+          description="Попробуйте изменить поисковый запрос или выбрать другой тег."
+          className="py-space-xl"
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+          {filteredNotes.map((note) => (
+            <div
+              key={note.id}
+              className="p-space-lg rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/30 transition-all flex flex-col justify-between gap-space-md shadow-sm group cursor-pointer"
+            >
+              <div className="flex flex-col gap-space-xs">
+                <div className="flex items-center justify-between text-outline font-label-sm text-label-sm">
+                  <span>{note.date}</span>
+                  {note.duration && (
+                    <span className="flex items-center gap-1 text-secondary bg-surface-container px-2 py-0.5 rounded-full">
+                      <span className="material-symbols-outlined text-sm">mic</span>
+                      {note.duration}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">
+                  {note.title}
+                </h3>
+                <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed line-clamp-3">
+                  {note.snippet}
+                </p>
               </div>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">
-                {note.title}
-              </h3>
-              <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed line-clamp-3">
-                {note.snippet}
-              </p>
-            </div>
 
-            <div className="flex items-center justify-between pt-space-xs border-t border-surface-container-high/30">
-              <div className="flex flex-wrap gap-1">
-                {note.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="px-2 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-sm text-label-sm"
-                  >
-                    {t}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between pt-space-xs border-t border-surface-container-high/30">
+                <div className="flex flex-wrap gap-1">
+                  {note.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="px-2 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-sm text-label-sm"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  aria-label="Параметры заметки"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-outline hover:text-on-surface transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-body-md">more_horiz</span>
+                </button>
               </div>
-              <button
-                type="button"
-                aria-label="Параметры заметки"
-                className="opacity-0 group-hover:opacity-100 p-1 text-outline hover:text-on-surface transition-all"
-              >
-                <span className="material-symbols-outlined text-body-md">more_horiz</span>
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

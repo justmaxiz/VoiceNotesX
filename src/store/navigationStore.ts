@@ -20,6 +20,8 @@ interface NavigationState {
   setSearchQuery: (query: string) => void
   isRecordingModalOpen: boolean
   setRecordingModalOpen: (open: boolean) => void
+  isMobileMenuOpen: boolean
+  setMobileMenuOpen: (open: boolean) => void
 }
 
 const getInitialTab = (): NavigationTab => {
@@ -36,10 +38,12 @@ export const useNavigationStore = create<NavigationState>((set) => ({
         window.location.hash = tab
       }
     }
-    set({ activeTab: tab })
+    set({ activeTab: tab, isMobileMenuOpen: false })
   },
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
   isRecordingModalOpen: false,
   setRecordingModalOpen: (open) => set({ isRecordingModalOpen: open }),
+  isMobileMenuOpen: false,
+  setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
 }))

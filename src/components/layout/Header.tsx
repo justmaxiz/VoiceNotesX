@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react'
 import { useNavigationStore } from '../../store/navigationStore'
 
 export const Header: React.FC = () => {
-  const { searchQuery, setSearchQuery, setRecordingModalOpen } = useNavigationStore()
+  const { searchQuery, setSearchQuery, setRecordingModalOpen, isMobileMenuOpen, setMobileMenuOpen } =
+    useNavigationStore()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Hotkey listener for ⌘K / Ctrl+K search focus
@@ -27,10 +28,20 @@ export const Header: React.FC = () => {
     <header
       role="banner"
       aria-label="Верхняя панель управления"
-      className="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-surface-container-high/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-xl"
+      className="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-surface-container-high/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-md md:px-space-xl"
     >
-      {/* Left: Global Search Input */}
-      <div className="flex items-center gap-space-md">
+      {/* Left: Hamburger (mobile) + Global Search Input */}
+      <div className="flex items-center gap-space-sm md:gap-space-md">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+          className="md:hidden p-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-body-lg">
+            {isMobileMenuOpen ? 'close' : 'menu'}
+          </span>
+        </button>
         <div
           onClick={() => searchInputRef.current?.focus()}
           className="flex items-center gap-space-sm px-space-md py-space-xs rounded-xl bg-surface-container-lowest text-on-surface-variant border border-surface-container-high/30 focus-within:border-primary/50 transition-colors cursor-text"

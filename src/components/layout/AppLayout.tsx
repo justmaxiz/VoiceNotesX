@@ -35,7 +35,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <main
         role="main"
-        className="relative pl-72 pt-16 bg-surface min-h-screen w-full px-space-xl transition-all"
+        className="relative pl-0 md:pl-72 pt-16 bg-surface min-h-screen w-full px-space-md md:px-space-xl transition-all"
       >
         {/* Dynamic Ambient Auras */}
         <div

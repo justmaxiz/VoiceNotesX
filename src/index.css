@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #121317;
+  --color-surface-container-low: #1a1b20;
+  --color-surface-container: #1f1f24;
+  --color-surface-container-high: #292a2e;
+  --color-surface-container-highest: #343439;
+  --color-surface-container-lowest: #0d0e12;
+  --color-surface-dim: #121317;
+  --color-surface-bright: #38393e;
+  --color-surface-variant: #343439;
+
+  --color-primary: #a078ff;
+  --color-primary-container: #340080;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #d0bcff;
+  --color-primary-fixed: #e9ddff;
+  --color-primary-fixed-dim: #d0bcff;
+  --color-on-primary-fixed: #23005c;
+  --color-on-primary-fixed-variant: #5516be;
+
+  --color-secondary: #4edea3;
+  --color-secondary-container: #00a572;
+  --color-on-secondary: #003824;
+  --color-on-secondary-container: #00311f;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
+
+  --color-tertiary: #cebdff;
+  --color-tertiary-container: #9b7fed;
+  --color-on-tertiary: #381385;
+  --color-on-tertiary-container: #31057e;
+  --color-tertiary-fixed: #e8ddff;
+  --color-tertiary-fixed-dim: #cebdff;
+  --color-on-tertiary-fixed: #21005e;
+  --color-on-tertiary-fixed-variant: #4f319c;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-background: #121317;
+  --color-on-background: #e3e2e8;
+  --color-on-surface: #e3e2e8;
+  --color-on-surface-variant: #cbc3d7;
+  --color-outline: #958ea0;
+  --color-outline-variant: #494454;
+  --color-inverse-surface: #e3e2e8;
+  --color-inverse-on-surface: #2f3035;
+  --color-inverse-primary: #6d3bd7;
+  --color-surface-tint: #d0bcff;
+
+  --font-headline-xl: "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-md: "Plus Jakarta Sans", sans-serif;
+  --font-headline-sm: "Plus Jakarta Sans", sans-serif;
+  --font-label-lg: "Plus Jakarta Sans", sans-serif;
+  --font-label-md: "Plus Jakarta Sans", sans-serif;
+  --font-label-sm: "Plus Jakarta Sans", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2rem;
+}
+
+:root {
+  --bg-surface: #121317;
+  --bg-surface-container-low: #1a1b20;
+  --bg-surface-container: #1f1f24;
+  --bg-surface-container-high: #292a2e;
+  --bg-surface-container-highest: #343439;
+  --bg-surface-container-lowest: #0d0e12;
+
+  --color-primary: #a078ff;
+  --color-primary-container: #340080;
+  --color-secondary: #4edea3;
+  --color-secondary-container: #00a572;
+  --color-tertiary: #cebdff;
+  --color-error: #ffb4ab;
+
+  --text-on-surface: #e3e2e8;
+  --text-on-surface-variant: #cbc3d7;
+  --text-outline: #958ea0;
+  --text-outline-variant: #494454;
+}
+
+/* Material Symbols configuration */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Typography tokens matching design/desktop_overview.html */
+.font-headline-xl { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; }
+.text-headline-xl { font-size: 36px; line-height: 44px; letter-spacing: -0.03em; font-weight: 700; }
+
+.font-headline-lg { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+.text-headline-lg { font-size: 30px; line-height: 38px; letter-spacing: -0.02em; font-weight: 600; }
+
+.font-headline-md { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+.text-headline-md { font-size: 20px; line-height: 28px; letter-spacing: -0.01em; font-weight: 600; }
+
+.font-headline-sm { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+.text-headline-sm { font-size: 17px; line-height: 24px; letter-spacing: 0em; font-weight: 600; }
+
+.font-label-lg { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+.text-label-lg { font-size: 14px; line-height: 20px; letter-spacing: 0.01em; font-weight: 600; }
+
+.font-label-md { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+.text-label-md { font-size: 12px; line-height: 16px; letter-spacing: 0.03em; font-weight: 600; }
+
+.font-label-sm { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; }
+.text-label-sm { font-size: 10px; line-height: 14px; letter-spacing: 0.06em; font-weight: 700; }
+
+.font-body-lg { font-family: 'Inter', sans-serif; font-weight: 400; }
+.text-body-lg { font-size: 16px; line-height: 26px; letter-spacing: -0.011em; font-weight: 400; }
+
+.font-body-md { font-family: 'Inter', sans-serif; font-weight: 400; }
+.text-body-md { font-size: 14px; line-height: 22px; letter-spacing: -0.006em; font-weight: 400; }
+
+.font-body-sm { font-family: 'Inter', sans-serif; font-weight: 400; }
+.text-body-sm { font-size: 12px; line-height: 18px; letter-spacing: 0em; font-weight: 400; }
+
+/* Spacing tokens */
+.gap-space-xs { gap: 0.25rem; }
+.gap-space-sm { gap: 0.5rem; }
+.gap-space-md { gap: 1rem; }
+.gap-space-lg { gap: 1.5rem; }
+.gap-space-xl { gap: 2rem; }
+
+.p-space-xs { padding: 0.25rem; }
+.p-space-sm { padding: 0.5rem; }
+.p-space-md { padding: 1rem; }
+.p-space-lg { padding: 1.5rem; }
+.p-space-xl { padding: 2rem; }
+
+.px-space-xs { padding-left: 0.25rem; padding-right: 0.25rem; }
+.px-space-sm { padding-left: 0.5rem; padding-right: 0.5rem; }
+.px-space-md { padding-left: 1rem; padding-right: 1rem; }
+.px-space-lg { padding-left: 1.5rem; padding-right: 1.5rem; }
+.px-space-xl { padding-left: 2rem; padding-right: 2rem; }
+
+.py-space-xs { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-space-sm { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-space-md { padding-top: 1rem; padding-bottom: 1rem; }
+.py-space-lg { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.py-space-xl { padding-top: 2rem; padding-bottom: 2rem; }
+
+.pt-space-xs { padding-top: 0.25rem; }
+.pt-space-sm { padding-top: 0.5rem; }
+.pt-space-md { padding-top: 1rem; }
+.pt-space-lg { padding-top: 1.5rem; }
+.pt-space-xl { padding-top: 2rem; }
+
+.pb-space-xs { padding-bottom: 0.25rem; }
+.pb-space-sm { padding-bottom: 0.5rem; }
+.pb-space-md { padding-bottom: 1rem; }
+.pb-space-lg { padding-bottom: 1.5rem; }
+.pb-space-xl { padding-bottom: 2rem; }
+
+.mb-space-xs { margin-bottom: 0.25rem; }
+.mb-space-sm { margin-bottom: 0.5rem; }
+.mb-space-md { margin-bottom: 1rem; }
+.mb-space-lg { margin-bottom: 1.5rem; }
+.mb-space-xl { margin-bottom: 2rem; }
+
+/* Obsidian Lumina Glassmorphism & Neon Glow Utilities */
+.glass-panel {
+  background: rgba(26, 31, 44, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glow-violet {
+  box-shadow: 0 0 25px -5px rgba(160, 120, 255, 0.4);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 15px -3px rgba(0, 165, 114, 0.4);
+}

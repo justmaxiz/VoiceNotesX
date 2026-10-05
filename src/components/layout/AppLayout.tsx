@@ -3,14 +3,32 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { QuickCaptureWidget } from './QuickCaptureWidget'
 import { RecordingModal } from '../audio/RecordingModal'
+import { SlideOverDrawer } from './SlideOverDrawer'
+import { CommandPaletteModal } from '../ui/CommandPaletteModal'
 import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
+import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { setActiveTab, isSidebarCollapsed, toggleSidebar } = useNavigationStore()
+  const {
+    activeTab,
+    setActiveTab,
+    isSidebarCollapsed,
+    toggleSidebar,
+    setRecordingModalOpen,
+  } = useNavigationStore()
+
+  // Spacebar hotkey to toggle recording modal (TASK-13)
+  useSpaceRecordShortcut({
+    onToggle: () => {
+      const current = useNavigationStore.getState().isRecordingModalOpen
+      setRecordingModalOpen(!current)
+    },
+    enabled: activeTab === 'overview' || activeTab === 'notes',
+  })
 
   // Sync state with browser hash navigation (e.g., back / forward history)
   useEffect(() => {
@@ -90,6 +108,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Global Bottom Quick Capture Floating Widget */}
       <QuickCaptureWidget onSave={handleQuickCaptureSave} />
+
+      {/* Global Slide-Over Details Drawer */}
+      <SlideOverDrawer />
+
+      {/* Global Command Palette (⌘K) */}
+      <CommandPaletteModal />
 
       {/* Quick Recording Modal Overlay */}
       <RecordingModal />

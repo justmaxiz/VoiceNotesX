@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { TaskItemData, TaskFilter, ViewMode } from '../../types/item'
 import { useNavigationStore } from '../../store/navigationStore'
 import { useDashboardConfigStore } from '../../store/dashboardConfigStore'
@@ -59,9 +59,7 @@ export const DashboardOverview: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [isRecordingHeld, setIsRecordingHeld] = useState(false)
-
-  const { activeTab, setActiveTab, setRecordingModalOpen } = useNavigationStore()
+  const { setActiveTab, setRecordingModalOpen } = useNavigationStore()
   const { modules } = useDashboardConfigStore()
 
   // Toggle task completion
@@ -76,52 +74,6 @@ export const DashboardOverview: React.FC = () => {
     setTasks((prev) => [newTask, ...prev])
   }, [])
 
-  // Spacebar hotkey listener with strict scoping to overview tab and input protection
-  useEffect(() => {
-    if (activeTab !== 'overview') {
-      setIsRecordingHeld(false)
-      return
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat || e.code !== 'Space') return
-
-      const target = e.target as HTMLElement | null
-      const isInteractive =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLButtonElement ||
-        target instanceof HTMLSelectElement ||
-        target?.isContentEditable ||
-        Boolean(target?.closest('button, [role="button"], select, summary, a'))
-
-      if (!isInteractive) {
-        e.preventDefault()
-        setIsRecordingHeld(true)
-      }
-    }
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsRecordingHeld(false)
-      }
-    }
-
-    const handleBlur = () => {
-      setIsRecordingHeld(false)
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    window.addEventListener('blur', handleBlur)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      window.removeEventListener('blur', handleBlur)
-    }
-  }, [activeTab])
-
   const completedCount = tasks.filter((t) => t.isCompleted).length
   const totalCount = tasks.length
   const plannedCount = totalCount - completedCount
@@ -133,7 +85,6 @@ export const DashboardOverview: React.FC = () => {
         userName="Александр"
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        isRecordingHeld={isRecordingHeld}
         onStartRecording={() => setRecordingModalOpen(true)}
         onNewNote={() => setActiveTab('notes')}
       />

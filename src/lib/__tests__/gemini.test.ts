@@ -94,9 +94,7 @@ describe('Gemini AI Integration', () => {
         json: async () => mockResult,
       })
 
-      // Temporarily mock import.meta.env
-      const origEnv = (import.meta as any).env?.VITE_GEMINI_API_KEY
-      ;(import.meta as any).env = { ...(import.meta as any).env, VITE_GEMINI_API_KEY: 'test-key' }
+      vi.stubEnv('VITE_GEMINI_API_KEY', 'test-key')
 
       try {
         const res = await structureVoiceNote('Согласовать бюджет на AI API')
@@ -105,7 +103,7 @@ describe('Gemini AI Integration', () => {
         expect(res.category_tag).toBe('#Финансы')
         expect(res.checklist).toHaveLength(2)
       } finally {
-        ;(import.meta as any).env = { ...(import.meta as any).env, VITE_GEMINI_API_KEY: origEnv }
+        vi.unstubAllEnvs()
       }
     })
   })

@@ -19,7 +19,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     fireEvent.click(notesBtn)
 
     expect(screen.getByTestId('view-notes')).toBeVisible()
-    expect(screen.getByText('Библиотека записей')).toBeInTheDocument()
+    expect(screen.getByText('Хаб заметок')).toBeInTheDocument()
     expect(screen.getAllByText('План редизайна мобильного экрана').length).toBeGreaterThanOrEqual(1)
   })
 
@@ -55,8 +55,9 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     const settingsBtn = screen.getByTestId('nav-item-settings')
     fireEvent.click(settingsBtn)
 
-    expect(screen.getByText('Настройки и Профиль')).toBeInTheDocument()
-    expect(screen.getByText('Google AI Studio API Key (BYOK)')).toBeInTheDocument()
+    expect(screen.getByTestId('view-settings')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+    expect(screen.getByText('Подключенные устройства')).toBeInTheDocument()
   })
 
   it('preserves state when returning to Overview', () => {

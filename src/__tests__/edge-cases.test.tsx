@@ -51,45 +51,43 @@ describe('Edge Cases and Boundary Values', () => {
   })
 
   it('does not trigger spacebar recording shortcut while typing space inside an input', () => {
-    render(<DashboardOverview />)
-    const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    render(<App />)
+    const input = screen.getAllByPlaceholderText(/Быстрая мысль или задача/)[0]
     input.focus()
 
     // Trigger Space keydown while focused on input
     fireEvent.keyDown(input, { code: 'Space' })
 
-    const recordBtn = screen.getByText('Начать запись')
-    expect(recordBtn).toBeInTheDocument()
-    expect(screen.queryByText('Идет запись...')).not.toBeInTheDocument()
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 
   it('triggers spacebar recording feedback when Space is pressed outside inputs', () => {
-    render(<DashboardOverview />)
+    render(<App />)
 
-    // Trigger Space keydown on document body
-    fireEvent.keyDown(document.body, { code: 'Space' })
+    // Trigger Space keydown on window
+    fireEvent.keyDown(window, { code: 'Space' })
 
-    expect(screen.getByText('Идет запись...')).toBeInTheDocument()
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(true)
 
-    // Key up releases recording state
-    fireEvent.keyUp(document.body, { code: 'Space' })
-    expect(screen.getByText('Начать запись')).toBeInTheDocument()
+    // Second Space keydown toggles state
+    fireEvent.keyDown(window, { code: 'Space' })
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 
   it('does not trigger spacebar recording when user is on a different tab', () => {
     useNavigationStore.setState({ activeTab: 'settings' })
-    render(<DashboardOverview />)
+    render(<App />)
 
     fireEvent.keyDown(document.body, { code: 'Space' })
-    expect(screen.queryByText('Идет запись...')).not.toBeInTheDocument()
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 
   it('does not trigger spacebar recording when focused on an HTML button', () => {
-    render(<DashboardOverview />)
-    const newNoteBtn = screen.getByRole('button', { name: /Новая заметка/ })
-    newNoteBtn.focus()
+    render(<App />)
+    const button = screen.getByTestId('nav-item-settings')
+    button.focus()
 
-    fireEvent.keyDown(newNoteBtn, { code: 'Space' })
-    expect(screen.queryByText('Идет запись...')).not.toBeInTheDocument()
+    fireEvent.keyDown(button, { code: 'Space' })
+    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 })

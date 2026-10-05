@@ -18,15 +18,17 @@ export function useSpaceRecordShortcut({
       const target = event.target as HTMLElement | null
       const isElement = target && target.nodeType === 1
 
-      const isInput =
+      const isInteractive =
         isElement &&
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'SELECT' ||
           target.isContentEditable ||
           (typeof target.closest === 'function' &&
-            Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))))
+            Boolean(target.closest('input, textarea, select, button, [contenteditable="true"]'))))
 
-      if (!isInput) {
+      if (!isInteractive) {
         event.preventDefault()
         onToggle()
       }

@@ -1,82 +1,72 @@
 import React, { useState } from 'react'
+import { useAppStore } from '../../store/useAppStore'
+import { useQuickCaptureStore } from '../../store/useQuickCaptureStore'
+import { useDrawerStore } from '../../store/useDrawerStore'
+import { AddTaskMenu } from './AddTaskMenu'
+import { ImportFromExistingModal } from './ImportFromExistingModal'
+import { Item } from '../../types/item'
 
-interface TaskCard {
-  id: string
+type KanbanColumnKey = 'todo' | 'focus' | 'in_progress' | 'completed'
+
+interface ColumnDef {
+  key: KanbanColumnKey
   title: string
-  column: 'todo' | 'in_progress' | 'done'
-  priority: 'low' | 'medium' | 'high'
-  tag: string
-  dueTime?: string
+  colorClass: string
 }
 
-const INITIAL_TASKS: TaskCard[] = [
-  {
-    id: 'k-1',
-    title: 'Сверить архитектурные диаграммы с PR #142',
-    column: 'todo',
-    priority: 'high',
-    tag: '#Разработка',
-    dueTime: '18:30',
-  },
-  {
-    id: 'k-2',
-    title: 'Подготовить отчет по продуктовым метрикам Q3',
-    column: 'in_progress',
-    priority: 'high',
-    tag: '#Аналитика',
-    dueTime: '16:00',
-  },
-  {
-    id: 'k-3',
-    title: 'Записать идеи для дизайн-системы 2026',
-    column: 'in_progress',
-    priority: 'medium',
-    tag: '#Дизайн',
-    dueTime: 'Завтра',
-  },
-  {
-    id: 'k-4',
-    title: 'Согласовать бюджет на AI API',
-    column: 'done',
-    priority: 'low',
-    tag: '#Финансы',
-    dueTime: 'Выполнено в 14:15',
-  },
-  {
-    id: 'k-5',
-    title: 'Обновить переменные окружения на staging',
-    column: 'done',
-    priority: 'low',
-    tag: '#DevOps',
-  },
+const COLUMNS: ColumnDef[] = [
+  { key: 'todo', title: 'К выполнению', colorClass: 'border-outline-variant/50 text-outline' },
+  { key: 'focus', title: 'В фокусе', colorClass: 'border-secondary/60 text-secondary' },
+  { key: 'in_progress', title: 'В процессе', colorClass: 'border-primary/60 text-primary' },
+  { key: 'completed', title: 'Выполнено', colorClass: 'border-secondary text-secondary' },
 ]
 
 export const TasksPage: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskCard[]>(INITIAL_TASKS)
+  const { items, updateItem } = useAppStore()
+  const { openQuickCapture } = useQuickCaptureStore()
+  const { openDrawer } = useDrawerStore()
 
-  const moveTask = (taskId: string, targetCol: 'todo' | 'in_progress' | 'done') => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, column: targetCol } : t))
-    )
-  }
+  const [importTargetCol, setImportTargetCol] = useState<KanbanColumnKey | null>(null)
 
-  const handleCreateTask = () => {
-    const newTask: TaskCard = {
-      id: `k-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      title: 'Новая задача из канбана',
-      column: 'todo',
-      priority: 'medium',
-      tag: '#Заметка',
-      dueTime: 'Сегодня',
+  const taskItems = items.filter((i) => i.type === 'task')
+
+  const getTasksForColumn = (col: KanbanColumnKey): Item[] => {
+    switch (col) {
+      case 'todo':
+        return taskItems.filter((t) => t.status === 'todo' && !t.isFocus)
+      case 'focus':
+        return taskItems.filter((t) => t.status === 'todo' && t.isFocus)
+      case 'in_progress':
+        return taskItems.filter((t) => t.status === 'in_progress')
+      case 'completed':
+        return taskItems.filter((t) => t.status === 'completed')
+      default:
+        return []
     }
-    setTasks((prev) => [newTask, ...prev])
   }
 
-  const columns = [
-    { key: 'todo' as const, title: 'К выполнению', count: tasks.filter((t) => t.column === 'todo').length },
-    { key: 'in_progress' as const, title: 'В процессе', count: tasks.filter((t) => t.column === 'in_progress').length },
-    { key: 'done' as const, title: 'Завершено', count: tasks.filter((t) => t.column === 'done').length },
-  ]
+  const handleMoveTask = (task: Item, targetCol: KanbanColumnKey) => {
+    if (targetCol === 'focus') {
+      updateItem(task.id, { status: 'todo', isFocus: true })
+    } else if (targetCol === 'todo') {
+      updateItem(task.id, { status: 'todo', isFocus: false })
+    } else {
+      updateItem(task.id, { status: targetCol, isFocus: false })
+    }
+  }
+
+  const handleImportExisting = (item: Item, targetCol: KanbanColumnKey) => {
+    if (item.type === 'note') {
+      // Convert to task and place in target column
+      updateItem(item.id, {
+        type: 'task',
+        status: targetCol === 'focus' ? 'todo' : targetCol,
+        isFocus: targetCol === 'focus',
+      })
+    } else {
+      handleMoveTask(item, targetCol)
+    }
+  }
 
   return (
     <div className="flex flex-col w-full gap-space-lg pt-space-md">
@@ -87,116 +77,178 @@ export const TasksPage: React.FC = () => {
             <span className="material-symbols-outlined text-secondary text-sm">check_circle</span>
             <span className="uppercase tracking-wider">Канбан-доска задач</span>
             <span>•</span>
-            <span>{tasks.length} задач активно</span>
+            <span>{taskItems.length} задач всего</span>
           </div>
-          <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
             Задачи
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Интерактивная доска для приоритизации и отслеживания статусов выполнения
+            Интерактивная доска для приоритизации, фокуса и отслеживания статусов выполнения
           </p>
         </div>
 
+        {/* Global create button */}
         <button
           type="button"
-          onClick={handleCreateTask}
-          className="flex items-center gap-space-xs px-space-md py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all glow-violet cursor-pointer"
+          onClick={() => openQuickCapture({ entityType: 'task', targetColumn: 'todo' })}
+          className="flex items-center gap-1.5 px-space-md py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-label-md text-label-md font-medium transition-all shadow-md glow-violet cursor-pointer self-start md:self-end"
         >
           <span className="material-symbols-outlined text-body-lg">add</span>
           <span>Новая задача</span>
         </button>
       </div>
 
-      {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
-        {columns.map((col) => {
-          const colTasks = tasks.filter((t) => t.column === col.key)
+      {/* Kanban Board Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md items-start">
+        {COLUMNS.map((col) => {
+          const colTasks = getTasksForColumn(col.key)
+
           return (
             <div
               key={col.key}
-              className="flex flex-col gap-space-md p-space-md rounded-2xl bg-surface-container-low border border-surface-container-high/30 min-h-[500px]"
+              data-testid={`kanban-column-${col.key}`}
+              className="flex flex-col rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 p-3 min-h-[420px]"
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between pb-space-xs border-b border-surface-container-high/30">
-                <div className="flex items-center gap-space-xs">
-                  <span className="font-headline-sm text-headline-sm text-on-surface">
-                    {col.title}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
-                    {col.count}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-outline-variant/15 px-1">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full border-2 ${col.colorClass} bg-current`} />
+                  <h2 className="text-body-md font-semibold text-on-surface">{col.title}</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-surface-container text-xs text-outline font-medium">
+                    {colTasks.length}
                   </span>
                 </div>
+
+                {/* Add Task Menu Popover */}
+                <AddTaskMenu
+                  onSelectCreateNew={() =>
+                    openQuickCapture({ targetColumn: col.key, entityType: 'task' })
+                  }
+                  onSelectImportExisting={() => setImportTargetCol(col.key)}
+                />
               </div>
 
-              {/* Task Cards in Column */}
-              <div className="flex flex-col gap-space-sm flex-1">
+              {/* Tasks List */}
+              <div className="flex flex-col gap-2.5 flex-1">
                 {colTasks.length === 0 ? (
-                  <div className="h-32 border border-dashed border-surface-container-highest/60 rounded-xl flex items-center justify-center text-outline font-label-sm text-label-sm">
-                    Переместите задачи сюда
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-outline-variant/30 text-outline text-xs text-center min-h-[140px]">
+                    <span className="material-symbols-outlined text-xl mb-1 opacity-60">
+                      drag_indicator
+                    </span>
+                    <span>Перетащите задачи сюда</span>
+                    <span className="text-[11px] opacity-75 mt-0.5">или нажмите «+» для создания</span>
                   </div>
                 ) : (
-                  colTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-container-high/40 transition-all flex flex-col gap-space-sm shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="px-2 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-sm text-label-sm">
-                          {task.tag}
-                        </span>
-                        {task.dueTime && (
-                          <span className="text-outline font-label-sm text-label-sm flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">schedule</span>
-                            {task.dueTime}
+                  colTasks.map((task) => {
+                    const completedSubtasks =
+                      task.checklist?.filter((c) => c.isCompleted).length || 0
+                    const totalSubtasks = task.checklist?.length || 0
+
+                    return (
+                      <article
+                        key={task.id}
+                        onClick={() => openDrawer(task.id)}
+                        className="p-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 hover:border-primary/40 transition-all flex flex-col gap-2.5 cursor-pointer group shadow-xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-body-sm font-semibold text-on-surface group-hover:text-primary transition-colors leading-snug">
+                            {task.title}
                           </span>
+                        </div>
+
+                        {task.description && (
+                          <p className="text-xs text-outline line-clamp-2 leading-relaxed">
+                            {task.description}
+                          </p>
                         )}
-                      </div>
 
-                      <h4 className="font-body-md text-body-md text-on-surface font-medium leading-snug">
-                        {task.title}
-                      </h4>
+                        {/* Progress and Tags */}
+                        <div className="flex items-center justify-between gap-2 text-xs flex-wrap pt-1 border-t border-outline-variant/15">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-medium">
+                              {task.categoryTag}
+                            </span>
+                            {task.priority === 'high' && (
+                              <span className="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-medium text-[11px]">
+                                Срочно
+                              </span>
+                            )}
+                          </div>
 
-                      {/* Quick Move Status Buttons */}
-                      <div className="flex items-center justify-between pt-1 border-t border-surface-container-high/20 text-xs">
-                        <span className="text-outline font-label-sm">Переместить:</span>
-                        <div className="flex gap-1">
+                          {totalSubtasks > 0 && (
+                            <span className="flex items-center gap-1 text-outline text-xs">
+                              <span className="material-symbols-outlined text-xs">check_box</span>
+                              {completedSubtasks}/{totalSubtasks}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Quick Column Transfer Actions */}
+                        <div
+                          className="flex items-center justify-end gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {col.key !== 'todo' && (
                             <button
                               type="button"
-                              onClick={() => moveTask(task.id, 'todo')}
-                              className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high cursor-pointer"
+                              onClick={() => handleMoveTask(task, 'todo')}
+                              title="В 'К выполнению'"
+                              className="px-1.5 py-0.5 rounded text-[11px] bg-surface-container-high hover:bg-surface-container-highest text-outline hover:text-on-surface"
                             >
-                              В todo
+                              Todo
+                            </button>
+                          )}
+                          {col.key !== 'focus' && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveTask(task, 'focus')}
+                              title="В фокус"
+                              className="px-1.5 py-0.5 rounded text-[11px] bg-secondary-container text-on-secondary hover:opacity-90"
+                            >
+                              Фокус
                             </button>
                           )}
                           {col.key !== 'in_progress' && (
                             <button
                               type="button"
-                              onClick={() => moveTask(task.id, 'in_progress')}
-                              className="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary hover:bg-surface-container-high cursor-pointer"
+                              onClick={() => handleMoveTask(task, 'in_progress')}
+                              title="В процессе"
+                              className="px-1.5 py-0.5 rounded text-[11px] bg-primary-container text-on-primary-container hover:opacity-90"
                             >
-                              В работу
+                              В работе
                             </button>
                           )}
-                          {col.key !== 'done' && (
+                          {col.key !== 'completed' && (
                             <button
                               type="button"
-                              onClick={() => moveTask(task.id, 'done')}
-                              className="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary hover:bg-surface-container-high cursor-pointer"
+                              onClick={() => handleMoveTask(task, 'completed')}
+                              title="Завершить"
+                              className="px-1.5 py-0.5 rounded text-[11px] bg-secondary text-on-secondary hover:opacity-90"
                             >
-                              ✓ Готово
+                              ✓
                             </button>
                           )}
                         </div>
-                      </div>
-                    </div>
-                  ))
+                      </article>
+                    )
+                  })
                 )}
               </div>
             </div>
           )
         })}
       </div>
+
+      {/* Modal for importing unassigned notes/tasks */}
+      {importTargetCol && (
+        <ImportFromExistingModal
+          isOpen={Boolean(importTargetCol)}
+          targetColumnTitle={COLUMNS.find((c) => c.key === importTargetCol)?.title || ''}
+          items={items}
+          onSelect={(item) => handleImportExisting(item, importTargetCol)}
+          onClose={() => setImportTargetCol(null)}
+        />
+      )}
     </div>
   )
 }

@@ -118,7 +118,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         />
 
         {/* Dynamic Page Views with bottom spacing for floating QuickCaptureWidget */}
-        <div className="flex flex-col w-full pb-28 px-space-md md:px-space-xl">
+        <div className="flex flex-col w-full pb-36 px-space-md md:px-space-xl">
           {children}
         </div>
       </main>

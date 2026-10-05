@@ -20,7 +20,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Задачи',
     icon: 'check_circle',
     badge: 12,
-    badgeType: 'success',
+    badgeType: 'default',
   },
   {
     id: 'calendar',

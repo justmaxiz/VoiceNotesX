@@ -152,32 +152,39 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
   return (
     <section
       data-testid="focus-hero-card"
-      className="relative rounded-2xl bg-surface-container-low p-space-lg shadow-xl overflow-hidden group border border-surface-container-high/40 hover:border-primary/40 transition-all glass-panel"
+      className="relative rounded-2xl bg-surface-container-low p-space-lg shadow-xl group border border-surface-container-high/40 hover:border-primary/40 transition-all glass-panel"
     >
       {/* Visual Accent Glow */}
-      <div
-        aria-hidden="true"
-        className="absolute -right-16 -top-16 w-56 h-56 bg-primary-container/15 rounded-full blur-2xl pointer-events-none"
-      />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+        <div
+          aria-hidden="true"
+          className="absolute -right-16 -top-16 w-56 h-56 bg-primary-container/15 rounded-full blur-2xl"
+        />
+      </div>
 
       {/* Meta Header */}
       <div className="flex items-center justify-between gap-space-sm flex-wrap mb-space-md">
         <div className="flex items-center gap-space-xs flex-wrap">
-          <span className="flex items-center gap-1 px-space-sm py-1 rounded-full bg-secondary-container text-on-secondary font-label-sm text-label-sm font-semibold glow-emerald">
-            <span className="w-1.5 h-1.5 rounded-full bg-on-secondary animate-pulse" />
-            🎯 В фокусе
+          <span className="h-6 inline-flex items-center gap-1.5 px-2.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium leading-none select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <span>В фокусе</span>
           </span>
 
           {/* Switch Focus Popover */}
-          <div className="relative inline-block" ref={switchMenuRef}>
+          <div className="relative inline-flex items-center" ref={switchMenuRef}>
             <button
               type="button"
               onClick={() => setIsSwitchFocusOpen((prev) => !prev)}
               aria-label="Сменить фокус"
               aria-expanded={isSwitchFocusOpen}
-              className="px-2.5 py-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors cursor-pointer border border-primary/20"
+              className="h-6 inline-flex items-center gap-1 px-2.5 rounded-full bg-surface-container-high/80 hover:bg-surface-container-highest text-outline hover:text-on-surface text-xs font-medium transition-colors cursor-pointer border border-outline-variant/30 leading-none select-none"
             >
-              <span className="material-symbols-outlined text-xs">sync_alt</span>
+              <span
+                className="material-symbols-outlined !text-[13px] leading-none shrink-0"
+                style={{ fontSize: '13px', lineHeight: 1 }}
+              >
+                sync_alt
+              </span>
               <span>Сменить фокус</span>
             </button>
 
@@ -217,14 +224,14 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
             )}
           </div>
 
-          <span className="px-space-sm py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+          <span className="h-6 inline-flex items-center px-2.5 rounded-full bg-surface-container-high/70 text-on-surface-variant text-xs font-medium leading-none select-none">
             {currentCategory}
           </span>
 
           {currentPriority === 'high' && (
-            <span className="flex items-center gap-1 px-space-sm py-1 rounded-full bg-surface-container-high text-error font-label-sm text-label-sm">
-              <span className="material-symbols-outlined text-label-sm text-error">priority_high</span>
-              Высокий приоритет
+            <span className="h-6 inline-flex items-center gap-1.5 px-2.5 rounded-full bg-error/10 text-error text-xs font-medium leading-none select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+              <span>Высокий приоритет</span>
             </span>
           )}
         </div>
@@ -260,8 +267,8 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
       {/* Checklist / Subtasks Section */}
       {checklist.length > 0 && (
         <div className="my-3 space-y-2 border-t border-b border-surface-container-high/30 py-3">
-          <div className="text-label-sm text-outline uppercase tracking-wider font-medium">
-            Ключевые подзадачи:
+          <div className="text-xs font-semibold text-outline uppercase tracking-wider">
+            Подзадачи
           </div>
           <div className="space-y-1.5">
             {checklist.map((sub) => (
@@ -277,9 +284,9 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
                   ariaLabel={`Отметить подзадачу: ${sub.text}`}
                 />
                 <span
-                  className={`transition-all strike-linear ${
+                  className={`transition-all text-body-sm ${
                     sub.isCompleted
-                      ? 'strike-active text-outline opacity-60'
+                      ? 'line-through text-outline/75'
                       : 'text-on-surface group-hover:text-primary'
                   }`}
                 >
@@ -299,7 +306,7 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
               type="button"
               onClick={onTogglePlay}
               aria-label={isPlaying ? 'Приостановить' : 'Воспроизвести'}
-              className="px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
             >
               <span className="material-symbols-outlined text-body-md">
                 {isPlaying ? 'pause' : 'play_arrow'}
@@ -312,9 +319,9 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
             <button
               type="button"
               onClick={onSummary}
-              className="px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
             >
-              <span className="material-symbols-outlined text-body-md text-secondary">
+              <span className="material-symbols-outlined text-body-md text-primary">
                 auto_awesome
               </span>
               <span>Сводка</span>
@@ -326,7 +333,7 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
         <button
           type="button"
           onClick={handleMainComplete}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-on-secondary hover:bg-secondary/90 font-label-md text-label-md font-semibold transition-all shadow-md cursor-pointer glow-emerald"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-label-md text-label-md font-medium transition-all shadow-sm cursor-pointer active:scale-95"
         >
           <span className="material-symbols-outlined text-body-md">check</span>
           <span>Завершить задачу</span>

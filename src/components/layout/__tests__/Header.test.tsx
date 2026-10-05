@@ -24,7 +24,7 @@ describe('Header Component', () => {
   it('renders date badge, notifications button, and profile avatar', () => {
     render(<Header />)
     expect(screen.getByTestId('header-date-badge')).toBeInTheDocument()
-    expect(screen.getByText('Сегодня, 24 Окт')).toBeInTheDocument()
+    expect(screen.getByTestId('header-date-badge')).toHaveTextContent(/Сегодня/i)
     expect(screen.getByLabelText('Уведомления')).toBeInTheDocument()
     expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument()
     expect(screen.getByTestId('header-user-avatar')).toBeInTheDocument()

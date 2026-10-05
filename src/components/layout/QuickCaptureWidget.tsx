@@ -272,11 +272,12 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
         </span>
 
         {/* Entity Switcher (Задача / Заметка) */}
-        <div className="flex items-center p-0.5 rounded-lg bg-surface-container text-xs shrink-0 select-none border border-outline-variant/20">
+        <div className="flex items-center p-0.5 rounded-lg bg-surface-container text-xs shrink-0 select-none border border-outline-variant/20" role="group" aria-label="Тип записи">
           <button
             type="button"
+            aria-pressed={entityType === 'task'}
             onClick={() => setEntityType('task')}
-            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
               entityType === 'task'
                 ? 'bg-primary text-on-primary font-medium shadow-xs'
                 : 'text-outline hover:text-on-surface'
@@ -286,10 +287,11 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
           </button>
           <button
             type="button"
+            aria-pressed={entityType === 'note'}
             onClick={() => setEntityType('note')}
-            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
               entityType === 'note'
-                ? 'bg-secondary text-on-secondary font-medium shadow-xs'
+                ? 'bg-primary text-on-primary font-medium shadow-xs'
                 : 'text-outline hover:text-on-surface'
             }`}
           >
@@ -371,8 +373,8 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
             title={isRecording ? 'Остановить запись' : 'Голосовая запись (Space)'}
             className={`p-2 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
               isRecording
-                ? 'bg-secondary text-on-secondary shadow-md scale-105 animate-pulse'
-                : 'bg-surface-container hover:bg-surface-container-highest text-secondary hover:scale-105 active:scale-95'
+                ? 'bg-error text-on-error shadow-md scale-105 animate-pulse'
+                : 'bg-surface-container hover:bg-surface-container-highest text-primary hover:scale-105 active:scale-95'
             }`}
           >
             <span className="material-symbols-outlined text-body-lg">
@@ -387,7 +389,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
             aria-label="Сохранить мысль"
             className={`px-3 sm:px-space-md py-2 rounded-xl font-label-md text-label-md transition-all flex items-center gap-1 cursor-pointer ${
               localText.trim() && !isProcessingAI
-                ? 'bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container glow-violet shadow-sm'
+                ? 'bg-primary text-on-primary hover:bg-primary/90 shadow-sm'
                 : 'bg-surface-container text-outline opacity-60 cursor-not-allowed'
             }`}
           >

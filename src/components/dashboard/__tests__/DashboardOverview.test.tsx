@@ -15,7 +15,7 @@ describe('DashboardOverview Component', () => {
 
   it('renders greetings, metrics, and hero focus task', () => {
     render(<DashboardOverview />)
-    expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
+    expect(screen.getByText(/Алексей/)).toBeInTheDocument()
     expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
     expect(screen.getByText('Недавние аудиозаписи')).toBeInTheDocument()
     expect(screen.getByText('Сводка дня')).toBeInTheDocument()

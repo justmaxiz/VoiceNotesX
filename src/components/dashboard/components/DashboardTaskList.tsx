@@ -115,41 +115,45 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
     updateItem(id, { dueDate: todayStr }).catch(() => {})
   }
 
+
   return (
     <section className="flex flex-col gap-space-md">
       {/* Sub-navigation Tabs and Sort / Bulk Controls */}
       <div className="flex items-center justify-between pb-space-xs flex-wrap gap-2">
         {/* Filters */}
-        <div className="flex items-center gap-space-xs overflow-x-auto">
+        <div className="flex items-center gap-space-xs overflow-x-auto" role="group" aria-label="Фильтры задач">
           <button
             type="button"
+            aria-pressed={filter === 'all'}
             onClick={() => onFilterChange('all')}
-            className={`px-space-sm py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
               filter === 'all'
-                ? 'bg-primary-container text-on-primary-container shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
             Все <span className="text-xs opacity-75">{tasks.length}</span>
           </button>
           <button
             type="button"
+            aria-pressed={filter === 'urgent'}
             onClick={() => onFilterChange('urgent')}
-            className={`px-space-sm py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
               filter === 'urgent'
-                ? 'bg-primary-container text-on-primary-container shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
-            Срочные <span className="text-xs text-error font-semibold">{urgentCount}</span>
+            Срочные <span className="text-xs text-error font-medium">{urgentCount}</span>
           </button>
           <button
             type="button"
+            aria-pressed={filter === 'voice'}
             onClick={() => onFilterChange('voice')}
-            className={`px-space-sm py-1 rounded-lg font-label-md text-label-md transition-all flex items-center gap-1 cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all flex items-center gap-1 cursor-pointer ${
               filter === 'voice'
-                ? 'bg-primary-container text-on-primary-container shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
             <span>Голосовые</span>
@@ -157,11 +161,12 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
           </button>
           <button
             type="button"
+            aria-pressed={filter === 'summaries'}
             onClick={() => onFilterChange('summaries')}
-            className={`px-space-sm py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
               filter === 'summaries'
-                ? 'bg-primary-container text-on-primary-container shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
             Сводки <span className="text-xs opacity-75">1</span>

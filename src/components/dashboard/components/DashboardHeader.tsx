@@ -14,7 +14,7 @@ export interface DashboardHeaderProps {
   onNewNote?: () => void
 }
 
-export function getGreeting(userName = 'Александр'): string {
+export function getGreeting(userName = 'Алексей'): string {
   const hour = new Date().getHours()
   if (hour >= 5 && hour < 12) return `Доброе утро, ${userName}`
   if (hour >= 12 && hour < 18) return `Добрый день, ${userName}`
@@ -37,7 +37,7 @@ export function getFormattedDate(): string {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  userName = 'Александр',
+  userName = 'Алексей',
   dateText,
   aiSessionsText = '3 сессии обработаны AI',
   viewMode,
@@ -51,7 +51,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md pt-space-md mb-space-lg">
       <div className="flex flex-col gap-space-xs">
         <div className="flex items-center gap-space-xs text-outline font-label-sm text-label-sm">
-          <span className="inline-flex w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)]" />
+          <span className="inline-flex w-2 h-2 rounded-full bg-secondary/80" />
           <span className="uppercase tracking-wider">Готово к синхронизации</span>
           <span className="text-surface-container-highest">•</span>
           <span className="text-on-surface-variant">Облако активно</span>

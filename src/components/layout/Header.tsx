@@ -3,7 +3,28 @@ import { useNavigationStore } from '../../store/navigationStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { resolveEffectiveTheme } from '../../lib/theme'
 
-export const Header: React.FC = () => {
+export function getHeaderFormattedDate(): string {
+  try {
+    const now = new Date()
+    const formatted = new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+    }).format(now)
+    const cleaned = formatted.replace('.', '')
+    const parts = cleaned.split(' ')
+    const day = parts[0]
+    const month = parts[1] ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1) : ''
+    return `Сегодня, ${day} ${month}`.trim()
+  } catch {
+    return 'Сегодня'
+  }
+}
+
+export interface HeaderProps {
+  dateLabel?: string
+}
+
+export const Header: React.FC<HeaderProps> = ({ dateLabel }) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -65,8 +86,8 @@ export const Header: React.FC = () => {
       ? 'Показать боковую панель'
       : 'Скрыть боковую панель'
 
-  // Format today's date in Russian (e.g., "Сегодня, 24 Окт")
-  const todayLabel = 'Сегодня, 24 Окт'
+  // Dynamic formatted date in Russian (e.g. "Сегодня, 5 Окт")
+  const todayLabel = dateLabel || getHeaderFormattedDate()
 
   return (
     <header

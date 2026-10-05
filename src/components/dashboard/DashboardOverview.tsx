@@ -63,10 +63,10 @@ export const DashboardOverview: React.FC = () => {
   const plannedCount = totalCount - completedCount
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full pb-12">
       {/* Header with Greetings and Actions */}
       <DashboardHeader
-        userName="Александр"
+        userName="Алексей"
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onStartRecording={() => setRecordingModalOpen(true)}

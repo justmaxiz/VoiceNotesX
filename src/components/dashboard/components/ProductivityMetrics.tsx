@@ -29,29 +29,29 @@ export const ProductivityMetrics: React.FC<ProductivityMetricsProps> = ({
       {/* Progress Card */}
       <div
         data-testid="metrics-completed-card"
-        className={`p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md border transition-all ${
+        className={`p-space-md rounded-2xl bg-surface-container-low shadow-xs flex flex-col justify-between gap-3 border transition-all ${
           isAllDone
-            ? 'border-secondary/60 shadow-[0_0_20px_rgba(78,222,163,0.3)] ring-1 ring-secondary/50'
-            : 'border-surface-container-high/30'
+            ? 'border-secondary/40 ring-1 ring-secondary/30'
+            : 'border-surface-container-high/40'
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-medium">
+          <span className="text-xs font-semibold text-outline uppercase tracking-wider">
             Выполнено
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span
-              className={`font-label-sm text-label-sm px-2 py-0.5 rounded-full ${
+              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 isAllDone
-                  ? 'bg-secondary/15 text-secondary font-medium'
+                  ? 'bg-secondary/15 text-secondary'
                   : 'bg-surface-container-high text-on-surface-variant'
               }`}
             >
               {dayStatusText}
             </span>
             <span
-              className={`material-symbols-outlined text-body-lg transition-transform ${
-                isAllDone ? 'text-secondary scale-110' : 'text-secondary'
+              className={`material-symbols-outlined text-[18px] ${
+                isAllDone ? 'text-secondary' : 'text-outline'
               }`}
             >
               check_circle
@@ -75,7 +75,7 @@ export const ProductivityMetrics: React.FC<ProductivityMetricsProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-1 border-t border-outline-variant/15">
+        <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-1 border-t border-outline-variant/15 flex-wrap gap-1.5">
           {isAllDone ? (
             <span className="text-secondary font-medium">Все задачи закрыты! 🎉</span>
           ) : (

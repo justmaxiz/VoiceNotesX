@@ -10,7 +10,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
 
   it('renders Dashboard Overview on initial load', () => {
     render(<App />)
-    expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
+    expect(screen.getAllByText(/Алексей/).length).toBeGreaterThan(0)
   })
 
   it('switches to Notes view when clicked in sidebar', () => {

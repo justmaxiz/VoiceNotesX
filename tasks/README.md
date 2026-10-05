@@ -51,3 +51,14 @@
 * [TASK-31: Микро-взаимодействия и анимации интерфейса (React Bits)](TASK-31-react-bits-microinteractions.md)
 * [TASK-32: Правая Панель Детального Просмотра (Slide-over Drawer)](TASK-32-slide-over-drawer.md)
 * [TASK-33: Модульный Дашборд и Пользовательская Настройка Блоков](TASK-33-modular-dashboard-customization.md)
+
+## 🚀 Блок 8. Улучшения интерфейса, логики и UX
+* [TASK-34: Интерактивная сортировка задач и списков (Interactive Task Sorting)](TASK-34-interactive-task-sorting.md)
+* [TASK-35: Очистка терминологии и метрики продуктивности дня (Metrics & Terminology Cleanup)](TASK-35-metrics-and-terminology-cleanup.md)
+* [TASK-36: Упрощение Канбан-доски и концепция единого фокуса дня (Focus Task & Kanban Streamline)](TASK-36-focus-task-and-kanban-streamline.md)
+* [TASK-37: Детализация задачи: дата, время, теги и таймеры напоминаний (Task Details, Tags & Reminders)](TASK-37-task-details-date-time-tags-reminders.md)
+* [TASK-38: Календарь: реальные даты дедлайнов, бэклог без даты и почасовая сетка (Calendar Real Due Dates & Backlog)](TASK-38-calendar-real-due-dates-and-backlog.md)
+* [TASK-39: AI Сводки: разделение действий и архива, лимиты и вечерний автодайджест (AI Summaries UX & Limits)](TASK-39-ai-summaries-ux-and-rate-limiting.md)
+* [TASK-40: Главный экран: устранение дублирования инпута и единый Quick Capture (Single Unified Quick Capture)](TASK-40-dashboard-single-quick-capture.md)
+* [TASK-41: Современные чекбоксы Linear/Things 3, тактильный отклик и мультиселект (Modern Checkboxes & Multiselect)](TASK-41-modern-checkboxes-and-multiselect.md)
+

@@ -1,18 +1,22 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { DashboardOverview } from '../DashboardOverview'
-
 import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
+import { useAppStore } from '../../../store/useAppStore'
+import { SEED_ITEMS } from '../../../lib/seedData'
 
 describe('DashboardOverview Component', () => {
-  it('renders greetings, metrics, and hero focus task', () => {
+  beforeEach(() => {
+    useAppStore.setState({ items: SEED_ITEMS })
     useDashboardConfigStore.setState({
-      modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true },
+      modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true, focusTask: true, taskList: true },
     })
+  })
+
+  it('renders greetings, metrics, and hero focus task', () => {
     render(<DashboardOverview />)
     expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
-    expect(screen.getByText('Добавить новую фичу в VoiceNotes')).toBeInTheDocument()
-    expect(screen.getByText('Whisper AI Транскрипция')).toBeInTheDocument()
+    expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
     expect(screen.getByText('Недавние аудиозаписи')).toBeInTheDocument()
     expect(screen.getByText('AI Сводка дня')).toBeInTheDocument()
   })
@@ -31,23 +35,18 @@ describe('DashboardOverview Component', () => {
 
   it('toggles task completion and updates productivity stats', () => {
     render(<DashboardOverview />)
-    // Find first task checkbox
+    // Find task checkbox by aria-label
     const firstCheckbox = screen.getByLabelText('Отметить задачу: Подготовить отчет по продуктовым метрикам Q3')
-    expect(firstCheckbox).not.toBeChecked()
+    expect(firstCheckbox).toHaveAttribute('aria-checked', 'false')
 
     fireEvent.click(firstCheckbox)
-    expect(firstCheckbox).toBeChecked()
+    expect(firstCheckbox).toHaveAttribute('aria-checked', 'true')
   })
 
-  it('adds a quick task via quick input form', () => {
+  it('does NOT contain redundant QuickInputBar (TASK-40)', () => {
     render(<DashboardOverview />)
-    const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
-    const submitBtn = screen.getByText('Добавить')
-
-    fireEvent.change(input, { target: { value: 'Тестовая новая задача' } })
-    fireEvent.click(submitBtn)
-
-    expect(screen.getByText('Тестовая новая задача')).toBeInTheDocument()
+    // Redundant static quick input bar was removed in TASK-40
+    expect(screen.queryByPlaceholderText(/Быстрая мысль или задача/)).toBeNull()
   })
 
   it('filters task list when filter buttons are clicked', () => {

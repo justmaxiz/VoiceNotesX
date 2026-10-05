@@ -98,14 +98,22 @@ export class VoiceNotesDB extends Dexie {
       throw new Error(`Item with id "${id}" not found`)
     }
     await this.transaction('rw', this.items, async () => {
-      const allFocused = await this.items.filter((item) => Boolean(item.isFocus)).toArray()
+      const allFocused = await this.items
+        .filter((item) => Boolean(item.isFocus || item.isFocused))
+        .toArray()
       const now = new Date().toISOString()
       for (const item of allFocused) {
         if (item.id !== id) {
-          await this.items.update(item.id, { isFocus: false, updatedAt: now })
+          await this.items.update(item.id, { isFocus: false, isFocused: false, updatedAt: now })
         }
       }
-      await this.items.update(id, { isFocus: true, updatedAt: now })
+      const newStatus = target.status === 'todo' ? 'in_progress' : target.status
+      await this.items.update(id, {
+        isFocus: true,
+        isFocused: true,
+        status: newStatus,
+        updatedAt: now,
+      })
     })
   }
 

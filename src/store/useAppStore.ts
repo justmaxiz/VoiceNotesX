@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Item, TaskFilter } from '../types'
+import { Item, TaskFilter, TaskSortCriteria, TaskSortDirection } from '../types'
 import { db } from '../lib/db'
 import {
   upsertSearchItem,
@@ -19,6 +19,10 @@ export interface AppState {
   isRecording: boolean
   activeFilter: TaskFilter
   sortOrder: SortOrder
+  sortBy: TaskSortCriteria
+  sortDirection: TaskSortDirection
+  selectedTaskIds: string[]
+  isSelectMode: boolean
   apiKey: string
   isLoading: boolean
   error: string | null
@@ -28,6 +32,7 @@ export interface AppState {
   setSearchQuery: (query: string) => void
   setActiveFilter: (filter: TaskFilter) => void
   setSortOrder: (order: SortOrder) => void
+  setSort: (by: TaskSortCriteria, direction?: TaskSortDirection) => void
   setIsRecording: (isRecording: boolean) => void
   setRecording: (isRecording: boolean) => void
   setItems: (items: Item[]) => void
@@ -36,6 +41,14 @@ export interface AppState {
   deleteItem: (id: string) => Promise<void>
   toggleTask: (id: string) => Promise<void>
   setFocusTask: (id: string) => Promise<void>
+  setFocusedTask: (id: string) => Promise<void>
+  setSelectMode: (mode: boolean) => void
+  toggleSelectTask: (id: string) => void
+  selectAllTasks: (ids?: string[]) => void
+  clearSelectedTasks: () => void
+  batchCompleteTasks: () => Promise<void>
+  batchDeleteTasks: () => Promise<void>
+  batchRescheduleTasks: (dueDate: string | null) => Promise<void>
   setApiKey: (key: string) => void
   loadItems: () => Promise<void>
   clearError: () => void
@@ -57,8 +70,25 @@ const getStoredApiKey = (): string => {
   return localStorage.getItem('voicenotes_api_key') || ''
 }
 
+const getInitialSort = (): { sortBy: TaskSortCriteria; sortDirection: TaskSortDirection } => {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('voicenotes_task_sort')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.sortBy && parsed.sortDirection) {
+          return parsed
+        }
+      }
+    } catch {}
+  }
+  return { sortBy: 'priority', sortDirection: 'asc' }
+}
+
 // Populate search index with initial seed items synchronously
 rebuildSearchIndex(SEED_ITEMS)
+
+const initialSort = getInitialSort()
 
 export const useAppStore = create<AppState>((set, get) => ({
   items: SEED_ITEMS,
@@ -67,6 +97,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   isRecording: false,
   activeFilter: 'all',
   sortOrder: 'priority',
+  sortBy: initialSort.sortBy,
+  sortDirection: initialSort.sortDirection,
+  selectedTaskIds: [],
+  isSelectMode: false,
   apiKey: getStoredApiKey(),
   isLoading: false,
   error: null,
@@ -90,6 +124,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActiveFilter: (filter: TaskFilter) => set({ activeFilter: filter }),
 
   setSortOrder: (order: SortOrder) => set({ sortOrder: order }),
+
+  setSort: (by: TaskSortCriteria, direction?: TaskSortDirection) => {
+    const currentDir = get().sortDirection
+    const nextDir = direction !== undefined ? direction : (get().sortBy === by ? (currentDir === 'asc' ? 'desc' : 'asc') : 'asc')
+    set({ sortBy: by, sortDirection: nextDir })
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('voicenotes_task_sort', JSON.stringify({ sortBy: by, sortDirection: nextDir }))
+      } catch {}
+    }
+  },
 
   setIsRecording: (isRecording: boolean) => set({ isRecording }),
   setRecording: (isRecording: boolean) => set({ isRecording }),
@@ -242,13 +287,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const now = new Date().toISOString()
-    const prevFocused = previousItems.filter((i) => i.id !== id && i.isFocus)
+    const prevFocused = previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocused))
+    const newStatus = target.status === 'todo' ? 'in_progress' : target.status
+
     const nextItems = previousItems.map((item) => {
       if (item.id === id) {
-        return { ...item, isFocus: true, updatedAt: now }
+        return { ...item, isFocus: true, isFocused: true, status: newStatus, updatedAt: now }
       }
-      if (item.isFocus) {
-        return { ...item, isFocus: false, updatedAt: now }
+      if (item.isFocus || item.isFocused) {
+        return { ...item, isFocus: false, isFocused: false, updatedAt: now }
       }
       return item
     })
@@ -259,11 +306,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ items: nextItems })
     upsertSearchItem(updatedTarget)
     prevFocused.forEach((item) =>
-      upsertSearchItem({ ...item, isFocus: false, updatedAt: now })
+      upsertSearchItem({ ...item, isFocus: false, isFocused: false, updatedAt: now })
     )
 
     try {
       await db.setFocusTask(id)
+      if (target.status === 'todo') {
+        await db.updateItem(id, { status: 'in_progress' })
+      }
     } catch (err) {
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
@@ -271,6 +321,63 @@ export const useAppStore = create<AppState>((set, get) => ({
       prevFocused.forEach((item) => upsertSearchItem(item))
       throw err
     }
+  },
+
+  setFocusedTask: async (id: string) => {
+    return get().setFocusTask(id)
+  },
+
+  setSelectMode: (mode: boolean) => {
+    set({ isSelectMode: mode, selectedTaskIds: mode ? get().selectedTaskIds : [] })
+  },
+
+  toggleSelectTask: (id: string) => {
+    const current = get().selectedTaskIds
+    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
+    set({ selectedTaskIds: next, isSelectMode: next.length > 0 ? true : get().isSelectMode })
+  },
+
+  selectAllTasks: (ids?: string[]) => {
+    if (ids) {
+      set({ selectedTaskIds: ids, isSelectMode: true })
+    } else {
+      const allTaskIds = get().items.filter((i) => i.type === 'task').map((i) => i.id)
+      set({ selectedTaskIds: allTaskIds, isSelectMode: true })
+    }
+  },
+
+  clearSelectedTasks: () => {
+    set({ selectedTaskIds: [], isSelectMode: false })
+  },
+
+  batchCompleteTasks: async () => {
+    const selected = get().selectedTaskIds
+    if (selected.length === 0) return
+    for (const id of selected) {
+      const item = get().items.find((i) => i.id === id)
+      if (item && item.status !== 'completed') {
+        await get().toggleTask(id)
+      }
+    }
+    set({ selectedTaskIds: [], isSelectMode: false })
+  },
+
+  batchDeleteTasks: async () => {
+    const selected = get().selectedTaskIds
+    if (selected.length === 0) return
+    for (const id of selected) {
+      await get().deleteItem(id)
+    }
+    set({ selectedTaskIds: [], isSelectMode: false })
+  },
+
+  batchRescheduleTasks: async (dueDate: string | null) => {
+    const selected = get().selectedTaskIds
+    if (selected.length === 0) return
+    for (const id of selected) {
+      await get().updateItem(id, { dueDate })
+    }
+    set({ selectedTaskIds: [], isSelectMode: false })
   },
 
   setApiKey: (key: string) => {

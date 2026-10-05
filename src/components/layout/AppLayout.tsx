@@ -7,6 +7,10 @@ import { SlideOverDrawer } from './SlideOverDrawer'
 import { CommandPaletteModal } from '../ui/CommandPaletteModal'
 import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
 import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
+import { useQuickCaptureHotkey } from '../../hooks/useQuickCaptureHotkey'
+import { startReminderScheduler } from '../../lib/remindersService'
+import { startDailyDigestScheduler } from '../../lib/dailyDigestScheduler'
+import { useAppStore } from '../../store/useAppStore'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -20,6 +24,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     toggleSidebar,
     setRecordingModalOpen,
   } = useNavigationStore()
+
+  // Hotkey / or C for quick capture (TASK-40)
+  useQuickCaptureHotkey()
+
+  // Schedulers for Reminders (TASK-37) and Daily AI Digest (TASK-39)
+  useEffect(() => {
+    const stopReminders = startReminderScheduler(() => useAppStore.getState().items)
+    const stopDigest = startDailyDigestScheduler(() => useAppStore.getState().items)
+    return () => {
+      stopReminders()
+      stopDigest()
+    }
+  }, [])
 
   // Spacebar hotkey to toggle recording modal (TASK-13)
   useSpaceRecordShortcut({

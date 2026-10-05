@@ -1,78 +1,62 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useMemo } from 'react'
 import { TaskItemData, TaskFilter, ViewMode } from '../../types/item'
 import { useNavigationStore } from '../../store/navigationStore'
 import { useDashboardConfigStore } from '../../store/dashboardConfigStore'
+import { useAppStore } from '../../store/useAppStore'
 import { DashboardHeader } from './components/DashboardHeader'
 import { FocusHeroCard } from './components/FocusHeroCard'
 import { DashboardTaskList } from './components/DashboardTaskList'
-import { QuickInputBar } from './components/QuickInputBar'
 import { ProductivityMetrics } from './components/ProductivityMetrics'
 import { RecentAudioWidget } from './components/RecentAudioWidget'
 import { DailySummaryCard } from './components/DailySummaryCard'
 import { DashboardCustomizerModal } from './DashboardCustomizerModal'
 
-const INITIAL_TASKS: TaskItemData[] = [
-  {
-    id: 't-1',
-    title: 'Подготовить отчет по продуктовым метрикам Q3',
-    category: '#Аналитика',
-    categoryClass: 'text-tertiary',
-    time: '16:00',
-    isCompleted: false,
-    hasAudio: true,
-    audioDuration: '1:15',
-    noteSubtitle: 'Встреча с инвесторами',
-  },
-  {
-    id: 't-2',
-    title: 'Провести ревью архитектуры микросервисов',
-    category: '#Разработка',
-    categoryClass: 'text-primary',
-    time: '18:30',
-    isCompleted: false,
-    isUrgent: true,
-    noteSubtitle: 'PR #142 • Саммари готово',
-  },
-  {
-    id: 't-3',
-    title: 'Записать идеи для дизайн-системы 2026',
-    category: '#Дизайн',
-    categoryClass: 'text-secondary',
-    time: 'Завтра',
-    isCompleted: false,
-    hasAudio: true,
-    audioDuration: '3 заметки',
-  },
-  {
-    id: 't-4',
-    title: 'Согласовать бюджет на AI API',
-    category: '#Финансы',
-    categoryClass: 'text-outline',
-    time: '14:15',
-    isCompleted: true,
-    completedTime: 'Выполнено в 14:15',
-  },
-]
-
 export const DashboardOverview: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskItemData[]>(INITIAL_TASKS)
+  const { items, toggleTask } = useAppStore()
   const [isPlaying, setIsPlaying] = useState(false)
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const { setActiveTab, setRecordingModalOpen } = useNavigationStore()
   const { modules } = useDashboardConfigStore()
 
-  // Toggle task completion
-  const handleToggleTask = useCallback((id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, isCompleted: !t.isCompleted } : t))
-    )
-  }, [])
+  // Convert real store tasks to TaskItemData
+  const tasks: TaskItemData[] = useMemo(() => {
+    return items
+      .filter((i) => i.type === 'task')
+      .map((item) => {
+        let categoryClass = 'text-outline'
+        if (item.categoryTag.includes('Аналитик') || item.categoryTag.includes('Метрик')) {
+          categoryClass = 'text-tertiary'
+        } else if (item.categoryTag.includes('Разработк') || item.categoryTag.includes('Код')) {
+          categoryClass = 'text-primary'
+        } else if (item.categoryTag.includes('Дизайн')) {
+          categoryClass = 'text-secondary'
+        }
 
-  // Quick task submit
-  const handleAddQuickTask = useCallback((newTask: TaskItemData) => {
-    setTasks((prev) => [newTask, ...prev])
-  }, [])
+        return {
+          id: item.id,
+          title: item.title,
+          category: item.categoryTag,
+          categoryClass,
+          time: item.dueTime || item.dueDate || '',
+          dueDate: item.dueDate,
+          dueTime: item.dueTime,
+          isCompleted: item.status === 'completed',
+          hasAudio: Boolean(item.audioUrl || item.audioDuration),
+          audioDuration: item.audioDuration ? `${Math.floor(item.audioDuration / 60)}:${String(item.audioDuration % 60).padStart(2, '0')}` : undefined,
+          isUrgent: item.priority === 'high',
+          noteSubtitle: item.description,
+          completedTime: item.completedAt ? `Выполнено` : undefined,
+          isFocused: Boolean(item.isFocus || item.isFocused),
+          tags: item.tags,
+          estimatedMinutes: item.estimatedMinutes,
+        }
+      })
+  }, [items])
+
+  const handleToggleTask = (id: string) => {
+    toggleTask(id).catch(() => {})
+  }
 
   const completedCount = tasks.filter((t) => t.isCompleted).length
   const totalCount = tasks.length
@@ -98,14 +82,12 @@ export const DashboardOverview: React.FC = () => {
             <FocusHeroCard
               isPlaying={isPlaying}
               onTogglePlay={() => setIsPlaying((prev) => !prev)}
-              title="Добавить новую фичу в VoiceNotes"
-              description="Whisper AI Транскрипция и контекстное связывание голосовых заметок с календарем"
-              onComplete={() => handleToggleTask('t-1')}
+              onComplete={() => {}}
               onSummary={() => setActiveTab('ai-summaries')}
             />
           )}
 
-          {/* Tasks List / Board with Filters */}
+          {/* Tasks List / Board with Filters & Interactive Sorting */}
           {modules.taskList && (
             <DashboardTaskList
               tasks={tasks}
@@ -115,17 +97,11 @@ export const DashboardOverview: React.FC = () => {
               viewMode={viewMode}
             />
           )}
-
-          {/* Quick Input Bar */}
-          <QuickInputBar
-            onAddTask={handleAddQuickTask}
-            onVoiceRecordClick={() => setRecordingModalOpen(true)}
-          />
         </div>
 
         {/* Right Secondary Column */}
         <div className="lg:col-span-5 flex flex-col gap-space-lg">
-          {/* Productivity Stats Bento Cards */}
+          {/* Productivity Stats Bento Cards (Cleaned up, no sprint badge) */}
           {modules.metrics && (
             <ProductivityMetrics
               totalCount={totalCount}

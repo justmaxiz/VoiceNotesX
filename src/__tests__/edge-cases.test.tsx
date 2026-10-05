@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { App } from '../App'
-import { DashboardOverview } from '../components/dashboard/DashboardOverview'
+import { QuickCaptureWidget } from '../components/layout/QuickCaptureWidget'
 import { useNavigationStore } from '../store/navigationStore'
+import { vi } from 'vitest'
 
 describe('Edge Cases and Boundary Values', () => {
   beforeEach(() => {
@@ -36,18 +37,16 @@ describe('Edge Cases and Boundary Values', () => {
   })
 
   it('rejects empty or whitespace-only submissions in quick input', () => {
-    render(<DashboardOverview />)
+    const onSave = vi.fn()
+    render(<QuickCaptureWidget onSave={onSave} />)
     const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
-    const submitBtn = screen.getByText('Добавить')
-
-    const initialTasksCount = screen.getAllByRole('checkbox').length
+    const submitBtn = screen.getByLabelText('Сохранить мысль')
 
     // Submit pure spaces
     fireEvent.change(input, { target: { value: '    ' } })
     fireEvent.click(submitBtn)
 
-    const afterCount = screen.getAllByRole('checkbox').length
-    expect(afterCount).toBe(initialTasksCount)
+    expect(onSave).not.toHaveBeenCalled()
   })
 
   it('does not trigger spacebar recording shortcut while typing space inside an input', () => {

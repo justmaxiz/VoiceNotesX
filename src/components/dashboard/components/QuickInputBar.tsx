@@ -6,6 +6,9 @@ export interface QuickInputBarProps {
   onVoiceRecordClick?: () => void
 }
 
+/**
+ * @deprecated Replaced by global unified QuickCaptureWidget (TASK-40).
+ */
 export const QuickInputBar: React.FC<QuickInputBarProps> = ({
   onAddTask,
   onVoiceRecordClick,

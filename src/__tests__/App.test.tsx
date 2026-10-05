@@ -30,7 +30,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
 
     expect(screen.getByText('Канбан-доска задач')).toBeInTheDocument()
     expect(screen.getByText('К выполнению')).toBeInTheDocument()
-    expect(screen.getByText('В процессе')).toBeInTheDocument()
+    expect(screen.getAllByText('В процессе').length).toBeGreaterThanOrEqual(1)
   })
 
   it('switches to Calendar view when clicked in sidebar', () => {

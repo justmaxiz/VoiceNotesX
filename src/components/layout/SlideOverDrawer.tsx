@@ -4,10 +4,23 @@ import { useAppStore } from '../../store/useAppStore'
 import { MiniAudioPlayer } from '../audio/MiniAudioPlayer'
 import { exportNoteAsMarkdown } from '../../lib/export'
 import { ChecklistItem } from '../../types/item'
+import { DateTimePicker } from '../ui/DateTimePicker'
+import { TagInput } from '../ui/TagInput'
+import { Checkbox } from '../ui/Checkbox'
+import { requestNotificationPermission } from '../../lib/remindersService'
+
+const REMINDER_OPTIONS = [
+  { label: 'Без напоминания', value: null },
+  { label: 'В момент начала', value: 0 },
+  { label: 'За 5 минут до начала', value: 5 },
+  { label: 'За 10 минут до начала', value: 10 },
+  { label: 'За 15 минут до начала', value: 15 },
+  { label: 'За 1 час до начала', value: 60 },
+]
 
 export const SlideOverDrawer: React.FC = () => {
   const { selectedItemId, isDrawerOpen, closeDrawer } = useDrawerStore()
-  const { items, updateItem } = useAppStore()
+  const { items, updateItem, setFocusedTask } = useAppStore()
 
   const currentItem = items.find((i) => i.id === selectedItemId)
 
@@ -40,6 +53,8 @@ export const SlideOverDrawer: React.FC = () => {
   }, [isDrawerOpen, closeDrawer])
 
   if (!isDrawerOpen || !currentItem) return null
+
+  const isFocused = Boolean(currentItem.isFocus || currentItem.isFocused)
 
   const handleTitleBlur = () => {
     if (title.trim() && title !== currentItem.title) {
@@ -83,9 +98,31 @@ export const SlideOverDrawer: React.FC = () => {
     updateItem(currentItem.id, { checklist: updated })
   }
 
+  const handleToggleFocus = () => {
+    if (isFocused) {
+      updateItem(currentItem.id, { isFocus: false, isFocused: false })
+    } else {
+      setFocusedTask(currentItem.id)
+    }
+  }
+
+  const handleReminderChange = (value: number | null) => {
+    if (value !== null) {
+      requestNotificationPermission()
+    }
+    updateItem(currentItem.id, { reminderMinutesBefore: value })
+  }
+
   const handleExport = () => {
     exportNoteAsMarkdown(currentItem)
   }
+
+  const tagsList =
+    currentItem.tags && currentItem.tags.length > 0
+      ? currentItem.tags
+      : currentItem.categoryTag
+      ? [currentItem.categoryTag]
+      : []
 
   return (
     <div
@@ -103,7 +140,7 @@ export const SlideOverDrawer: React.FC = () => {
       {/* Slide-over panel */}
       <div
         ref={drawerRef}
-        className="fixed inset-y-0 right-0 w-full sm:w-[520px] max-w-full bg-surface-container border-l border-outline-variant/30 shadow-2xl flex flex-col z-10 transition-transform duration-250 ease-out"
+        className="fixed inset-y-0 right-0 w-full sm:w-[560px] max-w-full bg-surface-container border-l border-outline-variant/30 shadow-2xl flex flex-col z-10 transition-transform duration-250 ease-out"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20 bg-surface-container-high/40">
@@ -117,9 +154,23 @@ export const SlideOverDrawer: React.FC = () => {
             >
               {currentItem.type === 'task' ? 'Задача' : 'Заметка'}
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-label-sm">
-              {currentItem.categoryTag}
-            </span>
+
+            {/* Focus Toggle */}
+            {currentItem.type === 'task' && (
+              <button
+                type="button"
+                onClick={handleToggleFocus}
+                className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                  isFocused
+                    ? 'bg-primary text-on-primary shadow-xs glow-violet'
+                    : 'bg-surface-container-highest text-outline hover:text-primary hover:bg-surface-container'
+                }`}
+              >
+                <span>🎯</span>
+                <span>{isFocused ? 'В фокусе дня' : 'Сделать главной'}</span>
+              </button>
+            )}
+
             {currentItem.audioUrl && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container text-xs text-outline">
                 <MiniAudioPlayer audioUrl={currentItem.audioUrl} />
@@ -153,7 +204,7 @@ export const SlideOverDrawer: React.FC = () => {
         </div>
 
         {/* Content body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Editable Title */}
           <div>
             <label className="text-label-sm text-outline uppercase tracking-wider block mb-1">
@@ -169,13 +220,66 @@ export const SlideOverDrawer: React.FC = () => {
             />
           </div>
 
+          {/* Date & Time Picker */}
+          {currentItem.type === 'task' && (
+            <DateTimePicker
+              dueDate={currentItem.dueDate}
+              dueTime={currentItem.dueTime}
+              isAllDay={currentItem.isAllDay}
+              estimatedMinutes={currentItem.estimatedMinutes}
+              onChange={(updates) => updateItem(currentItem.id, updates)}
+            />
+          )}
+
+          {/* Interactive Tag Manager */}
+          <TagInput
+            tags={tagsList}
+            onChange={(newTags) =>
+              updateItem(currentItem.id, {
+                tags: newTags,
+                categoryTag: newTags[0] || currentItem.categoryTag,
+              })
+            }
+          />
+
+          {/* Reminders Selector */}
+          {currentItem.type === 'task' && (
+            <div className="space-y-1.5">
+              <label className="text-label-sm text-outline uppercase tracking-wider font-medium flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">notifications</span>
+                <span>Напоминание</span>
+              </label>
+              <select
+                value={
+                  currentItem.reminderMinutesBefore === null ||
+                  currentItem.reminderMinutesBefore === undefined
+                    ? ''
+                    : String(currentItem.reminderMinutesBefore)
+                }
+                onChange={(e) =>
+                  handleReminderChange(e.target.value === '' ? null : Number(e.target.value))
+                }
+                className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface focus:border-primary focus:outline-none cursor-pointer"
+              >
+                {REMINDER_OPTIONS.map((opt) => (
+                  <option
+                    key={String(opt.value)}
+                    value={opt.value === null ? '' : String(opt.value)}
+                  >
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Description / Content Body */}
           <div>
             <label className="text-label-sm text-outline uppercase tracking-wider block mb-1">
-              Содержимое
+              Содержимое и описание
             </label>
             <textarea
-              rows={8}
+              rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={handleDescriptionBlur}
@@ -212,23 +316,26 @@ export const SlideOverDrawer: React.FC = () => {
                   key={item.id}
                   className="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface-container-low/60 hover:bg-surface-container-low group"
                 >
-                  <label className="flex items-center gap-2.5 flex-1 cursor-pointer min-w-0">
-                    <input
-                      type="checkbox"
+                  <div
+                    className="flex items-center gap-2.5 flex-1 cursor-pointer min-w-0"
+                    onClick={() => handleToggleChecklist(item.id)}
+                  >
+                    <Checkbox
                       checked={item.isCompleted}
                       onChange={() => handleToggleChecklist(item.id)}
-                      className="w-4 h-4 rounded border-outline bg-surface-container text-secondary focus:ring-0 cursor-pointer accent-secondary shrink-0"
+                      size="sm"
+                      ariaLabel={`Пункт: ${item.text}`}
                     />
                     <span
-                      className={`text-body-sm truncate transition-all ${
+                      className={`text-body-sm truncate transition-all strike-linear ${
                         item.isCompleted
-                          ? 'line-through text-outline opacity-60'
+                          ? 'strike-active text-outline opacity-60'
                           : 'text-on-surface'
                       }`}
                     >
                       {item.text}
                     </span>
-                  </label>
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveChecklist(item.id)}

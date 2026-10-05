@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { useNavigationStore } from '../../store/navigationStore'
+import { useSettingsStore } from '../../store/useSettingsStore'
+import { resolveEffectiveTheme } from '../../lib/theme'
 
 export const Header: React.FC = () => {
   const {
@@ -11,6 +13,13 @@ export const Header: React.FC = () => {
     setMobileMenuOpen,
     setActiveTab,
   } = useNavigationStore()
+  const { theme, updateSettings } = useSettingsStore()
+  const isDark = resolveEffectiveTheme(theme) === 'dark'
+
+  const toggleTheme = () => {
+    updateSettings({ theme: isDark ? 'light' : 'dark' })
+  }
+
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const [isMobile, setIsMobile] = useState(() =>
@@ -131,6 +140,20 @@ export const Header: React.FC = () => {
         >
           <span className="material-symbols-outlined text-body-lg">notifications</span>
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface" />
+        </button>
+
+        {/* Quick Theme Toggle Button */}
+        <button
+          type="button"
+          data-testid="header-theme-toggle"
+          aria-label={isDark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
+          title={isDark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-body-lg">
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
         </button>
 
         {/* User Profile Avatar */}

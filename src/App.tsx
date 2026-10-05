@@ -15,8 +15,10 @@ import { TasksPage } from './components/tasks/TasksPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { AiSummariesPage } from './components/summaries/AiSummariesPage'
 import { SettingsPage } from './components/settings/SettingsPage'
+import { useThemeSync } from './hooks/useThemeSync'
 
 export const App: React.FC = () => {
+  useThemeSync()
   const { activeTab } = useNavigationStore()
 
   useEffect(() => {

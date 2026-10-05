@@ -169,17 +169,17 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
         </div>
 
         {/* Right Controls: Multiselect & TaskSortMenu */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setSelectMode(!isSelectMode)}
-            className={`px-2.5 py-1 rounded-lg font-label-sm text-label-sm transition-colors cursor-pointer flex items-center gap-1 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
               isSelectMode
                 ? 'bg-primary/20 text-primary border border-primary/40'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                : 'text-outline hover:text-on-surface hover:bg-surface-container-low border border-transparent'
             }`}
           >
-            <span className="material-symbols-outlined text-sm">
+            <span className="material-symbols-outlined text-[16px]">
               {isSelectMode ? 'close' : 'checklist'}
             </span>
             <span>{isSelectMode ? 'Отмена' : 'Выбрать'}</span>

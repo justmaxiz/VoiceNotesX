@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Header } from '../Header'
 import { useNavigationStore } from '../../../store/navigationStore'
+import { useSettingsStore } from '../../../store/useSettingsStore'
 
 describe('Header Component', () => {
   beforeEach(() => {
@@ -25,7 +26,21 @@ describe('Header Component', () => {
     expect(screen.getByTestId('header-date-badge')).toBeInTheDocument()
     expect(screen.getByText('Сегодня, 24 Окт')).toBeInTheDocument()
     expect(screen.getByLabelText('Уведомления')).toBeInTheDocument()
+    expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument()
     expect(screen.getByTestId('header-user-avatar')).toBeInTheDocument()
+  })
+
+  it('toggles theme when clicking theme toggle button', () => {
+    useSettingsStore.setState({ theme: 'dark' })
+    render(<Header />)
+    const themeBtn = screen.getByTestId('header-theme-toggle')
+    expect(themeBtn).toBeInTheDocument()
+    
+    fireEvent.click(themeBtn)
+    expect(useSettingsStore.getState().theme).toBe('light')
+
+    fireEvent.click(themeBtn)
+    expect(useSettingsStore.getState().theme).toBe('dark')
   })
 
   it('clicking sidebar toggle button updates store state', () => {

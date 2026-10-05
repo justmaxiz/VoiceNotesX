@@ -26,19 +26,28 @@ export const ProductivityMetrics: React.FC<ProductivityMetricsProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-space-md">
-        {/* Progress Card */}
-        <div
-          data-testid="metrics-completed-card"
-          className={`p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md border transition-all ${
-            isAllDone
-              ? 'border-secondary/60 shadow-[0_0_20px_rgba(78,222,163,0.3)] ring-1 ring-secondary/50'
-              : 'border-surface-container-high/30'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-medium">
-              Выполнено
+      {/* Progress Card */}
+      <div
+        data-testid="metrics-completed-card"
+        className={`p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md border transition-all ${
+          isAllDone
+            ? 'border-secondary/60 shadow-[0_0_20px_rgba(78,222,163,0.3)] ring-1 ring-secondary/50'
+            : 'border-surface-container-high/30'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-medium">
+            Выполнено
+          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`font-label-sm text-label-sm px-2 py-0.5 rounded-full ${
+                isAllDone
+                  ? 'bg-secondary/15 text-secondary font-medium'
+                  : 'bg-surface-container-high text-on-surface-variant'
+              }`}
+            >
+              {dayStatusText}
             </span>
             <span
               className={`material-symbols-outlined text-body-lg transition-transform ${
@@ -48,77 +57,39 @@ export const ProductivityMetrics: React.FC<ProductivityMetricsProps> = ({
               check_circle
             </span>
           </div>
+        </div>
 
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-headline-lg text-headline-lg text-on-surface font-semibold">
-                {completedCount}
-              </span>
-              <span className="font-body-md text-body-md text-outline">
-                из {totalCount} задач
-              </span>
-            </div>
-
-            {/* Segment Progress Bar */}
-            <div className="mt-space-sm">
-              <SegmentProgress total={totalCount} completed={completedCount} maxSegments={10} />
-            </div>
+        <div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-headline-lg text-headline-lg text-on-surface font-semibold">
+              {completedCount}
+            </span>
+            <span className="font-body-md text-body-md text-outline">
+              из {totalCount} задач
+            </span>
           </div>
 
-          <div className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-            {isAllDone ? (
-              <span className="text-secondary font-medium">Все задачи закрыты! 🎉</span>
-            ) : (
-              <span>
-                {totalCount > 0
-                  ? `${Math.round((completedCount / totalCount) * 100)}% плана выполнено`
-                  : 'Нет запланированных задач'}
-              </span>
-            )}
+          {/* Segment Progress Bar */}
+          <div className="mt-space-sm">
+            <SegmentProgress total={totalCount} completed={completedCount} maxSegments={10} />
           </div>
         </div>
 
-        {/* Planned Tasks Card */}
-        <div
-          data-testid="metrics-planned-card"
-          className={`p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md border transition-all ${
-            isAllDone ? 'border-secondary/40' : 'border-surface-container-high/30'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-medium">
-              В плане
+        <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-1 border-t border-outline-variant/15">
+          {isAllDone ? (
+            <span className="text-secondary font-medium">Все задачи закрыты! 🎉</span>
+          ) : (
+            <span>
+              {totalCount > 0
+                ? `${Math.round((completedCount / totalCount) * 100)}% плана выполнено`
+                : '0% плана'}
             </span>
-            <span className="material-symbols-outlined text-primary text-body-lg">
-              assignment
-            </span>
-          </div>
-
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-headline-lg text-headline-lg text-on-surface font-semibold">
-                {plannedCount}
-              </span>
-              <span className="font-body-md text-body-md text-outline">
-                {plannedCount === 1 ? 'задача' : plannedCount < 5 ? 'задачи' : 'задач'}
-              </span>
-            </div>
-
-            <p className="font-label-sm text-label-sm text-outline mt-1 leading-snug">
+          )}
+          {!isAllDone && (
+            <span className="text-outline">
               {remainingText}
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between font-label-sm text-label-sm text-outline pt-1 border-t border-outline-variant/15">
-            <span>Статус дня:</span>
-            <span
-              className={`font-medium ${
-                isAllDone ? 'text-secondary font-semibold' : 'text-on-surface'
-              }`}
-            >
-              {dayStatusText}
             </span>
-          </div>
+          )}
         </div>
       </div>
 

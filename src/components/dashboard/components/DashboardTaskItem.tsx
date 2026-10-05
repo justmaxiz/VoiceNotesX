@@ -108,7 +108,7 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
 
             {task.hasAudio && (
               <span className="flex items-center gap-1 text-secondary px-space-xs py-0.5 rounded bg-surface-container">
-                <span className="material-symbols-outlined text-label-sm">mic</span>
+                <span className="material-symbols-outlined text-[13px]">mic</span>
                 {task.audioDuration}
               </span>
             )}
@@ -119,7 +119,7 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
 
             {task.completedTime && (
               <span className="text-secondary font-label-sm text-label-sm flex items-center gap-0.5">
-                <span className="material-symbols-outlined text-label-sm">
+                <span className="material-symbols-outlined text-[13px]">
                   check_circle
                 </span>
                 {task.completedTime}
@@ -128,7 +128,7 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
 
             {isOverdue && (
               <span className="px-2 py-0.5 rounded-full bg-error-container/30 text-error text-[11px] font-semibold flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">warning</span>
+                <span className="material-symbols-outlined text-[13px]">warning</span>
                 Просрочено
               </span>
             )}

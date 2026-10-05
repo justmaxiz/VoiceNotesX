@@ -61,8 +61,8 @@ export const TaskSortMenu: React.FC<TaskSortMenuProps> = ({
   }
 
   return (
-    <div className="relative inline-flex items-center gap-1.5 font-label-sm text-label-sm" ref={menuRef}>
-      <span className="text-outline">Сортировка:</span>
+    <div className="relative inline-flex items-center gap-2 text-xs" ref={menuRef}>
+      <span className="text-outline text-xs select-none">Сортировка:</span>
 
       <div className="inline-flex items-center rounded-lg bg-surface-container-low border border-outline-variant/30 hover:border-primary/40 transition-colors">
         <button
@@ -70,10 +70,10 @@ export const TaskSortMenu: React.FC<TaskSortMenuProps> = ({
           onClick={() => setIsOpen((prev) => !prev)}
           aria-expanded={isOpen}
           aria-label={`Сортировка: ${currentOption.label}`}
-          className="flex items-center gap-1 px-2 py-1 text-on-surface hover:text-primary transition-colors cursor-pointer select-none font-medium"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-on-surface hover:text-primary transition-colors cursor-pointer select-none font-medium"
         >
           <span>{currentOption.label}</span>
-          <span className="material-symbols-outlined text-xs transition-transform duration-150">
+          <span className="material-symbols-outlined text-[15px] text-outline transition-transform duration-150">
             {isOpen ? 'expand_less' : 'expand_more'}
           </span>
         </button>
@@ -83,9 +83,9 @@ export const TaskSortMenu: React.FC<TaskSortMenuProps> = ({
           onClick={handleToggleDirection}
           title={`Направление: ${directionDesc}`}
           aria-label={`Сменить направление: ${directionDesc}`}
-          className="p-1 pr-1.5 text-outline hover:text-primary transition-colors cursor-pointer border-l border-outline-variant/20 flex items-center justify-center"
+          className="p-1.5 px-2 text-outline hover:text-primary transition-colors cursor-pointer border-l border-outline-variant/20 flex items-center justify-center self-stretch"
         >
-          <span className="material-symbols-outlined text-sm">
+          <span className="material-symbols-outlined text-[15px]">
             {sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
           </span>
         </button>
@@ -117,13 +117,13 @@ export const TaskSortMenu: React.FC<TaskSortMenuProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-outline">
+                  <span className="material-symbols-outlined text-[16px] text-outline">
                     {opt.icon}
                   </span>
                   <span>{opt.label}</span>
                 </div>
                 {isActive && (
-                  <span className="material-symbols-outlined text-sm text-primary">
+                  <span className="material-symbols-outlined text-[16px] text-primary">
                     check
                   </span>
                 )}

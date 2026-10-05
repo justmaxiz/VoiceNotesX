@@ -1,15 +1,36 @@
 <!doctype html>
-<html lang="ru" class="dark">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('voicenotes_user_settings');
+          var theme = 'dark';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.theme) theme = parsed.theme;
+          }
+          var effective = theme;
+          if (theme === 'system') {
+            effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.classList.add(effective);
+          document.documentElement.style.colorScheme = effective;
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VoiceNotes AI — Intelligent Voice &amp; Task Workspace</title>
-    <!-- Google Fonts: Inter, JetBrains Mono & Material Symbols -->
+    <!-- Google Fonts: Golos Text, JetBrains Mono & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
     <link

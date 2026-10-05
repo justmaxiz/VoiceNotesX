@@ -106,14 +106,15 @@ export const SettingsPage: React.FC = () => {
               <label className="text-label-sm text-outline block mb-1.5 uppercase tracking-wider">
                 Тема оформления
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
+                  data-testid="theme-btn-dark"
                   onClick={() => {
                     updateSettings({ theme: 'dark' })
                     showSavedIndicator()
                   }}
-                  className={`p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  className={`p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     theme === 'dark'
                       ? 'bg-surface-container-high text-on-surface border-primary ring-1 ring-primary/40'
                       : 'bg-surface-container text-outline border-outline-variant/20 hover:text-on-surface'
@@ -124,11 +125,28 @@ export const SettingsPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
+                  data-testid="theme-btn-light"
+                  onClick={() => {
+                    updateSettings({ theme: 'light' })
+                    showSavedIndicator()
+                  }}
+                  className={`p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    theme === 'light'
+                      ? 'bg-surface-container-high text-on-surface border-primary ring-1 ring-primary/40'
+                      : 'bg-surface-container text-outline border-outline-variant/20 hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-base">light_mode</span>
+                  <span>Светлая</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="theme-btn-system"
                   onClick={() => {
                     updateSettings({ theme: 'system' })
                     showSavedIndicator()
                   }}
-                  className={`p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  className={`p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     theme === 'system'
                       ? 'bg-surface-container-high text-on-surface border-primary ring-1 ring-primary/40'
                       : 'bg-surface-container text-outline border-outline-variant/20 hover:text-on-surface'

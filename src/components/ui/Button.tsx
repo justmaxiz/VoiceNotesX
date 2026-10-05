@@ -43,6 +43,12 @@ export const Button: React.FC<ButtonProps> = ({
       'p-2 rounded-xl bg-surface-container hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface',
   }
 
+  const iconSizeClasses = {
+    sm: 'text-[15px]',
+    md: 'text-[18px]',
+    lg: 'text-[20px]',
+  }
+
   return (
     <button
       type={type}
@@ -51,7 +57,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {icon && (
-        <span className="material-symbols-outlined text-body-md select-none">{icon}</span>
+        <span className={`material-symbols-outlined ${variant === 'icon' ? 'text-[20px]' : iconSizeClasses[size]} select-none`}>{icon}</span>
       )}
       {children}
     </button>

@@ -28,4 +28,10 @@ describe('ProductivityMetrics - Metrics & Terminology Cleanup (TASK-35)', () => 
     expect(screen.getByText('Нет задач на сегодня')).toBeInTheDocument()
     expect(screen.queryByTestId('metrics-all-done-banner')).toBeNull()
   })
+
+  it('does NOT render the "В плане" card', () => {
+    render(<ProductivityMetrics totalCount={5} completedCount={2} plannedCount={3} />)
+    expect(screen.queryByTestId('metrics-planned-card')).toBeNull()
+    expect(screen.queryByText(/^в плане$/i)).toBeNull()
+  })
 })

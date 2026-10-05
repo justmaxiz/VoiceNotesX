@@ -12,10 +12,10 @@ const MODULE_LABELS: Record<keyof DashboardModules, { title: string; desc: strin
   },
   metrics: {
     title: 'Метрики продуктивности',
-    desc: 'Bento-карточки «Выполнено» и «В плане»',
+    desc: 'Карточка продуктивности «Выполнено»',
   },
   dailySummary: {
-    title: 'AI Сводка дня',
+    title: 'Сводка дня',
     desc: 'Аналитический дайджест ключевых тем и паттернов',
   },
   recentAudio: {

@@ -18,7 +18,7 @@ describe('DashboardOverview Component', () => {
     expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
     expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
     expect(screen.getByText('Недавние аудиозаписи')).toBeInTheDocument()
-    expect(screen.getByText('AI Сводка дня')).toBeInTheDocument()
+    expect(screen.getByText('Сводка дня')).toBeInTheDocument()
   })
 
   it('toggles audio play button icon state', () => {

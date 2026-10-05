@@ -31,6 +31,11 @@ export const Badge: React.FC<BadgeProps> = ({
     outline: 'border border-outline-variant text-outline bg-transparent',
   }
 
+  const iconSizeClasses = {
+    sm: 'text-[12px]',
+    md: 'text-[14px]',
+  }
+
   return (
     <span
       className={`inline-flex items-center gap-1 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
@@ -39,7 +44,7 @@ export const Badge: React.FC<BadgeProps> = ({
         <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
       )}
       {icon && (
-        <span className="material-symbols-outlined text-label-sm shrink-0">{icon}</span>
+        <span className={`material-symbols-outlined ${iconSizeClasses[size]} shrink-0`}>{icon}</span>
       )}
       <span>{children}</span>
     </span>

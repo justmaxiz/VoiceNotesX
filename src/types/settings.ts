@@ -13,7 +13,7 @@ export interface UserSettings {
   subscriptionStatus: 'pro' | 'free' | 'active'
   aiMode: 'fast' | 'deep'
   structuringStyle: 'concise' | 'detailed' | 'action_plan'
-  theme: 'dark' | 'system'
+  theme: 'dark' | 'light' | 'system'
   fontScale: 'standard' | 'compact'
   language: 'ru-RU' | 'en-US' | 'auto'
   devices: DeviceItem[]

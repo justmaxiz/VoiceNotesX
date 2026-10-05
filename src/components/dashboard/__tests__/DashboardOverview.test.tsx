@@ -2,8 +2,13 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { DashboardOverview } from '../DashboardOverview'
 
+import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
+
 describe('DashboardOverview Component', () => {
   it('renders greetings, metrics, and hero focus task', () => {
+    useDashboardConfigStore.setState({
+      modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true },
+    })
     render(<DashboardOverview />)
     expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
     expect(screen.getByText('Добавить новую фичу в VoiceNotes')).toBeInTheDocument()

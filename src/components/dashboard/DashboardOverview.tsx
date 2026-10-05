@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { TaskItemData, TaskFilter, ViewMode } from '../../types/item'
 import { useNavigationStore } from '../../store/navigationStore'
+import { useDashboardConfigStore } from '../../store/dashboardConfigStore'
 import { DashboardHeader } from './components/DashboardHeader'
 import { FocusHeroCard } from './components/FocusHeroCard'
 import { DashboardTaskList } from './components/DashboardTaskList'
@@ -8,7 +9,7 @@ import { QuickInputBar } from './components/QuickInputBar'
 import { ProductivityMetrics } from './components/ProductivityMetrics'
 import { RecentAudioWidget } from './components/RecentAudioWidget'
 import { DailySummaryCard } from './components/DailySummaryCard'
-import { WorkspaceSyncCard } from './components/WorkspaceSyncCard'
+import { DashboardCustomizerModal } from './DashboardCustomizerModal'
 
 const INITIAL_TASKS: TaskItemData[] = [
   {
@@ -61,6 +62,7 @@ export const DashboardOverview: React.FC = () => {
   const [isRecordingHeld, setIsRecordingHeld] = useState(false)
 
   const { activeTab, setActiveTab, setRecordingModalOpen } = useNavigationStore()
+  const { modules } = useDashboardConfigStore()
 
   // Toggle task completion
   const handleToggleTask = useCallback((id: string) => {
@@ -126,7 +128,7 @@ export const DashboardOverview: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full">
-      {/* Header with Greetings and Quick Actions */}
+      {/* Header with Greetings and Actions */}
       <DashboardHeader
         userName="Александр"
         viewMode={viewMode}
@@ -140,22 +142,28 @@ export const DashboardOverview: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
         {/* Left Main Column */}
         <div className="lg:col-span-7 flex flex-col gap-space-lg">
-          {/* Hero Priority Focus Task & Audio */}
-          <FocusHeroCard
-            isPlaying={isPlaying}
-            onTogglePlay={() => setIsPlaying((prev) => !prev)}
-            onComplete={() => handleToggleTask('t-1')}
-            onSummary={() => setActiveTab('ai-summaries')}
-          />
+          {/* Hero Priority Focus Task */}
+          {modules.focusTask && (
+            <FocusHeroCard
+              isPlaying={isPlaying}
+              onTogglePlay={() => setIsPlaying((prev) => !prev)}
+              title="Добавить новую фичу в VoiceNotes"
+              description="Whisper AI Транскрипция и контекстное связывание голосовых заметок с календарем"
+              onComplete={() => handleToggleTask('t-1')}
+              onSummary={() => setActiveTab('ai-summaries')}
+            />
+          )}
 
           {/* Tasks List / Board with Filters */}
-          <DashboardTaskList
-            tasks={tasks}
-            filter={filter}
-            onFilterChange={setFilter}
-            onToggleTask={handleToggleTask}
-            viewMode={viewMode}
-          />
+          {modules.taskList && (
+            <DashboardTaskList
+              tasks={tasks}
+              filter={filter}
+              onFilterChange={setFilter}
+              onToggleTask={handleToggleTask}
+              viewMode={viewMode}
+            />
+          )}
 
           {/* Quick Input Bar */}
           <QuickInputBar
@@ -167,26 +175,32 @@ export const DashboardOverview: React.FC = () => {
         {/* Right Secondary Column */}
         <div className="lg:col-span-5 flex flex-col gap-space-lg">
           {/* Productivity Stats Bento Cards */}
-          <ProductivityMetrics
-            totalCount={totalCount}
-            completedCount={completedCount}
-            plannedCount={plannedCount}
-          />
+          {modules.metrics && (
+            <ProductivityMetrics
+              totalCount={totalCount}
+              completedCount={completedCount}
+              plannedCount={plannedCount}
+            />
+          )}
 
-          {/* Recent Audio Memos Widget */}
-          <RecentAudioWidget
-            onViewAll={() => setActiveTab('notes')}
-          />
+          {/* Recent Audio Memos Widget (modular, shown when enabled) */}
+          {modules.recentAudio && (
+            <RecentAudioWidget
+              onViewAll={() => setActiveTab('notes')}
+            />
+          )}
 
           {/* AI Daily Insights Card */}
-          <DailySummaryCard
-            onGenerateReport={() => setActiveTab('ai-summaries')}
-          />
-
-          {/* Context Devices Workspace Module */}
-          <WorkspaceSyncCard />
+          {modules.dailySummary && (
+            <DailySummaryCard
+              onGenerateReport={() => setActiveTab('ai-summaries')}
+            />
+          )}
         </div>
       </div>
+
+      {/* Modular Dashboard Customizer Modal */}
+      <DashboardCustomizerModal />
     </div>
   )
 }

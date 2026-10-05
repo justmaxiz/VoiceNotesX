@@ -13,6 +13,7 @@ export interface DashboardTaskListProps {
   onFilterChange: (filter: TaskFilter) => void
   onToggleTask: (id: string) => void
   viewMode?: ViewMode
+  onViewModeChange?: (mode: ViewMode) => void
 }
 
 export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
@@ -21,6 +22,7 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
   onFilterChange,
   onToggleTask,
   viewMode = 'list',
+  onViewModeChange,
 }) => {
   const {
     sortBy,
@@ -175,6 +177,38 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
 
         {/* Right Controls: Multiselect & TaskSortMenu */}
         <div className="flex items-center gap-2.5">
+          {/* View switcher */}
+          {onViewModeChange && (
+            <div className="flex items-center p-0.5 rounded-xl bg-surface-container-low shadow-sm border border-outline-variant/20 hidden sm:flex">
+              <button
+                type="button"
+                onClick={() => onViewModeChange('list')}
+                aria-label="Переключить на вид список"
+                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
+                    : 'text-outline hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">view_agenda</span>
+                <span>Список</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange('board')}
+                aria-label="Переключить на вид доска"
+                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'board'
+                    ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
+                    : 'text-outline hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">dashboard</span>
+                <span>Доска</span>
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setSelectMode(!isSelectMode)}

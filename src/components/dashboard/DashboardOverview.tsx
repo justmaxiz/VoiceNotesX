@@ -67,8 +67,6 @@ export const DashboardOverview: React.FC = () => {
       {/* Header with Greetings and Actions */}
       <DashboardHeader
         userName="Алексей"
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onStartRecording={() => setRecordingModalOpen(true)}
         onNewNote={() => setActiveTab('notes')}
       />
@@ -95,6 +93,7 @@ export const DashboardOverview: React.FC = () => {
               onFilterChange={setFilter}
               onToggleTask={handleToggleTask}
               viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
           )}
         </div>

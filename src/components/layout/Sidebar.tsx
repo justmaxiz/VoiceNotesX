@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
                   <span className="material-symbols-outlined text-body-md">hub</span>
                 </div>
                 <div className="flex flex-col overflow-hidden">
-                  <span className="font-label-md text-label-md text-on-surface font-medium truncate">
+                  <span className="font-label-lg text-label-lg text-on-surface font-semibold truncate">
                     Личное пространство
                   </span>
                   <span className="font-body-sm text-body-sm text-outline truncate">
@@ -135,7 +135,7 @@ export const Sidebar: React.FC = () => {
                   data-testid={`nav-item-${item.id}`}
                   onClick={() => setActiveTab(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`w-full flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-space-md py-3.5 rounded-xl font-label-lg text-label-lg transition-all cursor-pointer ${
                     isActive
                       ? 'bg-primary-container text-on-primary-container font-semibold shadow-sm'
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
@@ -143,7 +143,7 @@ export const Sidebar: React.FC = () => {
                 >
                   <div className="flex items-center gap-space-sm">
                     <span
-                      className={`material-symbols-outlined text-body-lg ${
+                      className={`material-symbols-outlined text-[22px] ${
                         isActive ? 'text-on-primary-container' : 'text-outline'
                       }`}
                     >
@@ -217,7 +217,7 @@ export const Sidebar: React.FC = () => {
                 АО
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-label-md text-label-md text-on-surface truncate">
+                <span className="font-label-lg text-label-lg font-semibold text-on-surface truncate">
                   Алексей Орлов
                 </span>
                 <span className="font-body-sm text-body-sm text-outline truncate">

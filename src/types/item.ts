@@ -31,6 +31,8 @@ export interface AudioSession {
   recordedAt: string;
   transcriptSnippet: string;
   tags: string[];
+  audioUrl?: string;
+  waveform?: number[];
 }
 
 export type TaskFilter = 'all' | 'urgent' | 'voice' | 'summaries';

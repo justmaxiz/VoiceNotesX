@@ -50,18 +50,26 @@ export const CalendarPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1.5 mt-1">
-              {item.events.map((ev, i) => (
-                <div
-                  key={i}
-                  className={`p-2 rounded-xl text-xs font-body-sm leading-tight ${
-                    item.current
-                      ? 'bg-primary/20 text-on-primary-container border border-primary/30'
-                      : 'bg-surface-container text-on-surface-variant'
-                  }`}
-                >
-                  {ev}
-                </div>
-              ))}
+              {item.events.map((ev, i) => {
+                // Determine category accent border for WCAG AAA compliance (clean left border, text-on-surface)
+                let borderCategoryClass = 'border-l-primary'
+                if (ev.includes('Релиз') || ev.includes('Личные')) {
+                  borderCategoryClass = 'border-l-secondary' // Cyber Emerald
+                } else if (ev.includes('Ревью') || ev.includes('Интервью')) {
+                  borderCategoryClass = 'border-l-amber-400' // Amber
+                } else if (ev.includes('Отчет') || ev.includes('Синхронизация')) {
+                  borderCategoryClass = 'border-l-cyan-400' // Cyan
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className={`p-2 rounded-lg text-xs font-body-sm leading-tight border-l-[3px] ${borderCategoryClass} bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors`}
+                  >
+                    {ev}
+                  </div>
+                )
+              })}
             </div>
           </div>
         ))}

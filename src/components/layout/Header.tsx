@@ -1,17 +1,31 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useNavigationStore } from '../../store/navigationStore'
 
 export const Header: React.FC = () => {
   const {
     searchQuery,
     setSearchQuery,
-    setRecordingModalOpen,
     isSidebarCollapsed,
     toggleSidebar,
+    isMobileMenuOpen,
+    setMobileMenuOpen,
+    setActiveTab,
   } = useNavigationStore()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Hotkey listener for ⌘K / Ctrl+K search focus and Ctrl+B / ⌘B sidebar toggle
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Hotkey listener for ⌘K / Ctrl+K search focus
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -26,6 +40,22 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  const handleToggle = () => {
+    if (isMobile) {
+      setMobileMenuOpen(!isMobileMenuOpen)
+    } else {
+      toggleSidebar()
+    }
+  }
+
+  const toggleLabel = isMobile
+    ? isMobileMenuOpen
+      ? 'Закрыть меню'
+      : 'Открыть меню'
+    : isSidebarCollapsed
+      ? 'Показать боковую панель'
+      : 'Скрыть боковую панель'
+
   // Format today's date in Russian (e.g., "Сегодня, 24 Окт")
   const todayLabel = 'Сегодня, 24 Окт'
 
@@ -39,15 +69,18 @@ export const Header: React.FC = () => {
     >
       {/* Left: Sidebar Toggle + Global Search Input */}
       <div className="flex items-center gap-space-sm md:gap-space-md">
+        {/* Sidebar Toggle: visible when sidebar is collapsed or on mobile (<md) */}
         <button
           type="button"
-          onClick={toggleSidebar}
-          aria-label={isSidebarCollapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
-          title={isSidebarCollapsed ? 'Показать боковую панель (Ctrl+B)' : 'Скрыть боковую панель (Ctrl+B)'}
-          className="p-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors cursor-pointer flex items-center justify-center shrink-0"
+          onClick={handleToggle}
+          aria-label={toggleLabel}
+          title={`${toggleLabel} (Ctrl+B)`}
+          className={`${
+            isSidebarCollapsed ? 'flex' : 'flex md:hidden'
+          } w-9 h-9 rounded-xl bg-surface-container/60 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-surface-container-high/40 transition-colors cursor-pointer items-center justify-center shrink-0`}
         >
-          <span className="material-symbols-outlined text-body-lg">
-            {isSidebarCollapsed ? 'menu' : 'dock_to_left'}
+          <span className="material-symbols-outlined text-[20px]">
+            {isMobile ? (isMobileMenuOpen ? 'close' : 'menu') : isSidebarCollapsed ? 'dock_to_right' : 'menu'}
           </span>
         </button>
 
@@ -68,40 +101,27 @@ export const Header: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="font-body-sm text-body-sm text-on-surface bg-transparent outline-none w-48 sm:w-64 placeholder:text-outline"
           />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              searchInputRef.current?.focus()
-            }}
-            className="hidden sm:flex items-center gap-0.5 px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm select-none hover:text-on-surface cursor-pointer"
+          <kbd
+            aria-hidden="true"
+            tabIndex={-1}
+            className="hidden sm:flex items-center gap-0.5 px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm select-none pointer-events-none"
             title="Горячая клавиша ⌘K"
           >
             <span>⌘</span>
             <span>K</span>
-          </button>
+          </kbd>
         </div>
       </div>
 
-      {/* Right: Quick Record Action, Calendar, and Status */}
-      <div className="flex items-center gap-space-md">
-        <div className="hidden lg:flex items-center gap-space-xs text-outline font-label-md text-label-md">
-          <span className="material-symbols-outlined text-body-md">calendar_month</span>
+      {/* Right: Date Badge, Notifications, and Profile Avatar */}
+      <div className="flex items-center gap-space-sm sm:gap-space-md">
+        <div
+          data-testid="header-date-badge"
+          className="hidden sm:flex items-center gap-space-xs text-outline font-label-md text-label-md px-2.5 py-1 rounded-xl bg-surface-container/60 border border-surface-container-high/30"
+        >
+          <span className="material-symbols-outlined text-body-md text-secondary">calendar_month</span>
           <span>{todayLabel}</span>
         </div>
-
-        {/* Global Record CTA */}
-        <button
-          type="button"
-          onClick={() => setRecordingModalOpen(true)}
-          className="flex items-center gap-space-xs px-space-md py-2 rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all glow-violet cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-body-md animate-pulse">mic</span>
-          <span className="hidden sm:inline">Запись</span>
-          <span className="hidden md:inline px-1 py-0.2 rounded bg-on-primary/20 text-on-primary font-label-sm text-label-sm ml-0.5">
-            Space
-          </span>
-        </button>
 
         {/* Notifications Icon Button */}
         <button
@@ -111,6 +131,17 @@ export const Header: React.FC = () => {
         >
           <span className="material-symbols-outlined text-body-lg">notifications</span>
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface" />
+        </button>
+
+        {/* User Profile Avatar */}
+        <button
+          type="button"
+          data-testid="header-user-avatar"
+          aria-label="Профиль: Алексей Орлов"
+          onClick={() => setActiveTab('settings')}
+          className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md font-semibold select-none cursor-pointer hover:ring-2 hover:ring-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all shrink-0"
+        >
+          АО
         </button>
       </div>
     </header>

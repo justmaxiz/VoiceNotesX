@@ -22,7 +22,7 @@ describe('Edge Cases and Boundary Values', () => {
     expect(screen.getByTestId('view-overview')).toBeVisible()
   })
 
-  it('gracefully handles #notes hash route by routing to notes-and-audio', () => {
+  it('gracefully handles #notes hash route by routing to notes', () => {
     render(<App />)
 
     act(() => {
@@ -30,8 +30,8 @@ describe('Edge Cases and Boundary Values', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     })
 
-    expect(useNavigationStore.getState().activeTab).toBe('notes-and-audio')
-    expect(screen.getByTestId('view-notes-and-audio')).toBeVisible()
+    expect(useNavigationStore.getState().activeTab).toBe('notes')
+    expect(screen.getByTestId('view-notes')).toBeVisible()
     expect(screen.getByTestId('view-overview')).not.toBeVisible()
   })
 

@@ -13,12 +13,12 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     expect(screen.getByText('Добрый вечер, Александр')).toBeInTheDocument()
   })
 
-  it('switches to Notes & Audio view when clicked in sidebar', () => {
+  it('switches to Notes view when clicked in sidebar', () => {
     render(<App />)
-    const notesBtn = screen.getByTestId('nav-item-notes-and-audio')
+    const notesBtn = screen.getByTestId('nav-item-notes')
     fireEvent.click(notesBtn)
 
-    expect(screen.getByTestId('view-notes-and-audio')).toBeVisible()
+    expect(screen.getByTestId('view-notes')).toBeVisible()
     expect(screen.getByText('Библиотека записей')).toBeInTheDocument()
     expect(screen.getAllByText('План редизайна мобильного экрана').length).toBeGreaterThanOrEqual(1)
   })
@@ -70,7 +70,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     expect(firstCheckbox).toBeChecked()
 
     // Enter text into quick input
-    const quickInput = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    const quickInput = screen.getAllByPlaceholderText(/Быстрая мысль или задача/)[0]
     fireEvent.change(quickInput, { target: { value: 'Черновик идеи для релиза' } })
     expect(quickInput).toHaveValue('Черновик идеи для релиза')
 

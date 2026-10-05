@@ -9,9 +9,9 @@ const NAV_ITEMS: NavItem[] = [
     icon: 'space_dashboard',
   },
   {
-    id: 'notes-and-audio',
-    label: 'Заметки и аудио',
-    icon: 'mic',
+    id: 'notes',
+    label: 'Заметки',
+    icon: 'description',
     badge: 42,
     badgeType: 'default',
   },
@@ -81,20 +81,23 @@ export const Sidebar: React.FC = () => {
                 VoiceNotes AI
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="px-space-xs py-0.5 rounded-full bg-surface-container-highest text-secondary font-label-sm text-label-sm font-semibold">
-                v2.4
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileMenuOpen) {
+                  setMobileMenuOpen(false)
+                } else {
+                  toggleSidebar()
+                }
+              }}
+              aria-label={isMobileMenuOpen ? 'Закрыть меню' : 'Скрыть боковую панель'}
+              title={isMobileMenuOpen ? 'Закрыть меню' : 'Скрыть боковую панель (Ctrl+B)'}
+              className="w-8 h-8 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isMobileMenuOpen ? 'close' : 'dock_to_left'}
               </span>
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                aria-label="Скрыть боковую панель"
-                title="Скрыть боковую панель (Ctrl+B)"
-                className="p-1 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-body-md">dock_to_left</span>
-              </button>
-            </div>
+            </button>
           </div>
 
           {/* Workspace Selector */}
@@ -112,7 +115,7 @@ export const Sidebar: React.FC = () => {
                     Личное пространство
                   </span>
                   <span className="font-body-sm text-body-sm text-outline truncate">
-                    Синхронизировано
+                    Локальный воркспейс
                   </span>
                 </div>
               </div>
@@ -125,7 +128,7 @@ export const Sidebar: React.FC = () => {
           {/* Nav Items List */}
           <nav className="px-space-sm flex flex-col gap-1" aria-label="Основное меню">
             {NAV_ITEMS.map((item) => {
-              const isActive = activeTab === item.id
+              const isActive = activeTab === item.id || (item.id === 'notes' && activeTab === 'notes-and-audio')
               return (
                 <button
                   key={item.id}
@@ -170,8 +173,21 @@ export const Sidebar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Bottom Section: Cloud Meter & User Profile */}
-        <div className="px-space-md flex flex-col gap-space-md">
+        {/* Bottom Section: Sync Indicator, Cloud Meter & User Profile */}
+        <div className="px-space-md flex flex-col gap-space-sm">
+          {/* Synchronized status indicator (Obsidian Lumina / Cyber Emerald) */}
+          <div
+            data-testid="sidebar-sync-indicator"
+            className="flex items-center gap-2 px-space-xs py-1 text-label-sm font-label-sm text-on-surface-variant select-none"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary" />
+            </span>
+            <span className="text-secondary font-medium">Синхронизировано</span>
+            <span className="text-outline text-xs ml-auto">Только что</span>
+          </div>
+
           {/* Cloud Storage Usage Card */}
           <div className="p-space-sm rounded-xl bg-surface-container border border-surface-container-high/30 flex flex-col gap-space-xs">
             <div className="flex items-center justify-between text-label-sm font-label-sm text-outline">

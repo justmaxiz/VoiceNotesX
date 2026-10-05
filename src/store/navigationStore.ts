@@ -5,7 +5,7 @@ export const normalizeTab = (rawHash?: string | null): NavigationTab | null => {
   if (rawHash === undefined || rawHash === null) return null
   const clean = rawHash.replace(/^#\/?/, '').trim().toLowerCase()
   if (clean === 'overview' || clean === 'home' || clean === '') return 'overview'
-  if (clean === 'notes' || clean === 'notes-and-audio') return 'notes-and-audio'
+  if (clean === 'notes' || clean === 'notes-and-audio') return 'notes'
   if (clean === 'tasks') return 'tasks'
   if (clean === 'calendar') return 'calendar'
   if (clean === 'ai-summaries' || clean === 'summaries') return 'ai-summaries'
@@ -35,13 +35,14 @@ const getInitialTab = (): NavigationTab => {
 export const useNavigationStore = create<NavigationState>((set) => ({
   activeTab: getInitialTab(),
   setActiveTab: (tab) => {
+    const normalized = normalizeTab(tab) ?? tab
     if (typeof window !== 'undefined') {
       const currentCleanHash = window.location.hash.replace(/^#\/?/, '')
-      if (currentCleanHash !== tab) {
-        window.location.hash = tab
+      if (currentCleanHash !== normalized) {
+        window.location.hash = normalized
       }
     }
-    set({ activeTab: tab, isMobileMenuOpen: false })
+    set({ activeTab: normalized, isMobileMenuOpen: false })
   },
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -51,10 +52,14 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
   isSidebarCollapsed: false,
   toggleSidebar: () =>
-    set((state) => ({
-      isSidebarCollapsed: !state.isSidebarCollapsed,
-      // If expanding on mobile, open mobile menu
-      isMobileMenuOpen: false,
-    })),
+    set((state) => {
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        return { isMobileMenuOpen: !state.isMobileMenuOpen }
+      }
+      return {
+        isSidebarCollapsed: !state.isSidebarCollapsed,
+        isMobileMenuOpen: false,
+      }
+    }),
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
 }))

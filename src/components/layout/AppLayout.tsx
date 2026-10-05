@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { QuickCaptureWidget } from './QuickCaptureWidget'
 import { RecordingModal } from '../audio/RecordingModal'
 import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
 
@@ -27,6 +28,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Keyboard shortcut Ctrl+B / Cmd+B for sidebar toggle
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+      ) {
+        return
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault()
         toggleSidebar()
@@ -36,6 +46,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [toggleSidebar])
+
+  const handleQuickCaptureSave = (text: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('voicenotes:quick-capture', {
+          detail: { text, timestamp: Date.now() },
+        })
+      )
+    }
+  }
 
   return (
     <div className="min-h-screen bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
@@ -62,11 +82,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           className="absolute top-20 left-1/3 w-80 h-80 bg-secondary/5 rounded-full blur-3xl pointer-events-none -z-10"
         />
 
-        {/* Dynamic Page Views with isolated horizontal padding */}
-        <div className="flex flex-col w-full pb-space-xl px-space-md md:px-space-xl">
+        {/* Dynamic Page Views with bottom spacing for floating QuickCaptureWidget */}
+        <div className="flex flex-col w-full pb-28 px-space-md md:px-space-xl">
           {children}
         </div>
       </main>
+
+      {/* Global Bottom Quick Capture Floating Widget */}
+      <QuickCaptureWidget onSave={handleQuickCaptureSave} />
 
       {/* Quick Recording Modal Overlay */}
       <RecordingModal />

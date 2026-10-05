@@ -22,11 +22,13 @@ export const App: React.FC = () => {
       </div>
 
       <div
-        data-testid="view-notes-and-audio"
-        className={activeTab === 'notes-and-audio' ? 'block' : 'hidden'}
-        style={{ display: activeTab === 'notes-and-audio' ? 'block' : 'none' }}
+        data-testid="view-notes"
+        className={activeTab === 'notes' || activeTab === 'notes-and-audio' ? 'block' : 'hidden'}
+        style={{ display: activeTab === 'notes' || activeTab === 'notes-and-audio' ? 'block' : 'none' }}
       >
-        <NotesPage />
+        <div data-testid="view-notes-and-audio" className="w-full">
+          <NotesPage />
+        </div>
       </div>
 
       <div

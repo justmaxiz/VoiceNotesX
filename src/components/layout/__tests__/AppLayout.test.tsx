@@ -1,5 +1,5 @@
 import { render, screen, act, fireEvent } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AppLayout } from '../AppLayout'
 import { useNavigationStore } from '../../../store/navigationStore'
 
@@ -38,7 +38,7 @@ describe('AppLayout Shell Component', () => {
     expect(useNavigationStore.getState().activeTab).toBe('settings')
   })
 
-  it('normalizes #notes route alias to notes-and-audio', () => {
+  it('normalizes #notes route and #notes-and-audio backwards alias to notes', () => {
     render(
       <AppLayout>
         <div>Контент</div>
@@ -50,7 +50,25 @@ describe('AppLayout Shell Component', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     })
 
-    expect(useNavigationStore.getState().activeTab).toBe('notes-and-audio')
+    expect(useNavigationStore.getState().activeTab).toBe('notes')
+
+    act(() => {
+      window.location.hash = '#notes-and-audio'
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    })
+
+    expect(useNavigationStore.getState().activeTab).toBe('notes')
+  })
+
+  it('renders global QuickCaptureWidget floating widget', () => {
+    render(
+      <AppLayout>
+        <div>Контент</div>
+      </AppLayout>
+    )
+
+    expect(screen.getByLabelText('Быстрый ввод мыслей и задач')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Быстрая мысль или задача/)).toBeInTheDocument()
   })
 
   it('renders RecordingModal when isRecordingModalOpen is true and dismisses it', () => {
@@ -96,5 +114,37 @@ describe('AppLayout Shell Component', () => {
     fireEvent.keyDown(window, { key: 'b', ctrlKey: true })
     expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
     expect(main.className).toContain('pl-72')
+  })
+
+  it('does not toggle sidebar when Ctrl+B is pressed inside an input or textarea', () => {
+    render(
+      <AppLayout>
+        <input data-testid="test-input" />
+      </AppLayout>
+    )
+
+    const input = screen.getByTestId('test-input')
+    input.focus()
+
+    fireEvent.keyDown(input, { key: 'b', ctrlKey: true })
+    expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
+  })
+
+  it('dispatches voicenotes:quick-capture custom event on quick capture submit', () => {
+    const listener = vi.fn()
+    window.addEventListener('voicenotes:quick-capture', listener)
+
+    render(
+      <AppLayout>
+        <div>Контент</div>
+      </AppLayout>
+    )
+
+    const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    fireEvent.change(input, { target: { value: 'Тестовая мысль' } })
+    fireEvent.submit(input.closest('form')!)
+
+    expect(listener).toHaveBeenCalled()
+    window.removeEventListener('voicenotes:quick-capture', listener)
   })
 })

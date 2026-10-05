@@ -41,8 +41,8 @@ describe('navigationStore', () => {
   })
 
   it('normalizes various hash patterns correctly', () => {
-    expect(normalizeTab('#notes')).toBe('notes-and-audio')
-    expect(normalizeTab('#notes-and-audio')).toBe('notes-and-audio')
+    expect(normalizeTab('#notes')).toBe('notes')
+    expect(normalizeTab('#notes-and-audio')).toBe('notes')
     expect(normalizeTab('#tasks')).toBe('tasks')
     expect(normalizeTab('#calendar')).toBe('calendar')
     expect(normalizeTab('#ai-summaries')).toBe('ai-summaries')

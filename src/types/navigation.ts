@@ -1,10 +1,12 @@
 export type NavigationTab =
   | 'overview'
-  | 'notes-and-audio'
+  | 'notes'
   | 'tasks'
   | 'calendar'
   | 'ai-summaries'
-  | 'settings';
+  | 'settings'
+  /** @deprecated Use 'notes' instead */
+  | 'notes-and-audio';
 
 export interface NavItem {
   id: NavigationTab;

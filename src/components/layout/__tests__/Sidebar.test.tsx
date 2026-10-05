@@ -8,16 +8,16 @@ describe('Sidebar Component', () => {
     useNavigationStore.setState({ activeTab: 'overview' })
   })
 
-  it('renders the branding logo and version badge', () => {
+  it('renders the branding logo and sidebar collapse toggle', () => {
     render(<Sidebar />)
     expect(screen.getByText('VoiceNotes AI')).toBeInTheDocument()
-    expect(screen.getByText('v2.4')).toBeInTheDocument()
+    expect(screen.getByLabelText('Скрыть боковую панель')).toBeInTheDocument()
   })
 
   it('renders all navigation items', () => {
     render(<Sidebar />)
     expect(screen.getByText('Главная / Обзор')).toBeInTheDocument()
-    expect(screen.getByText('Заметки и аудио')).toBeInTheDocument()
+    expect(screen.getByText('Заметки')).toBeInTheDocument()
     expect(screen.getByText('Задачи')).toBeInTheDocument()
     expect(screen.getByText('Календарь')).toBeInTheDocument()
     expect(screen.getByText('AI Сводки')).toBeInTheDocument()
@@ -45,6 +45,8 @@ describe('Sidebar Component', () => {
 
   it('renders cloud storage meter and user profile', () => {
     render(<Sidebar />)
+    expect(screen.getByTestId('sidebar-sync-indicator')).toBeInTheDocument()
+    expect(screen.getByText('Синхронизировано')).toBeInTheDocument()
     expect(screen.getByText('Облако активно')).toBeInTheDocument()
     expect(screen.getByText('82%')).toBeInTheDocument()
     expect(screen.getByText('16.4 / 20 ГБ')).toBeInTheDocument()

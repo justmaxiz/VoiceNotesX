@@ -133,7 +133,7 @@ export const DashboardOverview: React.FC = () => {
         onViewModeChange={setViewMode}
         isRecordingHeld={isRecordingHeld}
         onStartRecording={() => setRecordingModalOpen(true)}
-        onNewNote={() => setActiveTab('notes-and-audio')}
+        onNewNote={() => setActiveTab('notes')}
       />
 
       {/* Bento Grid Layout */}
@@ -175,7 +175,7 @@ export const DashboardOverview: React.FC = () => {
 
           {/* Recent Audio Memos Widget */}
           <RecentAudioWidget
-            onViewAll={() => setActiveTab('notes-and-audio')}
+            onViewAll={() => setActiveTab('notes')}
           />
 
           {/* AI Daily Insights Card */}

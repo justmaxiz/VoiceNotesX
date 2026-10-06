@@ -28,18 +28,20 @@ export const DashboardCustomizerModal: React.FC = () => {
   const { modules, isCustomizerOpen, setCustomizerOpen, toggleModule, resetToDefaults } =
     useDashboardConfigStore()
 
-  if (!isCustomizerOpen) return null
-
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Настройка виджетов дашборда"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className={`fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${
+        isCustomizerOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+      }`}
       onClick={() => setCustomizerOpen(false)}
     >
       <div
-        className="w-full max-w-md bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 text-on-surface"
+        className={`w-full max-w-md bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 text-on-surface transition-all duration-300 ${
+          isCustomizerOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">

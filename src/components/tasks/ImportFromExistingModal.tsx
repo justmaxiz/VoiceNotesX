@@ -94,7 +94,7 @@ export const ImportFromExistingModal: React.FC<ImportFromExistingModalProps> = (
                     <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-medium">
                       {item.type === 'note' ? 'Заметка' : 'Задача'}
                     </span>
-                    <span>{item.categoryTag}</span>
+                    <span>{item.categoryTag?.startsWith('#') ? item.categoryTag : `#${item.categoryTag}`}</span>
                   </div>
                 </div>
 

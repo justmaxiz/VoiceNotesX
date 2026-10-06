@@ -21,8 +21,12 @@ export const DashboardOverview: React.FC = () => {
 
   // Convert real store tasks to TaskItemData
   const tasks: TaskItemData[] = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0]
     return items
-      .filter((i) => i.type === 'task')
+      .filter((i) => {
+        if (i.type !== 'task') return false
+        return true
+      })
       .map((item) => {
         let categoryClass = 'text-outline'
         if (item.categoryTag.includes('Аналитик') || item.categoryTag.includes('Метрик')) {

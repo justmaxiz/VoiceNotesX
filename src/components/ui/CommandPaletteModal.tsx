@@ -246,7 +246,7 @@ export const CommandPaletteModal: React.FC = () => {
 
                       <div className="flex items-center gap-2 shrink-0 text-xs text-outline">
                         <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">
-                          {item.categoryTag}
+                          {item.categoryTag?.startsWith('#') ? item.categoryTag : `#${item.categoryTag}`}
                         </span>
                         {isSelected && (
                           <span className="text-primary font-medium">↵ Открыть</span>

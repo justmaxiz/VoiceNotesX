@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useQuickCaptureStore } from '../../store/useQuickCaptureStore'
 import { useAppStore } from '../../store/useAppStore'
-import { useNavigationStore } from '../../store/navigationStore'
 import { useDrawerStore } from '../../store/useDrawerStore'
 import { useAudioRecorder } from '../../hooks/useAudioRecorder'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { LiveWaveform } from '../audio/LiveWaveform'
 import { structureVoiceNote } from '../../lib/geminiStructuring'
 import { Item } from '../../types/item'
+
+import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
 
 export interface QuickCaptureWidgetProps {
   onSave?: (text: string) => void
@@ -39,7 +40,6 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
   const tagMenuRef = useRef<HTMLDivElement>(null)
 
   const { addItem } = useAppStore()
-  const { setRecordingModalOpen } = useNavigationStore()
   const { openDrawer } = useDrawerStore()
   const { isRecording, stream, startRecording, stopRecording } = useAudioRecorder()
   const {
@@ -107,8 +107,11 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
     }
   }, [])
 
+  useSpaceRecordShortcut({
+    onToggle: () => handleToggleRecord(),
+  })
+
   const handleToggleRecord = async () => {
-    setRecordingModalOpen(true)
     if (isRecording) {
       stopListening()
       const blob = await stopRecording()

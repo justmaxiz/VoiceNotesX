@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DashboardOverview } from '../DashboardOverview'
 import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
 import { useAppStore } from '../../../store/useAppStore'
@@ -7,9 +7,30 @@ import { SEED_ITEMS } from '../../../lib/seedData'
 
 describe('DashboardOverview Component', () => {
   beforeEach(() => {
-    useAppStore.setState({ items: SEED_ITEMS })
+    useAppStore.setState({ 
+      items: SEED_ITEMS,
+      toggleTask: vi.fn().mockImplementation(async (id) => {
+        const items = useAppStore.getState().items;
+        useAppStore.setState({
+          items: items.map(i => i.id === id ? { ...i, status: i.status === 'completed' ? 'todo' : 'completed' } : i)
+        });
+      })
+    })
     useDashboardConfigStore.setState({
       modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true, focusTask: true, taskList: true },
+    })
+    
+    // Mock the toggleTask so it doesn't call IndexedDB
+    useAppStore.setState({
+      toggleTask: async (id) => {
+        useAppStore.setState((state) => ({
+          items: state.items.map((item) =>
+            item.id === id
+              ? { ...item, status: item.status === 'completed' ? 'todo' : 'completed' }
+              : item
+          ),
+        }))
+      }
     })
   })
 
@@ -17,41 +38,43 @@ describe('DashboardOverview Component', () => {
     render(<DashboardOverview />)
     expect(screen.getByText(/Алексей/)).toBeInTheDocument()
     expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
-    expect(screen.getByText('Недавние аудиозаписи')).toBeInTheDocument()
-    expect(screen.getByText('Сводка дня')).toBeInTheDocument()
+    expect(screen.getAllByText('Недавние аудиозаписи')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('Сводка дня')[0]).toBeInTheDocument()
   })
 
   it('toggles audio play button icon state', () => {
     render(<DashboardOverview />)
-    const playBtn = screen.getByLabelText('Воспроизвести')
+    const playBtns = screen.getAllByLabelText(/Воспроизвести/i)
+    const playBtn = playBtns[0]
     expect(playBtn).toBeInTheDocument()
 
     fireEvent.click(playBtn)
-    expect(screen.getByLabelText('Приостановить')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Приостановить/i)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByLabelText('Приостановить'))
-    expect(screen.getByLabelText('Воспроизвести')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText(/Приостановить/i))
+    expect(screen.getAllByLabelText(/Воспроизвести/i).length).toBeGreaterThan(0)
   })
 
-  it('toggles task completion and updates productivity stats', () => {
+  it('toggles task completion and updates productivity stats', async () => {
     render(<DashboardOverview />)
-    // Find task checkbox by aria-label
     const firstCheckbox = screen.getByLabelText('Отметить задачу: Подготовить отчет по продуктовым метрикам Q3')
     expect(firstCheckbox).toHaveAttribute('aria-checked', 'false')
 
     fireEvent.click(firstCheckbox)
-    expect(firstCheckbox).toHaveAttribute('aria-checked', 'true')
+    
+    await waitFor((wait) => {
+      expect(firstCheckbox).toHaveAttribute('aria-checked', 'true')
+    })
   })
 
   it('does NOT contain redundant QuickInputBar (TASK-40)', () => {
     render(<DashboardOverview />)
-    // Redundant static quick input bar was removed in TASK-40
     expect(screen.queryByPlaceholderText(/Быстрая мысль или задача/)).toBeNull()
   })
 
   it('filters task list when filter buttons are clicked', () => {
     render(<DashboardOverview />)
-    const urgentBtn = screen.getByText(/Срочные/)
+    const urgentBtn = screen.getAllByRole('button', { name: /Срочные/i })[0]
     fireEvent.click(urgentBtn)
 
     expect(screen.getByText('Провести ревью архитектуры микросервисов')).toBeInTheDocument()

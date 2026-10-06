@@ -28,13 +28,7 @@ describe('Seed Data & Database Initialization (TASK-07)', () => {
     const itemsCount = await db.items.count()
     expect(itemsCount).toBe(SEED_ITEMS.length)
 
-    const audioCount = await db.audioSessions.count()
-    expect(audioCount).toBe(SEED_AUDIO_SESSIONS.length)
-
-    const settings = await db.settings.get('default')
-    expect(settings).toBeDefined()
-    expect(settings?.userName).toBe(DEFAULT_USER_SETTINGS.userName)
-  })
+    })
 
   it('contains the Hero focus card task with expected attributes', async () => {
     await seedDatabase()
@@ -45,7 +39,7 @@ describe('Seed Data & Database Initialization (TASK-07)', () => {
     expect(focusTask?.title).toBe('Добавить новую фичу в VoiceNotes')
     expect(focusTask?.categoryTag).toBe('Работа')
     expect(focusTask?.priority).toBe('high')
-    expect(focusTask?.dueDate).toBe('21:00')
+    expect(focusTask?.dueTime).toBe('21:00')
     expect(focusTask?.checklist).toHaveLength(3)
     expect(focusTask?.checklist?.[2].isCompleted).toBe(true)
   })
@@ -56,7 +50,7 @@ describe('Seed Data & Database Initialization (TASK-07)', () => {
     const t1 = await db.items.get('t-1')
     expect(t1?.title).toContain('Подготовить отчет по продуктовым метрикам Q3')
     expect(t1?.categoryTag).toBe('#Аналитика')
-    expect(t1?.dueDate).toBe('16:00')
+    expect(t1?.dueTime).toBe('16:00')
 
     const t2 = await db.items.get('t-2')
     expect(t2?.title).toBe('Провести ревью архитектуры микросервисов')
@@ -68,17 +62,7 @@ describe('Seed Data & Database Initialization (TASK-07)', () => {
     expect(t4?.completedAt).toBeDefined()
   })
 
-  it('contains recent audio recordings', async () => {
-    await seedDatabase()
-
-    const memos = await db.audioSessions.toArray()
-    expect(memos).toHaveLength(3)
-
-    const titles = memos.map((m) => m.title)
-    expect(titles).toContain('План редизайна мобильного экрана')
-    expect(titles).toContain('Брейншторм фичи Voice-to-SQL')
-    expect(titles).toContain('Заметки к встрече 1-на-1 с тимлидом')
-  })
+  
 
   it('is idempotent: calling seedDatabase repeatedly does not duplicate data', async () => {
     await seedDatabase()

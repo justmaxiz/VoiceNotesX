@@ -2,11 +2,9 @@ import React, { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { QuickCaptureWidget } from './QuickCaptureWidget'
-import { RecordingModal } from '../audio/RecordingModal'
 import { SlideOverDrawer } from './SlideOverDrawer'
 import { CommandPaletteModal } from '../ui/CommandPaletteModal'
 import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
-import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
 import { useQuickCaptureHotkey } from '../../hooks/useQuickCaptureHotkey'
 import { startReminderScheduler } from '../../lib/remindersService'
 import { startDailyDigestScheduler } from '../../lib/dailyDigestScheduler'
@@ -18,11 +16,9 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const {
-    activeTab,
     setActiveTab,
     isSidebarCollapsed,
     toggleSidebar,
-    setRecordingModalOpen,
   } = useNavigationStore()
 
   // Hotkey / or C for quick capture (TASK-40)
@@ -38,14 +34,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [])
 
-  // Spacebar hotkey to toggle recording modal (TASK-13)
-  useSpaceRecordShortcut({
-    onToggle: () => {
-      const current = useNavigationStore.getState().isRecordingModalOpen
-      setRecordingModalOpen(!current)
-    },
-    enabled: activeTab === 'overview' || activeTab === 'notes',
-  })
+
 
   // Sync state with browser hash navigation (e.g., back / forward history)
   useEffect(() => {
@@ -132,8 +121,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Global Command Palette (⌘K) */}
       <CommandPaletteModal />
 
-      {/* Quick Recording Modal Overlay */}
-      <RecordingModal />
     </div>
   )
 }

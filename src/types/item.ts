@@ -17,7 +17,6 @@ export interface Item {
   completedAt?: string;
   categoryTag: string;
   isFocus: boolean;
-  isFocused?: boolean;
   checklist?: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
@@ -32,18 +31,8 @@ export interface ChecklistItem {
   sortOrder: number;
 }
 
-export interface AudioSession {
-  id: string;
-  title: string;
-  duration: number;
-  recordedAt: string;
-  transcriptSnippet: string;
-  tags: string[];
-  audioUrl?: string;
-  waveform?: number[];
-}
 
-export type TaskFilter = 'all' | 'urgent' | 'voice' | 'summaries';
+export type TaskFilter = 'all' | 'urgent' | 'overdue';
 export type ViewMode = 'list' | 'board';
 export type TaskSortCriteria = 'priority' | 'time' | 'created' | 'title' | 'manual';
 export type TaskSortDirection = 'asc' | 'desc';
@@ -63,7 +52,6 @@ export interface TaskItemData {
   dueDate?: string | null;
   dueTime?: string | null;
   tags?: string[];
-  isFocused?: boolean;
   estimatedMinutes?: number;
 }
 

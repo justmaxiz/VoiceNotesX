@@ -14,8 +14,6 @@ export type SortOrder = 'priority' | 'date' | 'alphabetical'
 
 export interface AppState {
   items: Item[]
-  activeTab: string
-  searchQuery: string
   isRecording: boolean
   activeFilter: TaskFilter
   sortOrder: SortOrder
@@ -28,8 +26,6 @@ export interface AppState {
   error: string | null
 
   // Actions
-  setActiveTab: (tab: string) => void
-  setSearchQuery: (query: string) => void
   setActiveFilter: (filter: TaskFilter) => void
   setSortOrder: (order: SortOrder) => void
   setSort: (by: TaskSortCriteria, direction?: TaskSortDirection) => void
@@ -92,8 +88,6 @@ const initialSort = getInitialSort()
 
 export const useAppStore = create<AppState>((set, get) => ({
   items: SEED_ITEMS,
-  activeTab: 'overview',
-  searchQuery: '',
   isRecording: false,
   activeFilter: 'all',
   sortOrder: 'priority',
@@ -105,21 +99,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  setActiveTab: (tab: string) => {
-    set({ activeTab: tab })
-    const navStore = useNavigationStore.getState()
-    if (navStore.activeTab !== tab) {
-      navStore.setActiveTab(tab as any)
-    }
-  },
 
-  setSearchQuery: (query: string) => {
-    set({ searchQuery: query })
-    const navStore = useNavigationStore.getState()
-    if (navStore.searchQuery !== query) {
-      navStore.setSearchQuery(query)
-    }
-  },
+
+
 
   setActiveFilter: (filter: TaskFilter) => set({ activeFilter: filter }),
 
@@ -287,7 +269,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const now = new Date().toISOString()
-    const prevFocused = previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocused))
+    const prevFocused = previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocus))
     const newStatus = target.status === 'todo' ? 'in_progress' : target.status
 
     const nextItems = previousItems.map((item) => {
@@ -404,7 +386,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearError: () => set({ error: null }),
 
   getFilteredItems: () => {
-    const { items, activeFilter, sortOrder, searchQuery } = get()
+    const { items, activeFilter, sortOrder } = get()
+    const { searchQuery } = useNavigationStore.getState()
     let result = [...items]
 
     // Apply full-text search if query present
@@ -457,15 +440,4 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 }))
 
-// Synchronize changes from navigation store to app store
-if (typeof window !== 'undefined') {
-  useNavigationStore.subscribe((navState) => {
-    const current = useAppStore.getState()
-    if (current.activeTab !== navState.activeTab) {
-      useAppStore.setState({ activeTab: navState.activeTab })
-    }
-    if (current.searchQuery !== navState.searchQuery) {
-      useAppStore.setState({ searchQuery: navState.searchQuery })
-    }
-  })
-}
+

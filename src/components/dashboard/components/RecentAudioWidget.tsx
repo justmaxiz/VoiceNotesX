@@ -16,21 +16,21 @@ const DEFAULT_MEMOS: AudioMemoItemData[] = [
     title: 'План редизайна мобильного экрана',
     duration: '0:42 мин',
     time: '14:30',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=1',
   },
   {
     id: 'memo-2',
     title: 'Брейншторм фичи Voice-to-SQL',
     duration: '2:18 мин',
     time: '12:10',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=2',
   },
   {
     id: 'memo-3',
     title: 'Заметки к встрече 1-на-1 с тимлидом',
     duration: '1:05 мин',
     time: '10:45',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=3',
   },
 ]
 

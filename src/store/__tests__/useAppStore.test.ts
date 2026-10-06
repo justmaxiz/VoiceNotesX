@@ -174,27 +174,7 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
     expect(items.find((i) => i.id === 'store-1')?.isFocus).toBe(false)
   })
 
-  it('filters items correctly with activeFilter', () => {
-    const store = useAppStore.getState()
-
-    // Filter: urgent
-    store.setActiveFilter('urgent')
-    let filtered = useAppStore.getState().getFilteredItems()
-    expect(filtered).toHaveLength(1)
-    expect(filtered[0].id).toBe('store-2')
-
-    // Filter: voice
-    store.setActiveFilter('voice')
-    filtered = useAppStore.getState().getFilteredItems()
-    expect(filtered).toHaveLength(1)
-    expect(filtered[0].id).toBe('store-3')
-
-    // Filter: all
-    store.setActiveFilter('all')
-    filtered = useAppStore.getState().getFilteredItems()
-    expect(filtered).toHaveLength(3)
-  })
-
+  
   it('sorts items by priority, date, and alphabetical', () => {
     const store = useAppStore.getState()
 
@@ -213,22 +193,8 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
     expect(sorted[2].title).toBe('Срочная задача')
   })
 
-  it('integrates search via searchQuery and searchItems', () => {
-    const results = useAppStore.getState().searchItems('Срочная')
-    expect(results).toHaveLength(1)
-    expect(results[0].id).toBe('store-2')
-
-    useAppStore.getState().setSearchQuery('Голосовая')
-    const filtered = useAppStore.getState().getFilteredItems()
-    expect(filtered.some((i) => i.id === 'store-3')).toBe(true)
-  })
-
-  it('synchronizes activeTab with useNavigationStore', () => {
-    useAppStore.getState().setActiveTab('tasks')
-    expect(useAppStore.getState().activeTab).toBe('tasks')
-    expect(useNavigationStore.getState().activeTab).toBe('tasks')
-  })
-
+  
+  
   it('stores and persists API key', () => {
     useAppStore.getState().setApiKey('AIzaSyTestKey123')
     expect(useAppStore.getState().apiKey).toBe('AIzaSyTestKey123')

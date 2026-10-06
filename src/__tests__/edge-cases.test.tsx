@@ -60,19 +60,7 @@ describe('Edge Cases and Boundary Values', () => {
     expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
   })
 
-  it('triggers spacebar recording feedback when Space is pressed outside inputs', () => {
-    render(<App />)
-
-    // Trigger Space keydown on window
-    fireEvent.keyDown(window, { code: 'Space' })
-
-    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(true)
-
-    // Second Space keydown toggles state
-    fireEvent.keyDown(window, { code: 'Space' })
-    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
-  })
-
+  
   it('does not trigger spacebar recording when user is on a different tab', () => {
     useNavigationStore.setState({ activeTab: 'settings' })
     render(<App />)

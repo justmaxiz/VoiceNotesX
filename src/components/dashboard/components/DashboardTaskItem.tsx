@@ -29,7 +29,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
   const isOverdue = Boolean(
     !task.isCompleted &&
     task.dueDate &&
-    task.dueDate.includes('-') &&
     task.dueDate < todayStr
   )
 
@@ -49,12 +48,16 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
       } p-space-md rounded-2xl transition-all duration-200 group shadow-xs border ${
         task.isFocused
           ? 'border-primary/50 ring-1 ring-primary/30 bg-surface-container-low'
-          : 'border-outline-variant/20 hover:border-outline-variant/40'
+          : isOverdue && !task.isCompleted
+            ? 'border-error/30 ring-1 ring-error/20 bg-gradient-to-r from-error/5 to-transparent'
+            : 'border-outline-variant/20 hover:border-outline-variant/40'
       } ${
         task.isCompleted
           ? 'bg-surface-container-lowest/40 hover:bg-surface-container-low/70'
-          : 'bg-surface-container-low hover:bg-surface-container'
-      } ${isSelectMode ? 'cursor-pointer' : ''}`}
+          : task.isFocused || (isOverdue && !task.isCompleted)
+            ? ''
+            : 'bg-surface-container-low hover:bg-surface-container'
+      } cursor-pointer`}
     >
       <div className={`flex ${isCompact ? 'items-start' : 'items-center'} gap-3 min-w-0 flex-1`}>
         {/* Multi-selection Checkbox when select mode is active */}
@@ -92,6 +95,12 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
               {task.title}
             </span>
 
+            {isOverdue && (
+              <span className="shrink-0 px-2 py-0.5 rounded-full bg-error/15 text-error text-[11px] font-medium flex items-center gap-1 border border-error/20">
+                Просрочено
+              </span>
+            )}
+            
             {task.isFocused && (
               <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[11px] font-medium flex items-center gap-1 border border-primary/20">
                 В фокусе
@@ -103,15 +112,8 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
             <span
               className={`px-2 py-0.5 rounded-md bg-surface-container-high/60 text-xs font-medium ${task.categoryClass}`}
             >
-              {task.category}
+              {task.category.startsWith('#') ? task.category : `#${task.category}`}
             </span>
-
-            {task.hasAudio && (
-              <span className="inline-flex items-center gap-1 text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container text-xs">
-                <span className="material-symbols-outlined text-[13px] text-primary">mic</span>
-                {task.audioDuration}
-              </span>
-            )}
 
             {task.noteSubtitle && (
               <span className="text-outline text-xs truncate max-w-xs">{task.noteSubtitle}</span>
@@ -120,13 +122,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
             {task.completedTime && task.completedTime !== 'Выполнено' && (
               <span className="text-outline/80 text-xs font-normal">
                 {task.completedTime}
-              </span>
-            )}
-
-            {isOverdue && (
-              <span className="px-2 py-0.5 rounded-full bg-error/10 text-error text-[11px] font-medium flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px]">warning</span>
-                Просрочено
               </span>
             )}
           </div>
@@ -182,14 +177,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => onClickItem?.(task.id)}
-            aria-label="Открыть подробности задачи"
-            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded-lg hover:bg-surface-container-highest text-outline hover:text-on-surface transition-all cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-body-md">more_vert</span>
-          </button>
         </div>
       </div>
     </div>

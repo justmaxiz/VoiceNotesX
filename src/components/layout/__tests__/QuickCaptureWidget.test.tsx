@@ -43,14 +43,6 @@ describe('QuickCaptureWidget Component', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
-  it('triggers recording modal on microphone button click', () => {
-    render(<QuickCaptureWidget />)
-
-    const micBtn = screen.getByLabelText('Начать голосовую запись')
-    fireEvent.click(micBtn)
-
-    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(true)
-  })
 
   it('renders aria-live notification on save and cleans up timer on unmount', () => {
     vi.useFakeTimers()

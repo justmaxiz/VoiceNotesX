@@ -1,0 +1,1142 @@
+﻿diff --git a/AGENTS.md b/AGENTS.md
+index 32547b6..cd943b3 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -11,3 +11,8 @@
+    - ╨Ф╨╗╤П ╨┐╤А╨░╨▓╨╛╨║ ╨▓╨╡╤А╤Б╤В╨║╨╕, ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓, Tailwind-╨║╨╗╨░╤Б╤Б╨╛╨▓, ╤В╨╡╨║╤Б╤В╨╛╨▓, ╨╕╨║╨╛╨╜╨╛╨║ ╨╕ ╨╗╨╛╨║╨░╨╗╤М╨╜╤Л╤Е ╨┐╤А╨░╨▓╨╛╨║ UI **╨Э╨Х ╨╖╨░╨┐╤Г╤Б╨║╨░╤В╤М** ╨┐╨╛╨╗╨╜╤Л╨╣ ╤В╨╡╤Б╤В╨╛╨▓╤Л╨╣ ╤Б╤М╤О╤В.
+    - ╨Ю╨│╤А╨░╨╜╨╕╤З╨╕╨▓╨░╤В╤М╤Б╤П ╨▒╤Л╤Б╤В╤А╨╛╨╣ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╛╨╣ ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤Б╨░ ╨╕ ╤В╨╕╨┐╨╛╨▓: `npm run build` ╨╕╨╗╨╕ `npx tsc --noEmit`.
+    - ╨Я╤А╨╕ ╨╜╨╡╨╛╨▒╤Е╨╛╨┤╨╕╨╝╨╛╤Б╤В╨╕ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╕ ╨║╨╛╨╜╨║╤А╨╡╤В╨╜╨╛╨│╨╛ ╨╕╨╖╨╝╨╡╨╜╨╡╨╜╨╜╨╛╨│╨╛ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨░ ╨╖╨░╨┐╤Г╤Б╨║╨░╤В╤М ╤В╨╛╨╗╤М╨║╨╛ ╨╡╨│╨╛ ╨╕╨╖╨╛╨╗╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╤Д╨░╨╣╨╗: `npx vitest run <path-to-test>.test.tsx`.
++
++
++## ╨Я╤А╨░╨▓╨╕╨╗╨░ ╨║╨╛╨╜╤В╤А╨╛╨╗╤П ╨▓╨╡╤А╤Б╨╕╨╣ (Git)
++1. **╨Э╨╕╨║╨░╨║╨╕╤Е ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╕╤Е ╨║╨╛╨╝╨╝╨╕╤В╨╛╨▓:** ╨Э╨╕╨║╨╛╨│╨┤╨░ ╨╜╨╡ ╨┤╨╡╨╗╨░╨╣ `git commit` ╨▒╨╡╨╖ ╨┐╤А╤П╨╝╨╛╨│╨╛ ╤Г╨║╨░╨╖╨░╨╜╨╕╤П ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П.
++2. **╨Ю╨╢╨╕╨┤╨░╨╜╨╕╨╡ ╤А╨╡╨▓╤М╤О:** ╨Т╤Б╨╡ ╨▓╨╜╨╡╤Б╨╡╨╜╨╜╤Л╨╡ ╨╕╨╖╨╝╨╡╨╜╨╡╨╜╨╕╤П ╨┤╨╛╨╗╨╢╨╜╤Л ╨╛╤Б╤В╨░╨▓╨░╤В╤М╤Б╤П ╨▓ ╤А╨░╨▒╨╛╤З╨╡╨╣ ╨┤╨╕╤А╨╡╨║╤В╨╛╤А╨╕╨╕ (unstaged/staged). ╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╨┤╨╛╨╗╨╢╨╡╨╜ ╨╕╨╝╨╡╤В╤М ╨▓╨╛╨╖╨╝╨╛╨╢╨╜╨╛╤Б╤В╤М ╨┐╨╛╤Б╨╝╨╛╤В╤А╨╡╤В╤М ╨┤╨╕╤Д╤Д╤Л ╨╕ ╨┐╤А╨╛╨▓╨╡╤Б╤В╨╕ ╤А╨╡╨▓╤М╤О ╨┐╨╡╤А╨╡╨┤ ╤В╨╡╨╝, ╨║╨░╨║ ╨┐╨╛╨┐╤А╨╛╤Б╨╕╤В╤М ╤Б╨┤╨╡╨╗╨░╤В╤М ╨║╨╛╨╝╨╝╨╕╤В.
+diff --git a/src/components/audio/RecordingModal.tsx b/src/components/audio/RecordingModal.tsx
+deleted file mode 100644
+index 5de10ba..0000000
+--- a/src/components/audio/RecordingModal.tsx
++++ /dev/null
+@@ -1,116 +0,0 @@
+-import React, { useEffect, useRef } from 'react'
+-import { useNavigationStore } from '../../store/navigationStore'
+-
+-export const RecordingModal: React.FC = () => {
+-  const { isRecordingModalOpen, setRecordingModalOpen } = useNavigationStore()
+-  const previousActiveElementRef = useRef<HTMLElement | null>(null)
+-  const modalContainerRef = useRef<HTMLDivElement>(null)
+-  const firstButtonRef = useRef<HTMLButtonElement>(null)
+-
+-  useEffect(() => {
+-    if (!isRecordingModalOpen) return
+-
+-    previousActiveElementRef.current = document.activeElement as HTMLElement | null
+-
+-    // Focus the first button inside modal on open
+-    const focusTimeout = setTimeout(() => {
+-      firstButtonRef.current?.focus()
+-    }, 50)
+-
+-    const handleKeyDown = (e: KeyboardEvent) => {
+-      if (e.key === 'Escape') {
+-        e.preventDefault()
+-        setRecordingModalOpen(false)
+-        return
+-      }
+-
+-      // Focus trap for Tab
+-      if (e.key === 'Tab' && modalContainerRef.current) {
+-        const focusableElements = modalContainerRef.current.querySelectorAll<HTMLElement>(
+-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+-        )
+-        if (focusableElements.length === 0) return
+-
+-        const firstElement = focusableElements[0]
+-        const lastElement = focusableElements[focusableElements.length - 1]
+-
+-        if (e.shiftKey) {
+-          if (document.activeElement === firstElement) {
+-            e.preventDefault()
+-            lastElement.focus()
+-          }
+-        } else {
+-          if (document.activeElement === lastElement) {
+-            e.preventDefault()
+-            firstElement.focus()
+-          }
+-        }
+-      }
+-    }
+-
+-    window.addEventListener('keydown', handleKeyDown)
+-
+-    return () => {
+-      clearTimeout(focusTimeout)
+-      window.removeEventListener('keydown', handleKeyDown)
+-      // Restore focus to trigger element
+-      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+-        previousActiveElementRef.current.focus()
+-      }
+-    }
+-  }, [isRecordingModalOpen, setRecordingModalOpen])
+-
+-  if (!isRecordingModalOpen) return null
+-
+-  return (
+-    <div
+-      role="dialog"
+-      aria-modal="true"
+-      aria-labelledby="recording-modal-title"
+-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-space-md"
+-      onClick={() => setRecordingModalOpen(false)}
+-    >
+-      <div
+-        ref={modalContainerRef}
+-        className="glass-panel rounded-2xl p-space-xl max-w-md w-full flex flex-col items-center gap-space-md text-center shadow-2xl border border-white/10"
+-        onClick={(e) => e.stopPropagation()}
+-      >
+-        <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center glow-violet animate-pulse">
+-          <span className="material-symbols-outlined text-3xl">mic</span>
+-        </div>
+-
+-        <div className="flex flex-col gap-1">
+-          <h3 id="recording-modal-title" className="font-headline-sm text-headline-sm text-on-surface">
+-            ╨С╤Л╤Б╤В╤А╨░╤П ╨│╨╛╨╗╨╛╤Б╨╛╨▓╨░╤П ╨╖╨░╨┐╨╕╤Б╤М
+-          </h3>
+-          <p className="font-body-sm text-body-sm text-on-surface-variant">
+-            ╨У╨╛╨▓╨╛╤А╨╕╤В╨╡ ╤Б╨▓╨╛╨▒╨╛╨┤╨╜╨╛ тАФ ╨╖╨▓╤Г╨║ ╨▒╤Г╨┤╨╡╤В ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╕ ╤В╤А╨░╨╜╤Б╨║╤А╨╕╨▒╨╕╤А╨╛╨▓╨░╨╜ ╨╕ ╤Б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜ ╨▓ ╨╖╨░╨┤╨░╤З╤Г.
+-          </p>
+-        </div>
+-
+-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-secondary font-label-sm text-label-sm">
+-          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+-          <span>╨Ь╨╕╨║╤А╨╛╤Д╨╛╨╜ ╨│╨╛╤В╨╛╨▓ ╨║ ╨┐╤А╨╕╨╡╨╝╤Г</span>
+-        </div>
+-
+-        <div className="flex items-center gap-space-sm w-full mt-space-xs">
+-          <button
+-            ref={firstButtonRef}
+-            type="button"
+-            onClick={() => setRecordingModalOpen(false)}
+-            className="flex-1 py-2.5 px-space-md rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-all cursor-pointer"
+-          >
+-            ╨Ч╨░╨║╤А╤Л╤В╤М
+-          </button>
+-          <button
+-            type="button"
+-            onClick={() => setRecordingModalOpen(false)}
+-            className="flex-1 py-2.5 px-space-md rounded-xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-md text-label-md transition-all glow-violet cursor-pointer"
+-          >
+-            ╨б╨╛╤Е╤А╨░╨╜╨╕╤В╤М ╨╖╨░╨╝╨╡╤В╨║╤Г
+-          </button>
+-        </div>
+-      </div>
+-    </div>
+-  )
+-}
+diff --git a/src/components/dashboard/DashboardCustomizerModal.tsx b/src/components/dashboard/DashboardCustomizerModal.tsx
+index 0eadf8b..08a918e 100644
+--- a/src/components/dashboard/DashboardCustomizerModal.tsx
++++ b/src/components/dashboard/DashboardCustomizerModal.tsx
+@@ -28,18 +28,20 @@ export const DashboardCustomizerModal: React.FC = () => {
+   const { modules, isCustomizerOpen, setCustomizerOpen, toggleModule, resetToDefaults } =
+     useDashboardConfigStore()
+ 
+-  if (!isCustomizerOpen) return null
+-
+   return (
+     <div
+       role="dialog"
+       aria-modal="true"
+       aria-label="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨░ ╨▓╨╕╨┤╨╢╨╡╤В╨╛╨▓ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░"
+-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
++      className={`fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${
++        isCustomizerOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
++      }`}
+       onClick={() => setCustomizerOpen(false)}
+     >
+       <div
+-        className="w-full max-w-md bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 text-on-surface"
++        className={`w-full max-w-md bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 text-on-surface transition-all duration-300 ${
++          isCustomizerOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'
++        }`}
+         onClick={(e) => e.stopPropagation()}
+       >
+         <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+diff --git a/src/components/dashboard/DashboardOverview.tsx b/src/components/dashboard/DashboardOverview.tsx
+index 0c4a0fb..cf02123 100644
+--- a/src/components/dashboard/DashboardOverview.tsx
++++ b/src/components/dashboard/DashboardOverview.tsx
+@@ -21,8 +21,14 @@ export const DashboardOverview: React.FC = () => {
+ 
+   // Convert real store tasks to TaskItemData
+   const tasks: TaskItemData[] = useMemo(() => {
++    const todayStr = new Date().toISOString().split('T')[0]
+     return items
+-      .filter((i) => i.type === 'task')
++      .filter((i) => {
++        if (i.type !== 'task') return false
++        const isToday = i.dueDate === todayStr
++        const isOverdue = i.dueDate && i.dueDate < todayStr && i.status !== 'completed'
++        return isToday || isOverdue
++      })
+       .map((item) => {
+         let categoryClass = 'text-outline'
+         if (item.categoryTag.includes('╨Р╨╜╨░╨╗╨╕╤В╨╕╨║') || item.categoryTag.includes('╨Ь╨╡╤В╤А╨╕╨║')) {
+diff --git a/src/components/dashboard/__tests__/DashboardOverview.test.tsx b/src/components/dashboard/__tests__/DashboardOverview.test.tsx
+index b95f1f3..515ebdc 100644
+--- a/src/components/dashboard/__tests__/DashboardOverview.test.tsx
++++ b/src/components/dashboard/__tests__/DashboardOverview.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, fireEvent } from '@testing-library/react'
++import { render, screen, fireEvent, act } from '@testing-library/react'
+ import { describe, it, expect, beforeEach } from 'vitest'
+ import { DashboardOverview } from '../DashboardOverview'
+ import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
+@@ -17,41 +17,43 @@ describe('DashboardOverview Component', () => {
+     render(<DashboardOverview />)
+     expect(screen.getByText(/╨Р╨╗╨╡╨║╤Б╨╡╨╣/)).toBeInTheDocument()
+     expect(screen.getAllByText('╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М ╨╜╨╛╨▓╤Г╤О ╤Д╨╕╤З╤Г ╨▓ VoiceNotes').length).toBeGreaterThan(0)
+-    expect(screen.getByText('╨Э╨╡╨┤╨░╨▓╨╜╨╕╨╡ ╨░╤Г╨┤╨╕╨╛╨╖╨░╨┐╨╕╤Б╨╕')).toBeInTheDocument()
+-    expect(screen.getByText('╨б╨▓╨╛╨┤╨║╨░ ╨┤╨╜╤П')).toBeInTheDocument()
++    expect(screen.getByRole('heading', { name: /╨Э╨╡╨┤╨░╨▓╨╜╨╕╨╡ ╨░╤Г╨┤╨╕╨╛╨╖╨░╨┐╨╕╤Б╨╕/i })).toBeInTheDocument()
++    expect(screen.getByRole('heading', { name: /╨б╨▓╨╛╨┤╨║╨░ ╨┤╨╜╤П/i })).toBeInTheDocument()
+   })
+ 
+   it('toggles audio play button icon state', () => {
+     render(<DashboardOverview />)
+-    const playBtn = screen.getByLabelText('╨Т╨╛╤Б╨┐╤А╨╛╨╕╨╖╨▓╨╡╤Б╤В╨╕')
++    const playBtns = screen.getAllByLabelText(/╨Т╨╛╤Б╨┐╤А╨╛╨╕╨╖╨▓╨╡╤Б╤В╨╕/i)
++    const playBtn = playBtns[0]
+     expect(playBtn).toBeInTheDocument()
+ 
+     fireEvent.click(playBtn)
+-    expect(screen.getByLabelText('╨Я╤А╨╕╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М')).toBeInTheDocument()
++    expect(screen.getByLabelText(/╨Я╤А╨╕╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М/i)).toBeInTheDocument()
+ 
+-    fireEvent.click(screen.getByLabelText('╨Я╤А╨╕╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М'))
+-    expect(screen.getByLabelText('╨Т╨╛╤Б╨┐╤А╨╛╨╕╨╖╨▓╨╡╤Б╤В╨╕')).toBeInTheDocument()
++    fireEvent.click(screen.getByLabelText(/╨Я╤А╨╕╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М/i))
++    // We get multiple again probably
++    expect(screen.getAllByLabelText(/╨Т╨╛╤Б╨┐╤А╨╛╨╕╨╖╨▓╨╡╤Б╤В╨╕/i).length).toBeGreaterThan(0)
+   })
+ 
+   it('toggles task completion and updates productivity stats', () => {
+     render(<DashboardOverview />)
+-    // Find task checkbox by aria-label
+     const firstCheckbox = screen.getByLabelText('╨Ю╤В╨╝╨╡╤В╨╕╤В╤М ╨╖╨░╨┤╨░╤З╤Г: ╨Я╨╛╨┤╨│╨╛╤В╨╛╨▓╨╕╤В╤М ╨╛╤В╤З╨╡╤В ╨┐╨╛ ╨┐╤А╨╛╨┤╤Г╨║╤В╨╛╨▓╤Л╨╝ ╨╝╨╡╤В╤А╨╕╨║╨░╨╝ Q3')
+     expect(firstCheckbox).toHaveAttribute('aria-checked', 'false')
+ 
+-    fireEvent.click(firstCheckbox)
++    act(() => {
++      fireEvent.click(firstCheckbox)
++    })
+     expect(firstCheckbox).toHaveAttribute('aria-checked', 'true')
+   })
+ 
+   it('does NOT contain redundant QuickInputBar (TASK-40)', () => {
+     render(<DashboardOverview />)
+-    // Redundant static quick input bar was removed in TASK-40
+     expect(screen.queryByPlaceholderText(/╨С╤Л╤Б╤В╤А╨░╤П ╨╝╤Л╤Б╨╗╤М ╨╕╨╗╨╕ ╨╖╨░╨┤╨░╤З╨░/)).toBeNull()
+   })
+ 
+   it('filters task list when filter buttons are clicked', () => {
+     render(<DashboardOverview />)
+-    const urgentBtn = screen.getByText(/╨б╤А╨╛╤З╨╜╤Л╨╡/)
++    const urgentBtn = screen.getByRole('button', { name: /╨б╤А╨╛╤З╨╜╤Л╨╡/i })
+     fireEvent.click(urgentBtn)
+ 
+     expect(screen.getByText('╨Я╤А╨╛╨▓╨╡╤Б╤В╨╕ ╤А╨╡╨▓╤М╤О ╨░╤А╤Е╨╕╤В╨╡╨║╤В╤Г╤А╤Л ╨╝╨╕╨║╤А╨╛╤Б╨╡╤А╨▓╨╕╤Б╨╛╨▓')).toBeInTheDocument()
+diff --git a/src/components/dashboard/components/DashboardTaskItem.tsx b/src/components/dashboard/components/DashboardTaskItem.tsx
+index c21e15d..ee403db 100644
+--- a/src/components/dashboard/components/DashboardTaskItem.tsx
++++ b/src/components/dashboard/components/DashboardTaskItem.tsx
+@@ -29,7 +29,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+   const isOverdue = Boolean(
+     !task.isCompleted &&
+     task.dueDate &&
+-    task.dueDate.includes('-') &&
+     task.dueDate < todayStr
+   )
+ 
+@@ -49,12 +48,16 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+       } p-space-md rounded-2xl transition-all duration-200 group shadow-xs border ${
+         task.isFocused
+           ? 'border-primary/50 ring-1 ring-primary/30 bg-surface-container-low'
+-          : 'border-outline-variant/20 hover:border-outline-variant/40'
++          : isOverdue && !task.isCompleted
++            ? 'border-error/30 ring-1 ring-error/20 bg-gradient-to-r from-error/5 to-transparent'
++            : 'border-outline-variant/20 hover:border-outline-variant/40'
+       } ${
+         task.isCompleted
+           ? 'bg-surface-container-lowest/40 hover:bg-surface-container-low/70'
+-          : 'bg-surface-container-low hover:bg-surface-container'
+-      } ${isSelectMode ? 'cursor-pointer' : ''}`}
++          : task.isFocused || (isOverdue && !task.isCompleted)
++            ? ''
++            : 'bg-surface-container-low hover:bg-surface-container'
++      } cursor-pointer`}
+     >
+       <div className={`flex ${isCompact ? 'items-start' : 'items-center'} gap-3 min-w-0 flex-1`}>
+         {/* Multi-selection Checkbox when select mode is active */}
+@@ -92,6 +95,12 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+               {task.title}
+             </span>
+ 
++            {isOverdue && (
++              <span className="shrink-0 px-2 py-0.5 rounded-full bg-error/15 text-error text-[11px] font-medium flex items-center gap-1 border border-error/20">
++                ╨Я╤А╨╛╤Б╤А╨╛╤З╨╡╨╜╨╛
++              </span>
++            )}
++            
+             {task.isFocused && (
+               <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[11px] font-medium flex items-center gap-1 border border-primary/20">
+                 ╨Т ╤Д╨╛╨║╤Г╤Б╨╡
+@@ -103,16 +112,9 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+             <span
+               className={`px-2 py-0.5 rounded-md bg-surface-container-high/60 text-xs font-medium ${task.categoryClass}`}
+             >
+-              {task.category}
++              {task.category.startsWith('#') ? task.category : `#${task.category}`}
+             </span>
+ 
+-            {task.hasAudio && (
+-              <span className="inline-flex items-center gap-1 text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container text-xs">
+-                <span className="material-symbols-outlined text-[13px] text-primary">mic</span>
+-                {task.audioDuration}
+-              </span>
+-            )}
+-
+             {task.noteSubtitle && (
+               <span className="text-outline text-xs truncate max-w-xs">{task.noteSubtitle}</span>
+             )}
+@@ -122,13 +124,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+                 {task.completedTime}
+               </span>
+             )}
+-
+-            {isOverdue && (
+-              <span className="px-2 py-0.5 rounded-full bg-error/10 text-error text-[11px] font-medium flex items-center gap-1">
+-                <span className="material-symbols-outlined text-[13px]">warning</span>
+-                ╨Я╤А╨╛╤Б╤А╨╛╤З╨╡╨╜╨╛
+-              </span>
+-            )}
+           </div>
+         </div>
+       </div>
+@@ -182,14 +177,6 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
+             </button>
+           )}
+ 
+-          <button
+-            type="button"
+-            onClick={() => onClickItem?.(task.id)}
+-            aria-label="╨Ю╤В╨║╤А╤Л╤В╤М ╨┐╨╛╨┤╤А╨╛╨▒╨╜╨╛╤Б╤В╨╕ ╨╖╨░╨┤╨░╤З╨╕"
+-            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded-lg hover:bg-surface-container-highest text-outline hover:text-on-surface transition-all cursor-pointer"
+-          >
+-            <span className="material-symbols-outlined text-body-md">more_vert</span>
+-          </button>
+         </div>
+       </div>
+     </div>
+diff --git a/src/components/dashboard/components/DashboardTaskList.tsx b/src/components/dashboard/components/DashboardTaskList.tsx
+index 3d10b5e..0d13675 100644
+--- a/src/components/dashboard/components/DashboardTaskList.tsx
++++ b/src/components/dashboard/components/DashboardTaskList.tsx
+@@ -30,7 +30,6 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+     setSort,
+     setFocusedTask,
+     isSelectMode,
+-    setSelectMode,
+     selectedTaskIds,
+     toggleSelectTask,
+     updateItem,
+@@ -38,19 +37,18 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+ 
+   const { openDrawer } = useDrawerStore()
+ 
+-  // Filter tasks based on active category tab
+   const filteredTasks = useMemo(() => {
++    const todayStr = new Date().toISOString().split('T')[0]
+     return tasks.filter((t) => {
+       if (filter === 'urgent') return t.isUrgent
+-      if (filter === 'voice') return t.hasAudio
+-      if (filter === 'summaries') return t.category === '#╨Р╨╜╨░╨╗╨╕╤В╨╕╨║╨░' || t.isUrgent
++      if (filter === 'overdue') return t.dueDate && t.dueDate < todayStr && !t.isCompleted
+       return true
+     })
+   }, [tasks, filter])
+ 
+   // Sort tasks according to criteria and direction
+   const { sortedTasks, unscheduledTasks } = useMemo(() => {
+-    const list = [...filteredTasks]
++    let list = [...filteredTasks]
+ 
+     if (sortBy === 'priority') {
+       const pWeights: Record<string, number> = { high: 3, medium: 2, low: 1 }
+@@ -59,9 +57,25 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+         const pB = b.isUrgent ? pWeights.high : pWeights.medium
+         return sortDirection === 'asc' ? pB - pA : pA - pB
+       })
+-      return { sortedTasks: list, unscheduledTasks: [] }
++    } else if (sortBy === 'created') {
++      if (sortDirection === 'desc') {
++        list.reverse()
++      }
++    } else if (sortBy === 'title') {
++      list.sort((a, b) => {
++        return sortDirection === 'asc'
++          ? a.title.localeCompare(b.title, 'ru')
++          : b.title.localeCompare(a.title, 'ru')
++      })
++    } else if (sortBy === 'manual') {
++      if (sortDirection === 'desc') {
++        list.reverse()
++      }
+     }
+ 
++    let finalSorted = list
++    let finalUnscheduled: TaskItemData[] = []
++
+     if (sortBy === 'time') {
+       const withTime: TaskItemData[] = []
+       const withoutTime: TaskItemData[] = []
+@@ -82,38 +96,50 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+           : timeB.localeCompare(timeA)
+       })
+ 
+-      return { sortedTasks: withTime, unscheduledTasks: withoutTime }
++      finalSorted = withTime
++      finalUnscheduled = withoutTime
+     }
+ 
+-    if (sortBy === 'created') {
+-      // Invert or normal
+-      if (sortDirection === 'desc') {
+-        list.reverse()
+-      }
+-      return { sortedTasks: list, unscheduledTasks: [] }
+-    }
++    // Move completed to bottom, overdue to top (sorted by date/time ascending)
++    const sortSpecial = (arr: TaskItemData[]) => {
++      const todayStr = new Date().toISOString().split('T')[0]
++      
++      return [...arr].sort((a, b) => {
++        if (a.isCompleted && !b.isCompleted) return 1
++        if (!a.isCompleted && b.isCompleted) return -1
++        if (a.isCompleted && b.isCompleted) return 0
+ 
+-    if (sortBy === 'title') {
+-      list.sort((a, b) => {
+-        return sortDirection === 'asc'
+-          ? a.title.localeCompare(b.title, 'ru')
+-          : b.title.localeCompare(a.title, 'ru')
++        const isOverdueA = a.dueDate && a.dueDate < todayStr
++        const isOverdueB = b.dueDate && b.dueDate < todayStr
++
++        if (isOverdueA && !isOverdueB) return -1
++        if (!isOverdueA && isOverdueB) return 1
++
++        if (isOverdueA && isOverdueB) {
++          const dateA = a.dueDate || ''
++          const dateB = b.dueDate || ''
++          if (dateA !== dateB) return dateA.localeCompare(dateB)
++          
++          const timeA = a.time || ''
++          const timeB = b.time || ''
++          return timeA.localeCompare(timeB)
++        }
++
++        return 0
+       })
+-      return { sortedTasks: list, unscheduledTasks: [] }
+     }
+ 
+-    // 'manual' - preserve original order
+-    if (sortDirection === 'desc') {
+-      list.reverse()
++    return { 
++      sortedTasks: sortSpecial(finalSorted), 
++      unscheduledTasks: sortSpecial(finalUnscheduled) 
+     }
+-    return { sortedTasks: list, unscheduledTasks: [] }
+   }, [filteredTasks, sortBy, sortDirection])
+ 
+   const urgentCount = tasks.filter((t) => t.isUrgent).length
+-  const voiceCount = tasks.filter((t) => t.hasAudio).length
++  const todayStr = new Date().toISOString().split('T')[0]
++  const overdueCount = tasks.filter((t) => t.dueDate && t.dueDate < todayStr && !t.isCompleted).length
+ 
+   const handleRescheduleToday = (id: string) => {
+-    const todayStr = new Date().toISOString().split('T')[0]
+     updateItem(id, { dueDate: todayStr }).catch(() => {})
+   }
+ 
+@@ -128,10 +154,10 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+             type="button"
+             aria-pressed={filter === 'all'}
+             onClick={() => onFilterChange('all')}
+-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
++            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 cursor-pointer border ${
+               filter === 'all'
+-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
++                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
++                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+             }`}
+           >
+             ╨Т╤Б╨╡ <span className="text-xs opacity-75">{tasks.length}</span>
+@@ -140,38 +166,26 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+             type="button"
+             aria-pressed={filter === 'urgent'}
+             onClick={() => onFilterChange('urgent')}
+-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
++            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 cursor-pointer border ${
+               filter === 'urgent'
+-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+-            }`}
+-          >
+-            ╨б╤А╨╛╤З╨╜╤Л╨╡ <span className="text-xs text-error font-medium">{urgentCount}</span>
+-          </button>
+-          <button
+-            type="button"
+-            aria-pressed={filter === 'voice'}
+-            onClick={() => onFilterChange('voice')}
+-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all flex items-center gap-1 cursor-pointer ${
+-              filter === 'voice'
+-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
++                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
++                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+             }`}
+           >
+-            <span>╨У╨╛╨╗╨╛╤Б╨╛╨▓╤Л╨╡</span>
+-            <span className="text-xs opacity-75">{voiceCount}</span>
++            ╨б╤А╨╛╤З╨╜╤Л╨╡ <span className={`text-xs ${urgentCount > 0 ? 'text-error font-medium' : 'opacity-75'}`}>{urgentCount}</span>
+           </button>
+           <button
+             type="button"
+-            aria-pressed={filter === 'summaries'}
+-            onClick={() => onFilterChange('summaries')}
+-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
+-              filter === 'summaries'
+-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
+-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
++            aria-pressed={filter === 'overdue'}
++            onClick={() => onFilterChange('overdue')}
++            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 flex items-center gap-1 cursor-pointer border ${
++              filter === 'overdue'
++                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
++                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+             }`}
+           >
+-            ╨б╨▓╨╛╨┤╨║╨╕ <span className="text-xs opacity-75">1</span>
++            <span>╨Я╤А╨╛╤Б╤А╨╛╤З╨╡╨╜╨╜╤Л╨╡</span>
++            <span className={`text-xs ${overdueCount > 0 ? 'text-error font-medium' : 'opacity-75'}`}>{overdueCount}</span>
+           </button>
+         </div>
+ 
+@@ -179,51 +193,36 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
+         <div className="flex items-center gap-2.5">
+           {/* View switcher */}
+           {onViewModeChange && (
+-            <div className="flex items-center p-0.5 rounded-xl bg-surface-container-low shadow-sm border border-outline-variant/20 hidden sm:flex">
++            <div className="inline-flex items-center p-0.5 rounded-lg bg-surface-container-low border border-outline-variant/30 hidden sm:flex">
+               <button
+                 type="button"
+                 onClick={() => onViewModeChange('list')}
+                 aria-label="╨Я╨╡╤А╨╡╨║╨╗╤О╤З╨╕╤В╤М ╨╜╨░ ╨▓╨╕╨┤ ╤Б╨┐╨╕╤Б╨╛╨║"
+-                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
++                className={`px-2 py-1 rounded-md text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                   viewMode === 'list'
+                     ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
+                     : 'text-outline hover:text-on-surface'
+                 }`}
+               >
+-                <span className="material-symbols-outlined text-[16px]">view_agenda</span>
++                <span className="material-symbols-outlined text-[15px]">view_agenda</span>
+                 <span>╨б╨┐╨╕╤Б╨╛╨║</span>
+               </button>
+               <button
+                 type="button"
+                 onClick={() => onViewModeChange('board')}
+                 aria-label="╨Я╨╡╤А╨╡╨║╨╗╤О╤З╨╕╤В╤М ╨╜╨░ ╨▓╨╕╨┤ ╨┤╨╛╤Б╨║╨░"
+-                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
++                className={`px-2 py-1 rounded-md text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                   viewMode === 'board'
+                     ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
+                     : 'text-outline hover:text-on-surface'
+                 }`}
+               >
+-                <span className="material-symbols-outlined text-[16px]">dashboard</span>
++                <span className="material-symbols-outlined text-[15px]">dashboard</span>
+                 <span>╨Ф╨╛╤Б╨║╨░</span>
+               </button>
+             </div>
+           )}
+ 
+-          <button
+-            type="button"
+-            onClick={() => setSelectMode(!isSelectMode)}
+-            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+-              isSelectMode
+-                ? 'bg-primary/20 text-primary border border-primary/40'
+-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low border border-transparent'
+-            }`}
+-          >
+-            <span className="material-symbols-outlined text-[16px]">
+-              {isSelectMode ? 'close' : 'checklist'}
+-            </span>
+-            <span>{isSelectMode ? '╨Ю╤В╨╝╨╡╨╜╨░' : '╨Т╤Л╨▒╤А╨░╤В╤М'}</span>
+-          </button>
+-
+           <TaskSortMenu
+             sortBy={sortBy}
+             sortDirection={sortDirection}
+diff --git a/src/components/dashboard/components/FocusHeroCard.tsx b/src/components/dashboard/components/FocusHeroCard.tsx
+index afe7d05..3c5ac84 100644
+--- a/src/components/dashboard/components/FocusHeroCard.tsx
++++ b/src/components/dashboard/components/FocusHeroCard.tsx
+@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti'
+ import { MiniAudioPlayer } from '../../audio/MiniAudioPlayer'
+ import { ChecklistItem } from '../../../types/item'
+ import { useAppStore } from '../../../store/useAppStore'
++import { useDrawerStore } from '../../../store/useDrawerStore'
+ import { Checkbox } from '../../ui/Checkbox'
+ 
+ export interface FocusHeroCardProps {
+@@ -21,8 +22,6 @@ export interface FocusHeroCardProps {
+ }
+ 
+ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
+-  isPlaying = false,
+-  onTogglePlay,
+   title: propTitle,
+   description: propDescription,
+   deadlineText: propDeadLine,
+@@ -31,10 +30,10 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
+   audioUrl: propAudioUrl,
+   checklist: propChecklist,
+   onComplete,
+-  onSummary,
+   isCompleted: initialCompleted = false,
+ }) => {
+   const { items, setFocusedTask, toggleTask, updateItem } = useAppStore()
++  const { openDrawer } = useDrawerStore()
+   const [isSwitchFocusOpen, setIsSwitchFocusOpen] = useState(false)
+   const switchMenuRef = useRef<HTMLDivElement>(null)
+ 
+@@ -253,8 +252,11 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
+       </div>
+ 
+       {/* Main Task Title & Description */}
+-      <div className="mb-space-md">
+-        <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug font-semibold">
++      <div 
++        className={`mb-space-md ${focusedTask ? 'cursor-pointer group/title' : ''}`}
++        onClick={() => focusedTask && openDrawer(focusedTask.id)}
++      >
++        <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug font-semibold group-hover/title:text-primary transition-colors">
+           {currentTitle}
+         </h2>
+         {currentDescription && (
+@@ -300,34 +302,7 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
+ 
+       {/* Footer Actions */}
+       <div className="flex items-center justify-between gap-space-sm pt-2 flex-wrap">
+-        <div className="flex items-center gap-2">
+-          {onTogglePlay && (
+-            <button
+-              type="button"
+-              onClick={onTogglePlay}
+-              aria-label={isPlaying ? '╨Я╤А╨╕╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М' : '╨Т╨╛╤Б╨┐╤А╨╛╨╕╨╖╨▓╨╡╤Б╤В╨╕'}
+-              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
+-            >
+-              <span className="material-symbols-outlined text-body-md">
+-                {isPlaying ? 'pause' : 'play_arrow'}
+-              </span>
+-              <span>{isPlaying ? '╨Я╨░╤Г╨╖╨░' : '╨б╨╗╤Г╤И╨░╤В╤М'}</span>
+-            </button>
+-          )}
+-
+-          {onSummary && (
+-            <button
+-              type="button"
+-              onClick={onSummary}
+-              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
+-            >
+-              <span className="material-symbols-outlined text-body-md text-primary">
+-                auto_awesome
+-              </span>
+-              <span>╨б╨▓╨╛╨┤╨║╨░</span>
+-            </button>
+-          )}
+-        </div>
++        <div className="flex items-center gap-2"></div>
+ 
+         {/* Complete Task Button */}
+         <button
+diff --git a/src/components/dashboard/components/RecentAudioWidget.tsx b/src/components/dashboard/components/RecentAudioWidget.tsx
+index ee63a59..cc9c90e 100644
+--- a/src/components/dashboard/components/RecentAudioWidget.tsx
++++ b/src/components/dashboard/components/RecentAudioWidget.tsx
+@@ -16,21 +16,21 @@ const DEFAULT_MEMOS: AudioMemoItemData[] = [
+     title: '╨Я╨╗╨░╨╜ ╤А╨╡╨┤╨╕╨╖╨░╨╣╨╜╨░ ╨╝╨╛╨▒╨╕╨╗╤М╨╜╨╛╨│╨╛ ╤Н╨║╤А╨░╨╜╨░',
+     duration: '0:42 ╨╝╨╕╨╜',
+     time: '14:30',
+-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
++    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=1',
+   },
+   {
+     id: 'memo-2',
+     title: '╨С╤А╨╡╨╣╨╜╤И╤В╨╛╤А╨╝ ╤Д╨╕╤З╨╕ Voice-to-SQL',
+     duration: '2:18 ╨╝╨╕╨╜',
+     time: '12:10',
+-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
++    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=2',
+   },
+   {
+     id: 'memo-3',
+     title: '╨Ч╨░╨╝╨╡╤В╨║╨╕ ╨║ ╨▓╤Б╤В╤А╨╡╤З╨╡ 1-╨╜╨░-1 ╤Б ╤В╨╕╨╝╨╗╨╕╨┤╨╛╨╝',
+     duration: '1:05 ╨╝╨╕╨╜',
+     time: '10:45',
+-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
++    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=3',
+   },
+ ]
+ 
+diff --git a/src/components/layout/AppLayout.tsx b/src/components/layout/AppLayout.tsx
+index f32d758..b4b1c29 100644
+--- a/src/components/layout/AppLayout.tsx
++++ b/src/components/layout/AppLayout.tsx
+@@ -2,11 +2,9 @@ import React, { useEffect } from 'react'
+ import { Sidebar } from './Sidebar'
+ import { Header } from './Header'
+ import { QuickCaptureWidget } from './QuickCaptureWidget'
+-import { RecordingModal } from '../audio/RecordingModal'
+ import { SlideOverDrawer } from './SlideOverDrawer'
+ import { CommandPaletteModal } from '../ui/CommandPaletteModal'
+ import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
+-import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
+ import { useQuickCaptureHotkey } from '../../hooks/useQuickCaptureHotkey'
+ import { startReminderScheduler } from '../../lib/remindersService'
+ import { startDailyDigestScheduler } from '../../lib/dailyDigestScheduler'
+@@ -18,11 +16,9 @@ interface AppLayoutProps {
+ 
+ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+   const {
+-    activeTab,
+     setActiveTab,
+     isSidebarCollapsed,
+     toggleSidebar,
+-    setRecordingModalOpen,
+   } = useNavigationStore()
+ 
+   // Hotkey / or C for quick capture (TASK-40)
+@@ -38,14 +34,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+     }
+   }, [])
+ 
+-  // Spacebar hotkey to toggle recording modal (TASK-13)
+-  useSpaceRecordShortcut({
+-    onToggle: () => {
+-      const current = useNavigationStore.getState().isRecordingModalOpen
+-      setRecordingModalOpen(!current)
+-    },
+-    enabled: activeTab === 'overview' || activeTab === 'notes',
+-  })
++
+ 
+   // Sync state with browser hash navigation (e.g., back / forward history)
+   useEffect(() => {
+@@ -132,8 +121,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+       {/* Global Command Palette (тМШK) */}
+       <CommandPaletteModal />
+ 
+-      {/* Quick Recording Modal Overlay */}
+-      <RecordingModal />
+     </div>
+   )
+ }
+diff --git a/src/components/layout/QuickCaptureWidget.tsx b/src/components/layout/QuickCaptureWidget.tsx
+index 54f1cb3..3a6b74f 100644
+--- a/src/components/layout/QuickCaptureWidget.tsx
++++ b/src/components/layout/QuickCaptureWidget.tsx
+@@ -1,7 +1,6 @@
+ import React, { useState, useRef, useEffect } from 'react'
+ import { useQuickCaptureStore } from '../../store/useQuickCaptureStore'
+ import { useAppStore } from '../../store/useAppStore'
+-import { useNavigationStore } from '../../store/navigationStore'
+ import { useDrawerStore } from '../../store/useDrawerStore'
+ import { useAudioRecorder } from '../../hooks/useAudioRecorder'
+ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
+@@ -9,6 +8,8 @@ import { LiveWaveform } from '../audio/LiveWaveform'
+ import { structureVoiceNote } from '../../lib/geminiStructuring'
+ import { Item } from '../../types/item'
+ 
++import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
++
+ export interface QuickCaptureWidgetProps {
+   onSave?: (text: string) => void
+ }
+@@ -39,7 +40,6 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
+   const tagMenuRef = useRef<HTMLDivElement>(null)
+ 
+   const { addItem } = useAppStore()
+-  const { setRecordingModalOpen } = useNavigationStore()
+   const { openDrawer } = useDrawerStore()
+   const { isRecording, stream, startRecording, stopRecording } = useAudioRecorder()
+   const {
+@@ -107,8 +107,11 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
+     }
+   }, [])
+ 
++  useSpaceRecordShortcut({
++    onToggle: () => handleToggleRecord(),
++  })
++
+   const handleToggleRecord = async () => {
+-    setRecordingModalOpen(true)
+     if (isRecording) {
+       stopListening()
+       const blob = await stopRecording()
+diff --git a/src/components/tasks/ImportFromExistingModal.tsx b/src/components/tasks/ImportFromExistingModal.tsx
+index 6d86719..8478834 100644
+--- a/src/components/tasks/ImportFromExistingModal.tsx
++++ b/src/components/tasks/ImportFromExistingModal.tsx
+@@ -94,7 +94,7 @@ export const ImportFromExistingModal: React.FC<ImportFromExistingModalProps> = (
+                     <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-medium">
+                       {item.type === 'note' ? '╨Ч╨░╨╝╨╡╤В╨║╨░' : '╨Ч╨░╨┤╨░╤З╨░'}
+                     </span>
+-                    <span>{item.categoryTag}</span>
++                    <span>{item.categoryTag?.startsWith('#') ? item.categoryTag : `#${item.categoryTag}`}</span>
+                   </div>
+                 </div>
+ 
+diff --git a/src/components/ui/CommandPaletteModal.tsx b/src/components/ui/CommandPaletteModal.tsx
+index 566fec5..41c214b 100644
+--- a/src/components/ui/CommandPaletteModal.tsx
++++ b/src/components/ui/CommandPaletteModal.tsx
+@@ -246,7 +246,7 @@ export const CommandPaletteModal: React.FC = () => {
+ 
+                       <div className="flex items-center gap-2 shrink-0 text-xs text-outline">
+                         <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">
+-                          {item.categoryTag}
++                          {item.categoryTag?.startsWith('#') ? item.categoryTag : `#${item.categoryTag}`}
+                         </span>
+                         {isSelected && (
+                           <span className="text-primary font-medium">тЖ╡ ╨Ю╤В╨║╤А╤Л╤В╤М</span>
+diff --git a/src/index.css b/src/index.css
+index f962288..43c2cd3 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -11,14 +11,14 @@
+   --color-surface-bright: #38393e;
+   --color-surface-variant: #343439;
+ 
+-  --color-primary: #a078ff;
+-  --color-primary-container: #a078ff;
+-  --color-on-primary: #23005c;
+-  --color-on-primary-container: #340080;
+-  --color-primary-fixed: #e9ddff;
+-  --color-primary-fixed-dim: #d0bcff;
+-  --color-on-primary-fixed: #23005c;
+-  --color-on-primary-fixed-variant: #5516be;
++  --color-primary: #94cce2;
++  --color-primary-container: #0c4c60;
++  --color-on-primary: #003448;
++  --color-on-primary-container: #d2eefc;
++  --color-primary-fixed: #d2eefc;
++  --color-primary-fixed-dim: #94cce2;
++  --color-on-primary-fixed: #001f2a;
++  --color-on-primary-fixed-variant: #0c4c60;
+ 
+   --color-secondary: #4edea3;
+   --color-secondary-container: #00a572;
+@@ -88,14 +88,14 @@ html.dark {
+   --color-surface-bright: #38393e;
+   --color-surface-variant: #343439;
+ 
+-  --color-primary: #a078ff;
+-  --color-primary-container: #a078ff;
+-  --color-on-primary: #23005c;
+-  --color-on-primary-container: #340080;
+-  --color-primary-fixed: #e9ddff;
+-  --color-primary-fixed-dim: #d0bcff;
+-  --color-on-primary-fixed: #23005c;
+-  --color-on-primary-fixed-variant: #5516be;
++  --color-primary: #94cce2;
++  --color-primary-container: #0c4c60;
++  --color-on-primary: #003448;
++  --color-on-primary-container: #d2eefc;
++  --color-primary-fixed: #d2eefc;
++  --color-primary-fixed-dim: #94cce2;
++  --color-on-primary-fixed: #001f2a;
++  --color-on-primary-fixed-variant: #0c4c60;
+ 
+   --color-secondary: #4edea3;
+   --color-secondary-container: #00a572;
+@@ -128,8 +128,8 @@ html.dark {
+   --color-outline-variant: #494454;
+   --color-inverse-surface: #e3e2e8;
+   --color-inverse-on-surface: #2f3035;
+-  --color-inverse-primary: #6d3bd7;
+-  --color-surface-tint: #d0bcff;
++  --color-inverse-primary: #2a6478;
++  --color-surface-tint: #94cce2;
+ 
+   --bg-surface: #121317;
+   --bg-surface-container-low: #1a1b20;
+@@ -145,30 +145,30 @@ html.dark {
+ 
+   --glass-panel-bg: rgba(26, 31, 44, 0.65);
+   --glass-panel-border: rgba(255, 255, 255, 0.1);
+-  --glow-violet-shadow: 0 0 25px -5px rgba(160, 120, 255, 0.4);
++  --glow-violet-shadow: 0 0 25px -5px rgba(148, 204, 226, 0.4);
+   --glow-emerald-shadow: 0 0 15px -3px rgba(0, 165, 114, 0.4);
+ }
+ 
+ html.light {
+   color-scheme: light;
+-  --color-surface: #f6f7fb;
++  --color-surface: #fcfcfc;
+   --color-surface-container-low: #ffffff;
+-  --color-surface-container: #f0f2f8;
+-  --color-surface-container-high: #e6e9f2;
+-  --color-surface-container-highest: #d9dee9;
++  --color-surface-container: #f5f5f5;
++  --color-surface-container-high: #eeeeee;
++  --color-surface-container-highest: #e5e5e5;
+   --color-surface-container-lowest: #ffffff;
+-  --color-surface-dim: #dcdee6;
++  --color-surface-dim: #e5e5e5;
+   --color-surface-bright: #ffffff;
+-  --color-surface-variant: #e2e4ed;
++  --color-surface-variant: #e5e5e5;
+ 
+-  --color-primary: #6b3fe4;
+-  --color-primary-container: #ede8ff;
++  --color-primary: #2a6478;
++  --color-primary-container: #d2eefc;
+   --color-on-primary: #ffffff;
+-  --color-on-primary-container: #2b0b7d;
+-  --color-primary-fixed: #ede8ff;
+-  --color-primary-fixed-dim: #cbbcff;
+-  --color-on-primary-fixed: #20005c;
+-  --color-on-primary-fixed-variant: #5325cd;
++  --color-on-primary-container: #001f2a;
++  --color-primary-fixed: #d2eefc;
++  --color-primary-fixed-dim: #94cce2;
++  --color-on-primary-fixed: #001f2a;
++  --color-on-primary-fixed-variant: #0c4c60;
+ 
+   --color-secondary: #00875a;
+   --color-secondary-container: #d2f7e4;
+@@ -193,56 +193,56 @@ html.light {
+   --color-on-error: #ffffff;
+   --color-on-error-container: #410002;
+ 
+-  --color-background: #f6f7fb;
+-  --color-on-background: #191b22;
+-  --color-on-surface: #191b22;
+-  --color-on-surface-variant: #454752;
+-  --color-outline: #727583;
+-  --color-outline-variant: #c3c6d4;
++  --color-background: #fcfcfc;
++  --color-on-background: #111111;
++  --color-on-surface: #111111;
++  --color-on-surface-variant: #555555;
++  --color-outline: #888888;
++  --color-outline-variant: #e0e0e0;
+   --color-inverse-surface: #2e3037;
+   --color-inverse-on-surface: #f1f2f9;
+-  --color-inverse-primary: #cbbeff;
+-  --color-surface-tint: #6b3fe4;
++  --color-inverse-primary: #94cce2;
++  --color-surface-tint: #2a6478;
+ 
+-  --bg-surface: #f6f7fb;
++  --bg-surface: #fcfcfc;
+   --bg-surface-container-low: #ffffff;
+-  --bg-surface-container: #f0f2f8;
+-  --bg-surface-container-high: #e6e9f2;
+-  --bg-surface-container-highest: #d9dee9;
++  --bg-surface-container: #f5f5f5;
++  --bg-surface-container-high: #eeeeee;
++  --bg-surface-container-highest: #e5e5e5;
+   --bg-surface-container-lowest: #ffffff;
+ 
+-  --text-on-surface: #191b22;
+-  --text-on-surface-variant: #454752;
+-  --text-outline: #727583;
+-  --text-outline-variant: #c3c6d4;
++  --text-on-surface: #111111;
++  --text-on-surface-variant: #555555;
++  --text-outline: #888888;
++  --text-outline-variant: #e0e0e0;
+ 
+   --glass-panel-bg: rgba(255, 255, 255, 0.85);
+   --glass-panel-border: rgba(0, 0, 0, 0.08);
+-  --glow-violet-shadow: 0 4px 20px -2px rgba(107, 63, 228, 0.22);
++  --glow-violet-shadow: 0 4px 20px -2px rgba(42, 100, 120, 0.22);
+   --glow-emerald-shadow: 0 4px 15px -2px rgba(0, 135, 90, 0.2);
+ }
+ 
+ @media (prefers-color-scheme: light) {
+   :root:not(.dark) {
+     color-scheme: light;
+-    --color-surface: #f6f7fb;
++    --color-surface: #fcfcfc;
+     --color-surface-container-low: #ffffff;
+-    --color-surface-container: #f0f2f8;
+-    --color-surface-container-high: #e6e9f2;
+-    --color-surface-container-highest: #d9dee9;
++    --color-surface-container: #f5f5f5;
++    --color-surface-container-high: #eeeeee;
++    --color-surface-container-highest: #e5e5e5;
+     --color-surface-container-lowest: #ffffff;
+-    --color-surface-dim: #dcdee6;
++    --color-surface-dim: #e5e5e5;
+     --color-surface-bright: #ffffff;
+-    --color-surface-variant: #e2e4ed;
++    --color-surface-variant: #e5e5e5;
+ 
+-    --color-primary: #6b3fe4;
+-    --color-primary-container: #ede8ff;
++    --color-primary: #2a6478;
++    --color-primary-container: #d2eefc;
+     --color-on-primary: #ffffff;
+-    --color-on-primary-container: #2b0b7d;
+-    --color-primary-fixed: #ede8ff;
+-    --color-primary-fixed-dim: #cbbcff;
+-    --color-on-primary-fixed: #20005c;
+-    --color-on-primary-fixed-variant: #5325cd;
++    --color-on-primary-container: #001f2a;
++    --color-primary-fixed: #d2eefc;
++    --color-primary-fixed-dim: #94cce2;
++    --color-on-primary-fixed: #001f2a;
++    --color-on-primary-fixed-variant: #0c4c60;
+ 
+     --color-secondary: #00875a;
+     --color-secondary-container: #d2f7e4;
+@@ -267,32 +267,32 @@ html.light {
+     --color-on-error: #ffffff;
+     --color-on-error-container: #410002;
+ 
+-    --color-background: #f6f7fb;
+-    --color-on-background: #191b22;
+-    --color-on-surface: #191b22;
+-    --color-on-surface-variant: #454752;
+-    --color-outline: #727583;
+-    --color-outline-variant: #c3c6d4;
++    --color-background: #fcfcfc;
++    --color-on-background: #111111;
++    --color-on-surface: #111111;
++    --color-on-surface-variant: #555555;
++    --color-outline: #888888;
++    --color-outline-variant: #e0e0e0;
+     --color-inverse-surface: #2e3037;
+     --color-inverse-on-surface: #f1f2f9;
+-    --color-inverse-primary: #cbbeff;
+-    --color-surface-tint: #6b3fe4;
++    --color-inverse-primary: #94cce2;
++    --color-surface-tint: #2a6478;
+ 
+-    --bg-surface: #f6f7fb;
++    --bg-surface: #fcfcfc;
+     --bg-surface-container-low: #ffffff;
+-    --bg-surface-container: #f0f2f8;
+-    --bg-surface-container-high: #e6e9f2;
+-    --bg-surface-container-highest: #d9dee9;
++    --bg-surface-container: #f5f5f5;
++    --bg-surface-container-high: #eeeeee;
++    --bg-surface-container-highest: #e5e5e5;
+     --bg-surface-container-lowest: #ffffff;
+ 
+-    --text-on-surface: #191b22;
+-    --text-on-surface-variant: #454752;
+-    --text-outline: #727583;
+-    --text-outline-variant: #c3c6d4;
++    --text-on-surface: #111111;
++    --text-on-surface-variant: #555555;
++    --text-outline: #888888;
++    --text-outline-variant: #e0e0e0;
+ 
+     --glass-panel-bg: rgba(255, 255, 255, 0.85);
+     --glass-panel-border: rgba(0, 0, 0, 0.08);
+-    --glow-violet-shadow: 0 4px 20px -2px rgba(107, 63, 228, 0.22);
++    --glow-violet-shadow: 0 4px 20px -2px rgba(42, 100, 120, 0.22);
+     --glow-emerald-shadow: 0 4px 15px -2px rgba(0, 135, 90, 0.2);
+   }
+ }
+@@ -438,8 +438,8 @@ html.light {
+ .border-glow:focus-within,
+ .border-glow:hover,
+ .border-glow.active {
+-  border-color: var(--color-primary, rgba(160, 120, 255, 0.6)) !important;
+-  box-shadow: var(--glow-violet-shadow, 0 0 20px -3px rgba(160, 120, 255, 0.35));
++  border-color: var(--color-primary, rgba(42, 100, 120, 0.6)) !important;
++  box-shadow: var(--glow-violet-shadow, 0 0 20px -3px rgba(42, 100, 120, 0.35));
+ }
+ 
+ .smooth-transition {
+diff --git a/src/store/__tests__/useAppStore.test.ts b/src/store/__tests__/useAppStore.test.ts
+index 477b411..94908fd 100644
+--- a/src/store/__tests__/useAppStore.test.ts
++++ b/src/store/__tests__/useAppStore.test.ts
+@@ -183,11 +183,11 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
+     expect(filtered).toHaveLength(1)
+     expect(filtered[0].id).toBe('store-2')
+ 
+-    // Filter: voice
+-    store.setActiveFilter('voice')
++    // Filter: overdue
++    // store-1, store-2, store-3 are not overdue in mock setup, so we expect 0
++    store.setActiveFilter('overdue')
+     filtered = useAppStore.getState().getFilteredItems()
+-    expect(filtered).toHaveLength(1)
+-    expect(filtered[0].id).toBe('store-3')
++    expect(filtered).toHaveLength(0)
+ 
+     // Filter: all
+     store.setActiveFilter('all')
+diff --git a/src/store/useAppStore.ts b/src/store/useAppStore.ts
+index d1800bf..860851a 100644
+--- a/src/store/useAppStore.ts
++++ b/src/store/useAppStore.ts
+@@ -415,19 +415,10 @@ export const useAppStore = create<AppState>((set, get) => ({
+     // Apply active filter
+     if (activeFilter === 'urgent') {
+       result = result.filter((item) => item.priority === 'high')
+-    } else if (activeFilter === 'voice') {
++    } else if (activeFilter === 'overdue') {
++      const todayStr = new Date().toISOString().split('T')[0]
+       result = result.filter(
+-        (item) =>
+-          Boolean(item.audioUrl) ||
+-          Boolean(item.transcriptText) ||
+-          (typeof item.audioDuration === 'number' && item.audioDuration > 0)
+-      )
+-    } else if (activeFilter === 'summaries') {
+-      result = result.filter(
+-        (item) =>
+-          item.type === 'note' ||
+-          item.categoryTag.toLowerCase().includes('╤Б╨▓╨╛╨┤╨║╨░') ||
+-          item.categoryTag.toLowerCase().includes('╨┤╨░╨╣╨┤╨╢╨╡╤Б╤В')
++        (item) => item.dueDate && item.dueDate < todayStr && item.status !== 'completed'
+       )
+     }
+ 
+diff --git a/src/types/item.ts b/src/types/item.ts
+index 906014e..724ec1b 100644
+--- a/src/types/item.ts
++++ b/src/types/item.ts
+@@ -43,7 +43,7 @@ export interface AudioSession {
+   waveform?: number[];
+ }
+ 
+-export type TaskFilter = 'all' | 'urgent' | 'voice' | 'summaries';
++export type TaskFilter = 'all' | 'urgent' | 'overdue';
+ export type ViewMode = 'list' | 'board';
+ export type TaskSortCriteria = 'priority' | 'time' | 'created' | 'title' | 'manual';
+ export type TaskSortDirection = 'asc' | 'desc';

@@ -15,7 +15,7 @@ export const SEED_ITEMS: Item[] = [
     audioDuration: 102,
     status: 'todo',
     priority: 'high',
-    dueDate: '21:00',
+    dueTime: '21:00', dueDate: '2026-10-06',
     categoryTag: 'Работа',
     isFocus: true,
     checklist: [
@@ -49,7 +49,7 @@ export const SEED_ITEMS: Item[] = [
     title: 'Подготовить отчет по продуктовым метрикам Q3',
     description: 'Встреча с инвесторами',
     categoryTag: '#Аналитика',
-    dueDate: '16:00',
+    dueTime: '16:00', dueDate: '2026-10-06',
     status: 'todo',
     priority: 'medium',
     audioDuration: 75,
@@ -63,7 +63,7 @@ export const SEED_ITEMS: Item[] = [
     title: 'Провести ревью архитектуры микросервисов',
     description: 'PR #142 • Саммари готово',
     categoryTag: '#Разработка',
-    dueDate: '18:30',
+    dueTime: '18:30', dueDate: '2026-10-06',
     status: 'todo',
     priority: 'high',
     isFocus: false,
@@ -76,7 +76,7 @@ export const SEED_ITEMS: Item[] = [
     title: 'Записать идеи для дизайн-системы 2026',
     description: '3 заметки',
     categoryTag: '#Дизайн',
-    dueDate: 'Завтра',
+    dueDate: '2026-10-07',
     status: 'todo',
     priority: 'low',
     audioDuration: 180,
@@ -90,7 +90,7 @@ export const SEED_ITEMS: Item[] = [
     title: 'Согласовать бюджет на AI API',
     description: 'Выполнено в 14:15',
     categoryTag: '#Финансы',
-    dueDate: '14:15',
+    dueTime: '14:15', dueDate: '2026-10-06',
     completedAt: '2026-10-05T14:15:00.000Z',
     status: 'completed',
     priority: 'medium',
@@ -144,35 +144,6 @@ export const SEED_ITEMS: Item[] = [
   },
 ]
 
-export const SEED_AUDIO_SESSIONS: AudioSession[] = [
-  {
-    id: 'memo-1',
-    title: 'План редизайна мобильного экрана',
-    duration: 42,
-    recordedAt: '14:30',
-    transcriptSnippet: 'Обсудили перенос карточки устройств в настройки и новый компактный виджет Quick Capture',
-    tags: ['#Мобильный', '#Дизайн'],
-    waveform: [2, 3, 4, 1.5, 3],
-  },
-  {
-    id: 'memo-2',
-    title: 'Брейншторм фичи Voice-to-SQL',
-    duration: 138,
-    recordedAt: '12:10',
-    transcriptSnippet: 'Идея прямого преобразования голосовых запросов в локальные запросы к Dexie/IndexedDB',
-    tags: ['#AI', '#Архитектура'],
-    waveform: [3, 2, 4, 2.5, 1],
-  },
-  {
-    id: 'memo-3',
-    title: 'Заметки к встрече 1-на-1 с тимлидом',
-    duration: 65,
-    recordedAt: '10:45',
-    transcriptSnippet: 'Синхронизация по бэклогу релиза 2.5: фокус на хранилище данных и скорость отклика интерфейса',
-    tags: ['#1-на-1', '#Управление'],
-    waveform: [1, 3.5, 4, 2, 3],
-  },
-]
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   id: 'default',
@@ -221,15 +192,13 @@ export async function seedDatabase(force: boolean = false): Promise<void> {
     }
   }
 
-  await db.transaction('rw', [db.items, db.audioSessions, db.settings], async () => {
+  await db.transaction('rw', [db.items], async () => {
     if (force) {
       await db.items.clear()
-      await db.audioSessions.clear()
-      await db.settings.clear()
+      
     }
     await db.items.bulkPut(SEED_ITEMS)
-    await db.audioSessions.bulkPut(SEED_AUDIO_SESSIONS)
-    await db.settings.bulkPut([DEFAULT_USER_SETTINGS])
+    
   })
 
   if (typeof localStorage !== 'undefined') {

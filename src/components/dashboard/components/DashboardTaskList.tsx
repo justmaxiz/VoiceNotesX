@@ -30,7 +30,6 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
     setSort,
     setFocusedTask,
     isSelectMode,
-    setSelectMode,
     selectedTaskIds,
     toggleSelectTask,
     updateItem,
@@ -38,19 +37,18 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
 
   const { openDrawer } = useDrawerStore()
 
-  // Filter tasks based on active category tab
   const filteredTasks = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0]
     return tasks.filter((t) => {
       if (filter === 'urgent') return t.isUrgent
-      if (filter === 'voice') return t.hasAudio
-      if (filter === 'summaries') return t.category === '#Аналитика' || t.isUrgent
+      if (filter === 'overdue') return t.dueDate && t.dueDate < todayStr && !t.isCompleted
       return true
     })
   }, [tasks, filter])
 
   // Sort tasks according to criteria and direction
   const { sortedTasks, unscheduledTasks } = useMemo(() => {
-    const list = [...filteredTasks]
+    let list = [...filteredTasks]
 
     if (sortBy === 'priority') {
       const pWeights: Record<string, number> = { high: 3, medium: 2, low: 1 }
@@ -59,8 +57,24 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
         const pB = b.isUrgent ? pWeights.high : pWeights.medium
         return sortDirection === 'asc' ? pB - pA : pA - pB
       })
-      return { sortedTasks: list, unscheduledTasks: [] }
+    } else if (sortBy === 'created') {
+      if (sortDirection === 'desc') {
+        list.reverse()
+      }
+    } else if (sortBy === 'title') {
+      list.sort((a, b) => {
+        return sortDirection === 'asc'
+          ? a.title.localeCompare(b.title, 'ru')
+          : b.title.localeCompare(a.title, 'ru')
+      })
+    } else if (sortBy === 'manual') {
+      if (sortDirection === 'desc') {
+        list.reverse()
+      }
     }
+
+    let finalSorted = list
+    let finalUnscheduled: TaskItemData[] = []
 
     if (sortBy === 'time') {
       const withTime: TaskItemData[] = []
@@ -82,38 +96,50 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
           : timeB.localeCompare(timeA)
       })
 
-      return { sortedTasks: withTime, unscheduledTasks: withoutTime }
+      finalSorted = withTime
+      finalUnscheduled = withoutTime
     }
 
-    if (sortBy === 'created') {
-      // Invert or normal
-      if (sortDirection === 'desc') {
-        list.reverse()
-      }
-      return { sortedTasks: list, unscheduledTasks: [] }
-    }
+    // Move completed to bottom, overdue to top (sorted by date/time ascending)
+    const sortSpecial = (arr: TaskItemData[]) => {
+      const todayStr = new Date().toISOString().split('T')[0]
+      
+      return [...arr].sort((a, b) => {
+        if (a.isCompleted && !b.isCompleted) return 1
+        if (!a.isCompleted && b.isCompleted) return -1
+        if (a.isCompleted && b.isCompleted) return 0
 
-    if (sortBy === 'title') {
-      list.sort((a, b) => {
-        return sortDirection === 'asc'
-          ? a.title.localeCompare(b.title, 'ru')
-          : b.title.localeCompare(a.title, 'ru')
+        const isOverdueA = a.dueDate && a.dueDate < todayStr
+        const isOverdueB = b.dueDate && b.dueDate < todayStr
+
+        if (isOverdueA && !isOverdueB) return -1
+        if (!isOverdueA && isOverdueB) return 1
+
+        if (isOverdueA && isOverdueB) {
+          const dateA = a.dueDate || ''
+          const dateB = b.dueDate || ''
+          if (dateA !== dateB) return dateA.localeCompare(dateB)
+          
+          const timeA = a.time || ''
+          const timeB = b.time || ''
+          return timeA.localeCompare(timeB)
+        }
+
+        return 0
       })
-      return { sortedTasks: list, unscheduledTasks: [] }
     }
 
-    // 'manual' - preserve original order
-    if (sortDirection === 'desc') {
-      list.reverse()
+    return { 
+      sortedTasks: sortSpecial(finalSorted), 
+      unscheduledTasks: sortSpecial(finalUnscheduled) 
     }
-    return { sortedTasks: list, unscheduledTasks: [] }
   }, [filteredTasks, sortBy, sortDirection])
 
   const urgentCount = tasks.filter((t) => t.isUrgent).length
-  const voiceCount = tasks.filter((t) => t.hasAudio).length
+  const todayStr = new Date().toISOString().split('T')[0]
+  const overdueCount = tasks.filter((t) => t.dueDate && t.dueDate < todayStr && !t.isCompleted).length
 
   const handleRescheduleToday = (id: string) => {
-    const todayStr = new Date().toISOString().split('T')[0]
     updateItem(id, { dueDate: todayStr }).catch(() => {})
   }
 
@@ -128,10 +154,10 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
             type="button"
             aria-pressed={filter === 'all'}
             onClick={() => onFilterChange('all')}
-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 cursor-pointer border ${
               filter === 'all'
-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
+                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
             Все <span className="text-xs opacity-75">{tasks.length}</span>
@@ -140,38 +166,26 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
             type="button"
             aria-pressed={filter === 'urgent'}
             onClick={() => onFilterChange('urgent')}
-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 cursor-pointer border ${
               filter === 'urgent'
-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
+                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
-            Срочные <span className="text-xs text-error font-medium">{urgentCount}</span>
+            Срочные <span className={`text-xs ${urgentCount > 0 ? 'text-error font-medium' : 'opacity-75'}`}>{urgentCount}</span>
           </button>
           <button
             type="button"
-            aria-pressed={filter === 'voice'}
-            onClick={() => onFilterChange('voice')}
-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all flex items-center gap-1 cursor-pointer ${
-              filter === 'voice'
-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
+            aria-pressed={filter === 'overdue'}
+            onClick={() => onFilterChange('overdue')}
+            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 flex items-center gap-1 cursor-pointer border ${
+              filter === 'overdue'
+                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
+                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
-            <span>Голосовые</span>
-            <span className="text-xs opacity-75">{voiceCount}</span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={filter === 'summaries'}
-            onClick={() => onFilterChange('summaries')}
-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all cursor-pointer ${
-              filter === 'summaries'
-                ? 'bg-primary/15 text-primary font-medium border border-primary/25 shadow-xs'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-high/40'
-            }`}
-          >
-            Сводки <span className="text-xs opacity-75">1</span>
+            <span>Просроченные</span>
+            <span className={`text-xs ${overdueCount > 0 ? 'text-error font-medium' : 'opacity-75'}`}>{overdueCount}</span>
           </button>
         </div>
 
@@ -179,50 +193,35 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
         <div className="flex items-center gap-2.5">
           {/* View switcher */}
           {onViewModeChange && (
-            <div className="flex items-center p-0.5 rounded-xl bg-surface-container-low shadow-sm border border-outline-variant/20 hidden sm:flex">
+            <div className="inline-flex items-center p-0.5 rounded-lg bg-surface-container-low border border-outline-variant/30 hidden sm:flex">
               <button
                 type="button"
                 onClick={() => onViewModeChange('list')}
                 aria-label="Переключить на вид список"
-                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                className={`px-2 py-1 rounded-md text-xs transition-all flex items-center gap-1 cursor-pointer ${
                   viewMode === 'list'
                     ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px]">view_agenda</span>
+                <span className="material-symbols-outlined text-[15px]">view_agenda</span>
                 <span>Список</span>
               </button>
               <button
                 type="button"
                 onClick={() => onViewModeChange('board')}
                 aria-label="Переключить на вид доска"
-                className={`px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                className={`px-2 py-1 rounded-md text-xs transition-all flex items-center gap-1 cursor-pointer ${
                   viewMode === 'board'
                     ? 'bg-surface-container-high text-on-surface shadow-sm font-medium'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px]">dashboard</span>
+                <span className="material-symbols-outlined text-[15px]">dashboard</span>
                 <span>Доска</span>
               </button>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => setSelectMode(!isSelectMode)}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-              isSelectMode
-                ? 'bg-primary/20 text-primary border border-primary/40'
-                : 'text-outline hover:text-on-surface hover:bg-surface-container-low border border-transparent'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              {isSelectMode ? 'close' : 'checklist'}
-            </span>
-            <span>{isSelectMode ? 'Отмена' : 'Выбрать'}</span>
-          </button>
 
           <TaskSortMenu
             sortBy={sortBy}

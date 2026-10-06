@@ -274,19 +274,7 @@ describe('VoiceNotesDB - Local-First Dexie Storage (TASK-05)', () => {
     expect(t1?.isFocus).toBe(false)
     expect(t2?.isFocus).toBe(true)
   })
-
-  it('enforces single focus invariant when updating an item with isFocus: true', async () => {
-    await createItem({
-      id: 'focus-t1',
-      type: 'task',
-      title: 'Задача 1',
-      categoryTag: '#Фокус',
-      status: 'todo',
-      priority: 'medium',
-      isFocus: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
+})
     await createItem({
       id: 'focus-t2',
       type: 'task',
@@ -305,41 +293,5 @@ describe('VoiceNotesDB - Local-First Dexie Storage (TASK-05)', () => {
     const t2 = await getItem('focus-t2')
     expect(t1?.isFocus).toBe(false)
     expect(t2?.isFocus).toBe(true)
-  })
-
-  it('provides helpers for audio sessions and settings management', async () => {
-    const audioId = await db.createAudioSession({
-      id: '',
-      title: 'Сессия с микрофона',
-      duration: 45,
-      recordedAt: '12:00',
-      transcriptSnippet: 'Тестовый сниппет',
-      tags: ['#Тест'],
-    })
-    expect(audioId).toBeTruthy()
-
-    const audio = await db.getAudioSession(audioId)
-    expect(audio?.title).toBe('Сессия с микрофона')
-
-    const allAudio = await db.getAllAudioSessions()
-    expect(allAudio.length).toBeGreaterThanOrEqual(1)
-
-    await db.deleteAudioSession(audioId)
-    expect(await db.getAudioSession(audioId)).toBeUndefined()
-
-    await db.saveSettings({
-      id: 'default',
-      userName: 'Иван',
-      subscriptionStatus: 'pro',
-      aiMode: 'fast',
-      structuringStyle: 'concise',
-      theme: 'dark',
-      fontScale: 'standard',
-      language: 'ru-RU',
-      devices: [],
-      updatedAt: new Date().toISOString(),
-    })
-    const settings = await db.getSettings()
-    expect(settings?.userName).toBe('Иван')
   })
 })

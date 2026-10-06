@@ -17,9 +17,7 @@ export class VoiceNotesDB extends Dexie {
     super(databaseName)
     this.version(1).stores({
       items: 'id, type, status, priority, categoryTag, isFocus, createdAt, dueDate',
-      audioSessions: 'id, recordedAt',
-      settings: 'id',
-    })
+      })
   }
 
   async createItem(item: Item): Promise<string> {
@@ -129,27 +127,7 @@ export class VoiceNotesDB extends Dexie {
     return this.audioSessions.toArray()
   }
 
-  async getAudioSession(id: string): Promise<AudioSession | undefined> {
-    return this.audioSessions.get(id)
-  }
-
-  async createAudioSession(session: AudioSession): Promise<string> {
-    const finalSession: AudioSession = {
-      ...session,
-      id: session.id || generateId(),
-      recordedAt: session.recordedAt || new Date().toISOString(),
-    }
-    await this.audioSessions.put(finalSession)
-    return finalSession.id
-  }
-
-  async deleteAudioSession(id: string): Promise<void> {
-    await this.audioSessions.delete(id)
-  }
-
-  async getSettings(): Promise<UserSettings | undefined> {
-    return this.settings.get('default')
-  }
+  
 
   async saveSettings(settings: UserSettings): Promise<void> {
     await this.settings.put({
@@ -160,10 +138,8 @@ export class VoiceNotesDB extends Dexie {
   }
 
   async clearDatabase(): Promise<void> {
-    await this.transaction('rw', [this.items, this.audioSessions, this.settings], async () => {
+    await this.transaction('rw', [this.items], async () => {
       await this.items.clear()
-      await this.audioSessions.clear()
-      await this.settings.clear()
     })
   }
 }

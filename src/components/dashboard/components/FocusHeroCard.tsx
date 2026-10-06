@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti'
 import { MiniAudioPlayer } from '../../audio/MiniAudioPlayer'
 import { ChecklistItem } from '../../../types/item'
 import { useAppStore } from '../../../store/useAppStore'
+import { useDrawerStore } from '../../../store/useDrawerStore'
 import { Checkbox } from '../../ui/Checkbox'
 
 export interface FocusHeroCardProps {
@@ -21,8 +22,6 @@ export interface FocusHeroCardProps {
 }
 
 export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
-  isPlaying = false,
-  onTogglePlay,
   title: propTitle,
   description: propDescription,
   deadlineText: propDeadLine,
@@ -31,10 +30,13 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
   audioUrl: propAudioUrl,
   checklist: propChecklist,
   onComplete,
-  onSummary,
   isCompleted: initialCompleted = false,
+  isPlaying,
+  onTogglePlay,
+  onSummary,
 }) => {
   const { items, setFocusedTask, toggleTask, updateItem } = useAppStore()
+  const { openDrawer } = useDrawerStore()
   const [isSwitchFocusOpen, setIsSwitchFocusOpen] = useState(false)
   const switchMenuRef = useRef<HTMLDivElement>(null)
 
@@ -253,8 +255,11 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
       </div>
 
       {/* Main Task Title & Description */}
-      <div className="mb-space-md">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug font-semibold">
+      <div 
+        className={`mb-space-md ${focusedTask ? 'cursor-pointer group/title' : ''}`}
+        onClick={() => focusedTask && openDrawer(focusedTask.id)}
+      >
+        <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug font-semibold group-hover/title:text-primary transition-colors">
           {currentTitle}
         </h2>
         {currentDescription && (
@@ -306,25 +311,21 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
               type="button"
               onClick={onTogglePlay}
               aria-label={isPlaying ? 'Приостановить' : 'Воспроизвести'}
-              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
+              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-highest text-primary flex items-center justify-center transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-body-md">
+              <span className="material-symbols-outlined text-xl">
                 {isPlaying ? 'pause' : 'play_arrow'}
               </span>
-              <span>{isPlaying ? 'Пауза' : 'Слушать'}</span>
             </button>
           )}
-
           {onSummary && (
             <button
               type="button"
               onClick={onSummary}
-              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors cursor-pointer border border-outline-variant/15"
+              className="px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-highest text-on-surface font-label-md transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-body-md text-primary">
-                auto_awesome
-              </span>
-              <span>Сводка</span>
+              <span className="material-symbols-outlined text-body-md text-secondary">auto_awesome</span>
+              <span className="hidden sm:inline">AI Сводка</span>
             </button>
           )}
         </div>

@@ -71,27 +71,6 @@ describe('AppLayout Shell Component', () => {
     expect(screen.getByPlaceholderText(/Быстрая мысль или задача/)).toBeInTheDocument()
   })
 
-  it('renders RecordingModal when isRecordingModalOpen is true and dismisses it', () => {
-    render(
-      <AppLayout>
-        <div>Контент</div>
-      </AppLayout>
-    )
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-
-    act(() => {
-      useNavigationStore.setState({ isRecordingModalOpen: true })
-    })
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Быстрая голосовая запись')).toBeInTheDocument()
-
-    const closeBtn = screen.getByText('Закрыть')
-    fireEvent.click(closeBtn)
-
-    expect(useNavigationStore.getState().isRecordingModalOpen).toBe(false)
-  })
 
   it('toggles sidebar collapse state on Ctrl+B shortcut and updates main padding', () => {
     render(

@@ -1,3 +1,5 @@
+import { zipSync, strToU8 } from 'fflate'
+import { db } from './db'
 import { Item } from '../types/item'
 
 export function slugify(text: string): string {
@@ -26,7 +28,7 @@ export function generateNoteMarkdown(item: Item): string {
   return `---
 title: "${item.title.replace(/"/g, '\\"')}"
 date: "${item.createdAt}"
-category: "${item.categoryTag}"
+category: ${JSON.stringify(item.categoryTag)}
 priority: "${item.priority}"
 type: "${item.type}"
 status: "${item.status}"
@@ -48,7 +50,7 @@ export function triggerDownload(content: string, filename: string, mimeType = 't
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export function exportNoteAsMarkdown(item: Item): void {
@@ -58,10 +60,7 @@ export function exportNoteAsMarkdown(item: Item): void {
 }
 
 export function exportAllNotesAsMarkdown(items: Item[]): void {
-  const combined = items
-    .map((item) => `====================\nFILE: ${item.title}.md\n====================\n${generateNoteMarkdown(item)}`)
-    .join('\n\n')
-  triggerDownload(combined, `voicenotes-all-notes-${Date.now()}.txt`)
+  triggerDownload(items.map(generateNoteMarkdown).join('\n\n---\n\n'), `voicenotes-all-notes-${Date.now()}.md`)
 }
 
 export function exportDatabaseAsJson(items: Item[]): void {
@@ -76,10 +75,34 @@ export function exportDatabaseAsJson(items: Item[]): void {
   triggerDownload(json, `voicenotes-backup-${Date.now()}.json`, 'application/json')
 }
 
+export async function createNotesZip(items: Item[]): Promise<Uint8Array> {
+  const files: Record<string, Uint8Array> = Object.create(null)
+  const names = new Set<string>()
+  for (const item of items) {
+    const base = slugify(item.title)
+    let filename = base
+    let suffix = 2
+    while (names.has(filename)) filename = `${base}-${suffix++}`
+    names.add(filename)
+    files[`${filename}.md`] = strToU8(generateNoteMarkdown(item))
+    const session = await db.getAudioSession(item.id)
+    if (session?.audioBlob) {
+      const extension = session.audioBlob.type.includes('ogg') ? 'ogg' : session.audioBlob.type.includes('mp4') ? 'm4a' : 'webm'
+      files[`audio/${filename}.${extension}`] = new Uint8Array(await session.audioBlob.arrayBuffer())
+    }
+  }
+  return zipSync(files)
+}
+
 export async function exportNotesAsZip(items: Item[]): Promise<void> {
-  // Bundled archive download
-  const bundled = items
-    .map((item) => `--- ${item.title}.md ---\n${generateNoteMarkdown(item)}`)
-    .join('\n\n')
-  triggerDownload(bundled, `voicenotes-archive-${Date.now()}.txt`)
+  const data = await createNotesZip(items)
+  const blob = new Blob([new Uint8Array(data)], { type: 'application/zip' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `voicenotes-archive-${Date.now()}.zip`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

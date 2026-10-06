@@ -94,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({ dateLabel }) => {
       role="banner"
       aria-label="Верхняя панель управления"
       className={`fixed top-0 ${
-        isSidebarCollapsed ? 'left-0' : 'left-0 md:left-72'
+        isSidebarCollapsed ? 'left-0 md:left-20' : 'left-0 md:left-72'
       } right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-surface-container-high/40 shadow-sm z-40 flex items-center justify-between px-space-md md:px-space-xl transition-all duration-200`}
     >
       {/* Left: Sidebar Toggle + Global Search Input */}

@@ -1,4 +1,4 @@
-import { render, screen, act, fireEvent } from '@testing-library/react'
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AppLayout } from '../AppLayout'
 import { useNavigationStore } from '../../../store/navigationStore'
@@ -109,7 +109,7 @@ describe('AppLayout Shell Component', () => {
     expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
   })
 
-  it('dispatches voicenotes:quick-capture custom event on quick capture submit', () => {
+  it('dispatches voicenotes:quick-capture custom event after successful quick capture persistence', async () => {
     const listener = vi.fn()
     window.addEventListener('voicenotes:quick-capture', listener)
 
@@ -123,7 +123,7 @@ describe('AppLayout Shell Component', () => {
     fireEvent.change(input, { target: { value: 'Тестовая мысль' } })
     fireEvent.submit(input.closest('form')!)
 
-    expect(listener).toHaveBeenCalled()
+    await waitFor(() => expect(listener).toHaveBeenCalled())
     window.removeEventListener('voicenotes:quick-capture', listener)
   })
 })

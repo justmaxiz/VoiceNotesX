@@ -12,17 +12,18 @@ export const NotesPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  const noteItems = items.filter((i) => i.type === 'note' || i.transcriptText)
+  const noteItems = items.filter((i) => i.status !== 'archived' && (i.type === 'note' || i.transcriptText))
 
   // Collect distinct tags
   const tagsSet = new Set<string>()
   noteItems.forEach((n) => {
     if (n.categoryTag) tagsSet.add(n.categoryTag)
+    n.tags?.forEach((tag) => tagsSet.add(tag))
   })
   const availableTags = ['all', ...Array.from(tagsSet)]
 
   const filteredNotes = noteItems.filter((note) => {
-    const matchesTag = selectedTag === 'all' || note.categoryTag === selectedTag
+    const matchesTag = selectedTag === 'all' || note.categoryTag === selectedTag || note.tags?.includes(selectedTag)
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||

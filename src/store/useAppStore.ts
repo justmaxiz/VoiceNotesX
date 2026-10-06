@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { Item, TaskFilter, TaskSortCriteria, TaskSortDirection } from '../types'
 import { db } from '../lib/db'
+import { normalizeTaskDates } from '../lib/taskDates'
+import { audioPlaybackUrl, releaseAudioUrl } from '../lib/audioPersistence'
 import {
   upsertSearchItem,
   removeSearchItem,
@@ -21,7 +23,6 @@ export interface AppState {
   sortDirection: TaskSortDirection
   selectedTaskIds: string[]
   isSelectMode: boolean
-  apiKey: string
   isLoading: boolean
   error: string | null
 
@@ -32,7 +33,7 @@ export interface AppState {
   setIsRecording: (isRecording: boolean) => void
   setRecording: (isRecording: boolean) => void
   setItems: (items: Item[]) => void
-  addItem: (item: Item) => Promise<void>
+  addItem: (item: Item, audio?: { blob: Blob; duration: number }) => Promise<void>
   updateItem: (id: string, patch: Partial<Item>) => Promise<void>
   deleteItem: (id: string) => Promise<void>
   toggleTask: (id: string) => Promise<void>
@@ -45,7 +46,6 @@ export interface AppState {
   batchCompleteTasks: () => Promise<void>
   batchDeleteTasks: () => Promise<void>
   batchRescheduleTasks: (dueDate: string | null) => Promise<void>
-  setApiKey: (key: string) => void
   loadItems: () => Promise<void>
   clearError: () => void
 
@@ -54,16 +54,13 @@ export interface AppState {
   searchItems: (query: string) => Item[]
 }
 
+export { normalizeTaskDates as syncTemporalFields } from '../lib/taskDates'
+
 const generateId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
   }
   return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9)
-}
-
-const getStoredApiKey = (): string => {
-  if (typeof localStorage === 'undefined') return ''
-  return localStorage.getItem('voicenotes_api_key') || ''
 }
 
 const getInitialSort = (): { sortBy: TaskSortCriteria; sortDirection: TaskSortDirection } => {
@@ -95,7 +92,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   sortDirection: initialSort.sortDirection,
   selectedTaskIds: [],
   isSelectMode: false,
-  apiKey: getStoredApiKey(),
   isLoading: false,
   error: null,
 
@@ -126,20 +122,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ items })
   },
 
-  addItem: async (item: Item) => {
+  addItem: async (item: Item, audio) => {
+    const isFocus = Boolean(item.isFocus || item.isFocused)
+    let synced: Item
+    try { synced = normalizeTaskDates(item) } catch (error) { set({ error: (error as Error).message }); throw error }
     const finalItem: Item = {
-      ...item,
-      id: item.id || generateId(),
-      isFocus: Boolean(item.isFocus),
-      createdAt: item.createdAt || new Date().toISOString(),
-      updatedAt: item.updatedAt || new Date().toISOString(),
+      ...synced,
+      id: synced.id || generateId(),
+      isFocus,
+      isFocused: isFocus,
+      createdAt: synced.createdAt || new Date().toISOString(),
+      updatedAt: synced.updatedAt || new Date().toISOString(),
     }
     const previousItems = get().items
 
     let nextItems = [finalItem, ...previousItems]
     if (finalItem.isFocus) {
       nextItems = nextItems.map((i) =>
-        i.id === finalItem.id ? i : i.isFocus ? { ...i, isFocus: false } : i
+        i.id === finalItem.id ? i : (i.isFocus || i.isFocused) ? { ...i, isFocus: false, isFocused: false } : i
       )
     }
 
@@ -148,18 +148,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     upsertSearchItem(finalItem)
     if (finalItem.isFocus) {
       previousItems
-        .filter((i) => i.isFocus)
-        .forEach((i) => upsertSearchItem({ ...i, isFocus: false }))
+        .filter((i) => i.isFocus || i.isFocused)
+        .forEach((i) => upsertSearchItem({ ...i, isFocus: false, isFocused: false }))
     }
 
     try {
-      await db.createItem(finalItem)
+      await db.createItem(finalItem, audio)
+      if (audio) {
+        const audioUrl = await audioPlaybackUrl(finalItem.id)
+        set({ items: get().items.map((i) => i.id === finalItem.id ? { ...i, audioUrl } : i) })
+      }
     } catch (err) {
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       removeSearchItem(finalItem.id)
       if (finalItem.isFocus) {
-        previousItems.filter((i) => i.isFocus).forEach((i) => upsertSearchItem(i))
+        previousItems.filter((i) => i.isFocus || i.isFocused).forEach((i) => upsertSearchItem(i))
       }
       throw err
     }
@@ -172,36 +176,53 @@ export const useAppStore = create<AppState>((set, get) => ({
       throw new Error(`Item with id "${id}" not found`)
     }
 
+    let syncedPatch: Partial<Item>
+    try { syncedPatch = normalizeTaskDates(patch, current) } catch (error) { set({ error: (error as Error).message }); throw error }
+    if ('status' in patch) {
+      syncedPatch.completedAt = patch.status === 'completed' ? current.completedAt || new Date().toISOString() : undefined
+      if (patch.status === 'completed' || patch.status === 'archived') {
+        syncedPatch.isFocus = false
+        syncedPatch.isFocused = false
+      }
+    }
+    const hasFocusChange = 'isFocus' in syncedPatch || 'isFocused' in syncedPatch
+    const isFocusVal = hasFocusChange ? Boolean(syncedPatch.isFocus || syncedPatch.isFocused) : Boolean(current.isFocus || current.isFocused)
+
+    if (isFocusVal && hasFocusChange && (syncedPatch.status || current.status) === 'todo') syncedPatch.status = 'in_progress'
     const updatedItem: Item = {
       ...current,
-      ...patch,
+      ...syncedPatch,
+      ...(hasFocusChange ? { isFocus: isFocusVal, isFocused: isFocusVal } : {}),
       updatedAt: new Date().toISOString(),
     }
 
     let nextItems = previousItems.map((item) => (item.id === id ? updatedItem : item))
-    if (patch.isFocus) {
+    if (isFocusVal && hasFocusChange) {
       nextItems = nextItems.map((item) =>
-        item.id === id ? item : item.isFocus ? { ...item, isFocus: false } : item
+        item.id === id ? item : (item.isFocus || item.isFocused) ? { ...item, isFocus: false, isFocused: false } : item
       )
     }
 
     // Optimistic update
     set({ items: nextItems })
     upsertSearchItem(updatedItem)
-    if (patch.isFocus) {
+    if (isFocusVal && hasFocusChange) {
       previousItems
-        .filter((i) => i.id !== id && i.isFocus)
-        .forEach((i) => upsertSearchItem({ ...i, isFocus: false }))
+        .filter((i) => i.id !== id && (i.isFocus || i.isFocused))
+        .forEach((i) => upsertSearchItem({ ...i, isFocus: false, isFocused: false }))
     }
 
     try {
-      await db.updateItem(id, patch)
+      await db.updateItem(id, {
+        ...syncedPatch,
+        ...(hasFocusChange ? { isFocus: isFocusVal, isFocused: isFocusVal } : {}),
+      })
     } catch (err) {
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       upsertSearchItem(current)
-      if (patch.isFocus) {
-        previousItems.filter((i) => i.id !== id && i.isFocus).forEach((i) => upsertSearchItem(i))
+      if (isFocusVal && hasFocusChange) {
+        previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocused)).forEach((i) => upsertSearchItem(i))
       }
       throw err
     }
@@ -221,6 +242,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       await db.deleteItem(id)
+      releaseAudioUrl(id)
     } catch (err) {
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
@@ -230,35 +252,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   toggleTask: async (id: string) => {
-    const previousItems = get().items
-    const current = previousItems.find((t) => t.id === id)
-    if (!current) {
-      throw new Error(`Item with id "${id}" not found`)
-    }
-
-    const isCompleted = current.status === 'completed'
-    const newStatus: Item['status'] = isCompleted ? 'todo' : 'completed'
-    const now = new Date().toISOString()
-    const updatedItem: Item = {
-      ...current,
-      status: newStatus,
-      completedAt: isCompleted ? undefined : now,
-      updatedAt: now,
-    }
-
-    // Optimistic update
-    const nextItems = previousItems.map((item) => (item.id === id ? updatedItem : item))
-    set({ items: nextItems })
-    upsertSearchItem(updatedItem)
-
-    try {
-      await db.toggleTaskComplete(id)
-    } catch (err) {
-      // Rollback on failure
-      set({ items: previousItems, error: (err as Error).message })
-      upsertSearchItem(current)
-      throw err
-    }
+    const current = get().items.find((item) => item.id === id)
+    if (!current) throw new Error(`Item with id "${id}" not found`)
+    await get().updateItem(id, { status: current.status === 'completed' ? 'todo' : 'completed' })
   },
 
   setFocusTask: async (id: string) => {
@@ -269,7 +265,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const now = new Date().toISOString()
-    const prevFocused = previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocus))
+    const prevFocused = previousItems.filter((i) => i.id !== id && (i.isFocus || i.isFocused))
     const newStatus = target.status === 'todo' ? 'in_progress' : target.status
 
     const nextItems = previousItems.map((item) => {
@@ -293,9 +289,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       await db.setFocusTask(id)
-      if (target.status === 'todo') {
-        await db.updateItem(id, { status: 'in_progress' })
-      }
     } catch (err) {
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
@@ -357,16 +350,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     const selected = get().selectedTaskIds
     if (selected.length === 0) return
     for (const id of selected) {
-      await get().updateItem(id, { dueDate })
+      if (dueDate === null) {
+        await get().updateItem(id, { dueDate: null, dueTime: null, deadline: null, startDate: null })
+      } else {
+        await get().updateItem(id, { dueDate })
+      }
     }
     set({ selectedTaskIds: [], isSelectMode: false })
-  },
-
-  setApiKey: (key: string) => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('voicenotes_api_key', key)
-    }
-    set({ apiKey: key })
   },
 
   loadItems: async () => {
@@ -375,6 +365,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await seedDatabase()
       const loaded = await db.getAllItems()
+      await Promise.all(loaded.map(async (item) => {
+        item.audioUrl = await audioPlaybackUrl(item.id) || (item.audioUrl?.startsWith('blob:') ? undefined : item.audioUrl)
+      }))
       rebuildSearchIndex(loaded)
       set({ items: loaded, isLoading: false })
     } catch (err) {
@@ -396,9 +389,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     // Apply active filter
-    if (activeFilter === 'urgent') {
-      result = result.filter((item) => item.priority === 'high')
-    } else if (activeFilter === 'voice') {
+    if (activeFilter === 'voice') {
       result = result.filter(
         (item) =>
           Boolean(item.audioUrl) ||

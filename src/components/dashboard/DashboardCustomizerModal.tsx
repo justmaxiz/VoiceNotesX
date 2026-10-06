@@ -8,7 +8,7 @@ const MODULE_LABELS: Record<keyof DashboardModules, { title: string; desc: strin
   },
   taskList: {
     title: 'Список задач дня',
-    desc: 'Интерактивный список с фильтрами («Все», «Срочные», «Голосовые»)',
+    desc: 'Интерактивный список задач с фильтрами',
   },
   metrics: {
     title: 'Метрики продуктивности',

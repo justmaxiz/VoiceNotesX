@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Sidebar } from '../Sidebar'
+import { Header } from '../Header'
 import { useNavigationStore } from '../../../store/navigationStore'
 
 describe('Sidebar Component', () => {
@@ -20,7 +21,7 @@ describe('Sidebar Component', () => {
     expect(screen.getByText('Заметки')).toBeInTheDocument()
     expect(screen.getByText('Задачи')).toBeInTheDocument()
     expect(screen.getByText('Календарь')).toBeInTheDocument()
-    expect(screen.getByText('AI Сводки')).toBeInTheDocument()
+    expect(screen.getByText('Сводки')).toBeInTheDocument()
     expect(screen.getByText('Настройки')).toBeInTheDocument()
   })
 
@@ -43,26 +44,27 @@ describe('Sidebar Component', () => {
     expect(useNavigationStore.getState().activeTab).toBe('tasks')
   })
 
-  it('renders cloud storage meter and user profile', () => {
+  it('shows local storage status and profile without fake cloud meter', () => {
     render(<Sidebar />)
     expect(screen.getByTestId('sidebar-sync-indicator')).toBeInTheDocument()
-    expect(screen.getByText('Синхронизировано')).toBeInTheDocument()
-    expect(screen.getByText('Облако активно')).toBeInTheDocument()
-    expect(screen.getByText('82%')).toBeInTheDocument()
-    expect(screen.getByText('16.4 / 20 ГБ')).toBeInTheDocument()
+    expect(screen.getByText('Сохранение в этом браузере')).toBeInTheDocument()
+    expect(screen.queryByText('Облако активно')).not.toBeInTheDocument()
+    expect(screen.queryByText('82%')).not.toBeInTheDocument()
+    expect(screen.queryByText('16.4 / 20 ГБ')).not.toBeInTheDocument()
     expect(screen.getByText('Алексей Орлов')).toBeInTheDocument()
     expect(screen.getByText('Pro Лицензия')).toBeInTheDocument()
   })
 
-  it('clicking collapse button toggles isSidebarCollapsed in store', () => {
-    render(<Sidebar />)
-    const collapseBtn = screen.getByLabelText('Скрыть боковую панель')
+  it('collapses from the sidebar and expands from the header control', () => {
+    render(<><Sidebar /><Header /></>)
+    const sidebar = screen.getByLabelText('Боковая панель навигации')
+    const collapseBtn = within(sidebar).getByLabelText('Скрыть боковую панель')
     expect(collapseBtn).toBeInTheDocument()
 
     fireEvent.click(collapseBtn)
     expect(useNavigationStore.getState().isSidebarCollapsed).toBe(true)
 
-    fireEvent.click(collapseBtn)
+    fireEvent.click(within(screen.getByRole('banner')).getByLabelText('Показать боковую панель'))
     expect(useNavigationStore.getState().isSidebarCollapsed).toBe(false)
   })
 })

@@ -1,17 +1,7 @@
 import { AIMode, ProcessNoteOptions, StructuredResult } from '../types/ai'
 
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-
-export const getGeminiApiKey = (): string => {
-  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) {
-    return import.meta.env.VITE_GEMINI_API_KEY
-  }
-  if (typeof process !== 'undefined' && process.env?.VITE_GEMINI_API_KEY) {
-    return process.env.VITE_GEMINI_API_KEY
-  }
-  return ''
-}
+// Optional existing server endpoint; API credentials never enter the browser bundle.
+export const getAIProxyUrl = (): string => import.meta.env.VITE_AI_PROXY_URL || ''
 
 export const RESPONSE_SCHEMA = {
   type: 'OBJECT',
@@ -51,7 +41,7 @@ export function mockLocalStructuring(
 
   // Priority detection
   let priority: 'low' | 'medium' | 'high' = 'medium'
-  if (/(срочн|важн|критичн|асап|asap|горит|блок|priority:?\s*high)/i.test(lower)) {
+  if (/(срочн|асап|asap|важн|критичн|горит|блок|priority:?\s*high)/i.test(lower)) {
     priority = 'high'
   } else if (/(не к спеху|позже|когда-нибудь|низк|low)/i.test(lower)) {
     priority = 'low'
@@ -154,47 +144,24 @@ export async function generateGeminiContent(
   userPrompt: string,
   options: ProcessNoteOptions = {}
 ): Promise<string> {
-  const apiKey = getGeminiApiKey()
-  if (!apiKey) {
-    throw new Error('API_KEY_NOT_FOUND')
+  const endpoint = getAIProxyUrl()
+  if (!endpoint) throw new Error('AI_PROXY_NOT_CONFIGURED')
+  const url = new URL(endpoint, window.location.origin)
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) {
+    throw new Error('AI endpoint должен использовать HTTPS (HTTP доступен только на localhost)')
   }
-
-  const mode = options.mode || 'fast'
-  const isDeep = mode === 'deep'
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: systemInstruction }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: userPrompt }],
-        },
-      ],
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: RESPONSE_SCHEMA,
-        temperature: isDeep ? 0.4 : 0.2,
-        maxOutputTokens: isDeep ? 4096 : 1024,
-      },
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) {
-    throw new Error('Empty response from Gemini API')
-  }
-
-  return text
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
+  try {
+    const response = await fetch(url.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({ systemInstruction, userPrompt, mode: options.mode || 'fast', style: options.style || 'concise', responseSchema: RESPONSE_SCHEMA }),
+    })
+    if (!response.ok) throw new Error(`AI endpoint: ${response.status}`)
+    const data: unknown = await response.json()
+    if (!data || typeof data !== 'object' || !('text' in data) || typeof data.text !== 'string') throw new Error('Некорректный ответ AI endpoint')
+    return data.text
+  } finally { clearTimeout(timeout) }
 }

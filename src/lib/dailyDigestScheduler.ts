@@ -1,3 +1,4 @@
+import { localDateKey, localDayBounds, taskDeadline } from './taskDates'
 import { Item } from '../types/item'
 
 export interface GeneratedDigest {
@@ -20,7 +21,10 @@ export function getStoredSummaries(): GeneratedDigest[] {
   if (typeof localStorage === 'undefined') return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.filter((value) => value && typeof value.id === 'string' && typeof value.dateKey === 'string' && typeof value.rawText === 'string' && [value.tags, value.achievements, value.bottlenecks, value.recommendations].every((field) => Array.isArray(field) && field.every((entry) => typeof entry === 'string')))
+    }
   } catch {}
   return []
 }
@@ -29,7 +33,8 @@ export function saveStoredSummaries(summaries: GeneratedDigest[]) {
   if (typeof localStorage === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(summaries))
-  } catch {}
+  } catch (error) { throw new Error(`Не удалось сохранить отчет: ${(error as Error).message}`) }
+  window.dispatchEvent(new Event('voicenotes:summaries-updated'))
 }
 
 export function generateDigestData(
@@ -38,79 +43,26 @@ export function generateDigestData(
   targetTag?: string
 ): GeneratedDigest {
   const now = new Date()
-  const nowTime = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-  const dateKey = now.toISOString().split('T')[0]
-
-  const completedTasks = items.filter((i) => i.type === 'task' && i.status === 'completed')
-  const pendingTasks = items.filter((i) => i.type === 'task' && i.status !== 'completed')
-  const notesCount = items.filter((i) => i.type === 'note').length
-
-  if (type === 'today') {
-    return {
-      id: `rep-today-${dateKey}`,
-      title: `Дайджест дня: ${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}`,
-      period: 'За сегодня',
-      date: `Сегодня, ${nowTime}`,
-      dateKey,
-      updatedAtTime: nowTime,
-      tags: ['#AI', '#Продуктивность', '#ИтогиДня'],
-      achievements: [
-        `Закрыто ${completedTasks.length} задач за сегодняшний день`,
-        completedTasks[0] ? `Ключевой результат: «${completedTasks[0].title}»` : 'Проведена продуктивная аналитическая работа',
-        `Зафиксировано ${notesCount} заметок и контекстных мыслей`,
-      ],
-      bottlenecks: [
-        pendingTasks.length > 0
-          ? `Осталось ${pendingTasks.length} открытых задач, перенесенных на следующий цикл`
-          : 'Блокеров и критических задержек не обнаружено',
-      ],
-      recommendations: [
-        'Сохранить фокус на ключевых приоритетах завтра с утра',
-        'Продолжать быструю фиксацию входящих мыслей через Quick Capture',
-      ],
-      rawText: `Сегодня обработано ${items.length} активных записей. Завершено ${completedTasks.length} задач. Фокус был направлен на качественное выполнение приоритетов дня.`,
-    }
-  }
-
-  if (type === 'weekly') {
-    return {
-      id: `rep-weekly-${Date.now()}`,
-      title: 'Еженедельная ретроспектива',
-      period: 'За неделю',
-      date: `${now.toLocaleDateString('ru-RU')}, ${nowTime}`,
-      dateKey,
-      updatedAtTime: nowTime,
-      tags: ['#Ретроспектива', '#Неделя', '#Аналитика'],
-      achievements: [
-        `Суммарно закрыто ${completedTasks.length} задач за отчетный период`,
-        'Успешная интеграция новых архитектурных компонентов',
-      ],
-      bottlenecks: ['Некоторые второстепенные задачи откладывались в бэклог'],
-      recommendations: [
-        'Выделить слот для очистки бэклога в начале следующей недели',
-      ],
-      rawText: `Недельный срез активности: ${items.length} задач и заметок в работе. Высокая стабильность завершения запланированных дел.`,
-    }
-  }
-
-  // by tag
-  const tagToUse = targetTag || '#Разработка'
-  const tagItems = items.filter((i) => i.categoryTag === tagToUse || i.tags?.includes(tagToUse))
+  const dateKey = localDateKey(now)
+  const [dayStart, dayEnd] = localDayBounds(dateKey)
+  const start = new Date(dayStart)
+  if (type === 'weekly') start.setDate(start.getDate() - 6)
+  const scope = items.filter((item) => item.status !== 'archived' && (type !== 'tag' || item.categoryTag === targetTag || item.tags?.includes(targetTag || '')))
+  const inPeriod = (value?: string | null) => !!value && new Date(value) >= start && new Date(value) < dayEnd
+  const completed = scope.filter((item) => item.type === 'task' && item.status === 'completed' && (type === 'tag' || inPeriod(item.completedAt)))
+  const pending = scope.filter((item) => item.type === 'task' && item.status !== 'completed' && (type === 'tag' || inPeriod(taskDeadline(item)?.toISOString())))
+  const notes = scope.filter((item) => item.type === 'note' && (type === 'tag' || inPeriod(item.createdAt)))
+  const time = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  const period = type === 'today' ? 'За сегодня' : type === 'weekly' ? 'За неделю' : 'По проекту'
   return {
-    id: `rep-tag-${Date.now()}`,
-    title: `Анализ проекта по тегу ${tagToUse}`,
-    period: 'По проекту',
-    date: `Сегодня, ${nowTime}`,
-    dateKey,
-    updatedAtTime: nowTime,
-    tags: [tagToUse, '#Срез'],
-    achievements: [
-      `Обработано ${tagItems.length} элементов с тегом ${tagToUse}`,
-      'Сформирована актуальная картина проекта',
-    ],
-    bottlenecks: ['Требуется синхронизация с зависимыми подсистемами'],
-    recommendations: ['Продолжить приоритизацию задач проекта'],
-    rawText: `Аналитический срез по тегу ${tagToUse}: в работе ${tagItems.length} активных записей.`,
+    id: type === 'today' ? `rep-today-${dateKey}` : `rep-${type}-${crypto.randomUUID()}`,
+    title: type === 'today' ? `Итоги дня: ${now.toLocaleDateString('ru-RU')}` : type === 'weekly' ? 'Итоги последних 7 дней' : `Итоги по тегу ${targetTag || ''}`,
+    period, date: `${now.toLocaleDateString('ru-RU')}, ${time}`, dateKey, updatedAtTime: time,
+    tags: Array.from(new Set([...completed, ...pending, ...notes].flatMap((item) => item.tags || [item.categoryTag]))).filter(Boolean).slice(0, 6),
+    achievements: [`Завершено задач: ${completed.length}`, ...completed.slice(0, 3).map((item) => item.title), `Создано заметок: ${notes.length}`],
+    bottlenecks: pending.length ? [`Открытых задач в выбранном периоде: ${pending.length}`] : ['Нет открытых задач с датой в выбранном периоде'],
+    recommendations: pending.length ? [`Следующая задача: ${pending[0].title}`] : ['Добавьте дела на следующий период при необходимости'],
+    rawText: `Локальный отчет по сохраненным данным. ${period}: завершено ${completed.length} задач, создано ${notes.length} заметок, открытых задач с датой ${pending.length}.`,
   }
 }
 
@@ -125,7 +77,7 @@ export function startDailyDigestScheduler(getItems: () => Item[]) {
     const now = new Date()
     // Trigger at 21:00
     if (now.getHours() === 21 && now.getMinutes() === 0) {
-      const todayKey = now.toISOString().split('T')[0]
+      const todayKey = localDateKey(now)
       const existing = getStoredSummaries()
       const alreadyHasToday = existing.some((e) => e.dateKey === todayKey && e.period === 'За сегодня')
 
@@ -133,7 +85,7 @@ export function startDailyDigestScheduler(getItems: () => Item[]) {
         const items = getItems()
         if (items.length > 0) {
           const newDigest = generateDigestData('today', items)
-          saveStoredSummaries([newDigest, ...existing])
+          try { saveStoredSummaries([newDigest, ...existing]) } catch (error) { window.dispatchEvent(new CustomEvent('voicenotes:storage-error', { detail: (error as Error).message })); return }
 
           if ('Notification' in window && Notification.permission === 'granted') {
             try {

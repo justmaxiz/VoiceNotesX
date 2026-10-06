@@ -8,6 +8,8 @@ export interface Item {
   audioUrl?: string;
   status: 'todo' | 'in_progress' | 'completed' | 'archived';
   priority: 'low' | 'medium' | 'high';
+  startDate?: string | null;
+  deadline?: string | null;
   dueDate?: string | null;
   dueTime?: string | null;
   isAllDay?: boolean;
@@ -17,9 +19,26 @@ export interface Item {
   completedAt?: string;
   categoryTag: string;
   isFocus: boolean;
+  isFocused?: boolean;
   checklist?: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AudioSession {
+  id: string;
+  title: string;
+  duration: number;
+  createdAt?: string;
+  recordedAt?: string;
+  transcriptSnippet?: string;
+  transcript?: string;
+  summary?: string;
+  actionItems?: string[];
+  tags?: string[];
+  audioUrl?: string;
+  audioBlob?: Blob;
+  waveform?: number[];
 }
 
 export type KanbanColumnKey = 'todo' | 'in_progress' | 'completed';
@@ -32,7 +51,7 @@ export interface ChecklistItem {
 }
 
 
-export type TaskFilter = 'all' | 'urgent' | 'overdue';
+export type TaskFilter = 'all' | 'overdue' | 'voice' | 'summaries';
 export type ViewMode = 'list' | 'board';
 export type TaskSortCriteria = 'priority' | 'time' | 'created' | 'title' | 'manual';
 export type TaskSortDirection = 'asc' | 'desc';
@@ -43,15 +62,18 @@ export interface TaskItemData {
   category: string;
   categoryClass: string;
   time: string;
+  priority?: 'low' | 'medium' | 'high';
   isCompleted: boolean;
   hasAudio?: boolean;
   audioDuration?: string;
-  isUrgent?: boolean;
   noteSubtitle?: string;
   completedTime?: string;
+  startDate?: string | null;
+  deadline?: string | null;
   dueDate?: string | null;
   dueTime?: string | null;
   tags?: string[];
+  isFocused?: boolean;
   estimatedMinutes?: number;
 }
 

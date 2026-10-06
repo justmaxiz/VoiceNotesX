@@ -1,5 +1,5 @@
 import { ProcessNoteOptions, StructuredResult } from '../types/ai'
-import { generateGeminiContent, mockLocalStructuring } from './gemini'
+import { generateGeminiContent, mockLocalStructuring, getAIProxyUrl } from './gemini'
 
 const STRUCTURING_SYSTEM_INSTRUCTION = `Ты — интеллектуальный помощник для структурирования голосовых заметок и задач VoiceNotes AI.
 Твоя задача — преобразовать поток мыслей пользователя в строго типизированный JSON.
@@ -15,8 +15,8 @@ const STRUCTURING_SYSTEM_INSTRUCTION = `Ты — интеллектуальны�
 4. due_date:
    - Точный ISO 8601 штамп времени, если упомянут дедлайн или дата (отталкиваясь от переданной текущей даты). Иначе null.
 5. priority:
-   - "high" при наличии слов "срочно", "критично", "важно", "горит".
-   - "low" для несрочных дел.
+   - "high" при наличии слов "критично", "важно", "горит".
+   - "low" при явном указании низкого приоритета.
    - "medium" по умолчанию.
 6. category_tag:
    - Тег категории с решеткой: #Работа, #Разработка, #Дизайн, #Аналитика, #Финансы, #Идеи, #Личное.
@@ -52,20 +52,23 @@ ${cleanTranscript}
 
 Сформируй валидный JSON согласно схеме.`
 
-  try {
+  if (!getAIProxyUrl()) return mockLocalStructuring(cleanTranscript, currentDate, options.mode || 'fast')
+  {
     const rawJson = await generateGeminiContent(
       STRUCTURING_SYSTEM_INSTRUCTION,
       userPrompt,
       { ...options, currentIsoDate: currentDate }
     )
 
-    const parsed = JSON.parse(rawJson) as StructuredResult
+    const parsed = validateStructuredResult(JSON.parse(rawJson))
     // Ensure required fields have valid fallbacks
     return {
       entity_type: parsed.entity_type === 'task' ? 'task' : 'note',
       title: parsed.title || cleanTranscript.slice(0, 50),
       description: parsed.description || cleanTranscript,
       due_date: parsed.due_date || null,
+      start_date: parsed.start_date,
+      deadline: parsed.deadline,
       priority: parsed.priority || 'medium',
       category_tag: parsed.category_tag?.startsWith('#')
         ? parsed.category_tag
@@ -73,8 +76,18 @@ ${cleanTranscript}
       transcript_summary: parsed.transcript_summary || cleanTranscript.slice(0, 100),
       checklist: Array.isArray(parsed.checklist) ? parsed.checklist : undefined,
     }
-  } catch {
-    // Graceful fallback to deterministic local engine
-    return mockLocalStructuring(cleanTranscript, currentDate, options.mode || 'fast')
   }
+}
+
+export function validateStructuredResult(value: unknown): StructuredResult {
+  if (!value || typeof value !== 'object') throw new Error('AI вернул некорректные данные')
+  const record = value as Record<string, unknown>
+  if (!['task', 'note'].includes(String(record.entity_type)) || !['low', 'medium', 'high'].includes(String(record.priority)) ||
+      typeof record.title !== 'string' || !record.title.trim() || typeof record.category_tag !== 'string' ||
+      typeof record.description !== 'string' || typeof record.transcript_summary !== 'string' ||
+      record.checklist !== undefined && (!Array.isArray(record.checklist) || record.checklist.some((item) => typeof item !== 'string')) ||
+      ['due_date', 'start_date', 'deadline'].some((key) => record[key] != null && (typeof record[key] !== 'string' || !Number.isFinite(new Date(record[key] as string).getTime())))) {
+    throw new Error('AI вернул некорректные поля')
+  }
+  return record as unknown as StructuredResult
 }

@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie'
 import { Item, AudioSession, UserSettings } from '../types'
+import { normalizeTaskDates, taskDuration } from './taskDates'
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -17,32 +18,50 @@ export class VoiceNotesDB extends Dexie {
     super(databaseName)
     this.version(1).stores({
       items: 'id, type, status, priority, categoryTag, isFocus, createdAt, dueDate',
+      audioSessions: 'id, recordedAt',
+      settings: 'id',
+    })
+
+    this.version(2)
+      .stores({
+        items: 'id, type, status, priority, categoryTag, isFocus, createdAt, dueDate, startDate, deadline',
+        audioSessions: 'id, recordedAt',
+        settings: 'id',
+      })
+      .upgrade(async (tx) => {
+        await tx.table('items').toCollection().modify((item: any) => {
+          try {
+            Object.assign(item, normalizeTaskDates({ ...item, estimatedMinutes: taskDuration(item) }))
+          } catch {
+            // Preserve malformed legacy rows; do not guess or discard user data.
+          }
+        })
       })
   }
 
-  async createItem(item: Item): Promise<string> {
+  async createItem(item: Item, audio?: { blob: Blob; duration: number }): Promise<string> {
+    const isItemFocus = Boolean(item.isFocus || item.isFocused)
     const finalItem: Item = {
-      ...item,
+      ...normalizeTaskDates(item),
       id: item.id || generateId(),
-      isFocus: Boolean(item.isFocus),
+      isFocus: isItemFocus,
+      isFocused: isItemFocus,
       createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: item.updatedAt || new Date().toISOString(),
     }
 
-    if (finalItem.isFocus) {
-      await this.transaction('rw', this.items, async () => {
-        const allFocused = await this.items.filter((i) => Boolean(i.isFocus)).toArray()
-        const now = new Date().toISOString()
-        for (const f of allFocused) {
-          if (f.id !== finalItem.id) {
-            await this.items.update(f.id, { isFocus: false, updatedAt: now })
-          }
-        }
-        await this.items.put(finalItem)
-      })
-    } else {
+    // A capture and its original audio are one atomic write.
+    await this.transaction('rw', [this.items, this.audioSessions], async () => {
+      if (finalItem.isFocus) {
+        await this.items.filter((i) => Boolean(i.isFocus || i.isFocused)).modify({ isFocus: false, isFocused: false })
+      }
+      if (audio) {
+        delete finalItem.audioUrl
+        finalItem.audioDuration = audio.duration
+        await this.audioSessions.put({ id: finalItem.id, title: finalItem.title, duration: audio.duration, recordedAt: finalItem.createdAt, audioBlob: audio.blob })
+      }
       await this.items.put(finalItem)
-    }
+    })
 
     return finalItem.id
   }
@@ -53,26 +72,28 @@ export class VoiceNotesDB extends Dexie {
       throw new Error(`Item with id "${id}" not found`)
     }
 
-    if (patch.isFocus) {
-      await this.setFocusTask(id)
-      const restPatch = { ...patch }
-      delete restPatch.isFocus
-      if (Object.keys(restPatch).length > 0) {
-        await this.items.update(id, {
-          ...restPatch,
-          updatedAt: new Date().toISOString(),
-        })
-      }
-    } else {
-      await this.items.update(id, {
-        ...patch,
-        updatedAt: new Date().toISOString(),
-      })
+    const normalized = normalizeTaskDates(patch, existing)
+    if ('status' in patch) {
+      normalized.completedAt = patch.status === 'completed' ? existing.completedAt || new Date().toISOString() : undefined
+      if (patch.status === 'completed' || patch.status === 'archived') { normalized.isFocus = false; normalized.isFocused = false }
     }
+    if ('isFocus' in normalized || 'isFocused' in normalized) {
+      normalized.isFocus = normalized.isFocused = Boolean(normalized.isFocus || normalized.isFocused)
+    }
+    await this.transaction('rw', this.items, async () => {
+      if (normalized.isFocus) {
+        await this.items.filter((i) => i.id !== id && Boolean(i.isFocus || i.isFocused)).modify({ isFocus: false, isFocused: false })
+        if ((normalized.status || existing.status) === 'todo') normalized.status = 'in_progress'
+      }
+      await this.items.update(id, { ...normalized, updatedAt: new Date().toISOString() })
+    })
   }
 
   async deleteItem(id: string): Promise<void> {
-    await this.items.delete(id)
+    await this.transaction('rw', [this.items, this.audioSessions], async () => {
+      await this.items.delete(id)
+      await this.audioSessions.delete(id)
+    })
   }
 
   async toggleTaskComplete(id: string): Promise<void> {
@@ -80,14 +101,7 @@ export class VoiceNotesDB extends Dexie {
     if (!item) {
       throw new Error(`Item with id "${id}" not found`)
     }
-    const isCompleted = item.status === 'completed'
-    const newStatus: Item['status'] = isCompleted ? 'todo' : 'completed'
-    const now = new Date().toISOString()
-    await this.items.update(id, {
-      status: newStatus,
-      completedAt: isCompleted ? undefined : now,
-      updatedAt: now,
-    })
+    await this.updateItem(id, { status: item.status === 'completed' ? 'todo' : 'completed' })
   }
 
   async setFocusTask(id: string): Promise<void> {
@@ -127,7 +141,27 @@ export class VoiceNotesDB extends Dexie {
     return this.audioSessions.toArray()
   }
 
-  
+  async getAudioSession(id: string): Promise<AudioSession | undefined> {
+    return this.audioSessions.get(id)
+  }
+
+  async createAudioSession(session: AudioSession): Promise<string> {
+    const finalSession: AudioSession = {
+      ...session,
+      id: session.id || generateId(),
+      recordedAt: session.recordedAt || new Date().toISOString(),
+    }
+    await this.audioSessions.put(finalSession)
+    return finalSession.id
+  }
+
+  async deleteAudioSession(id: string): Promise<void> {
+    await this.audioSessions.delete(id)
+  }
+
+  async getSettings(): Promise<UserSettings | undefined> {
+    return this.settings.get('default')
+  }
 
   async saveSettings(settings: UserSettings): Promise<void> {
     await this.settings.put({
@@ -138,8 +172,10 @@ export class VoiceNotesDB extends Dexie {
   }
 
   async clearDatabase(): Promise<void> {
-    await this.transaction('rw', [this.items], async () => {
+    await this.transaction('rw', [this.items, this.audioSessions, this.settings], async () => {
       await this.items.clear()
+      await this.audioSessions.clear()
+      await this.settings.clear()
     })
   }
 }

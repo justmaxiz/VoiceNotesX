@@ -1,7 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Item } from '../../types/item'
 import { useDrawerStore } from '../../store/useDrawerStore'
 import { useQuickCaptureStore } from '../../store/useQuickCaptureStore'
+import { getTaskTemporalStatus } from '../../lib/focusLogic'
+import { HOUR_HEIGHT, START_HOUR, END_HOUR, layoutDayTasks } from '../../lib/calendarLayout'
+import { taskDeadline, localTime } from '../../lib/taskDates'
+import { DayTasksPopover } from './DayTasksPopover'
 
 export interface WeekTimelineViewProps {
   weekDays: Array<{ day: string; dateKey: string; isToday: boolean }>
@@ -9,144 +13,52 @@ export interface WeekTimelineViewProps {
   getCategoryBorder: (categoryTag: string, title: string) => string
 }
 
-export const WeekTimelineView: React.FC<WeekTimelineViewProps> = ({
-  weekDays,
-  items,
-  getCategoryBorder,
-}) => {
+export const WeekTimelineView: React.FC<WeekTimelineViewProps> = ({ weekDays, items, getCategoryBorder }) => {
   const { openDrawer } = useDrawerStore()
   const { openQuickCapture } = useQuickCaptureStore()
-  const hours = Array.from({ length: 15 }, (_, i) => i + 8) // 08:00 - 22:00
-
-  // Filter tasks per day
-  const getTasksForDay = (dateKey: string) => {
-    return items.filter((item) => {
-      if (item.type !== 'task' || item.status === 'archived') return false
-      if (item.dueDate && item.dueDate.startsWith(dateKey)) return true
-      // fallback for seed tasks with plain times on today
-      const todayStr = new Date().toISOString().split('T')[0]
-      if (dateKey === todayStr && item.dueDate && item.dueDate.includes(':') && !item.dueDate.includes('-')) {
-        return true
-      }
-      return false
-    })
-  }
-
-  return (
-    <div className="flex flex-col rounded-2xl bg-surface-container-low border border-outline-variant/20 overflow-x-auto">
-      {/* Week Header */}
-      <div className="grid grid-cols-8 border-b border-outline-variant/20 min-w-[760px] bg-surface-container-high/40">
-        <div className="p-3 text-xs text-outline font-mono text-center border-r border-outline-variant/15 flex items-center justify-center">
-          Время
-        </div>
-
-        {weekDays.map((col) => (
-          <div
-            key={col.dateKey}
-            className={`p-3 text-center border-r border-outline-variant/15 last:border-r-0 ${
-              col.isToday ? 'bg-primary/10' : ''
-            }`}
-          >
-            <div
-              className={`text-xs font-semibold ${
-                col.isToday ? 'text-primary' : 'text-on-surface'
-              }`}
-            >
-              {col.day}
-            </div>
-            {col.isToday && (
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-secondary mt-1 shadow-[0_0_6px_rgba(78,222,163,0.8)]" />
-            )}
+  const [activePopoverDay, setActivePopoverDay] = useState<{ dateLabel: string; tasks: Item[] } | null>(null)
+  const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
+  return <>
+    <div className="overflow-x-auto rounded-2xl bg-surface-container-low border border-outline-variant/20 p-4">
+    <div className="flex gap-2" style={{ minWidth: weekDays.length > 1 ? 760 : undefined }}>
+      <div className="w-12 shrink-0 text-xs font-mono text-outline">
+        <div className="h-24">Время</div>
+        {hours.map((hour) => <div key={hour} style={{ height: HOUR_HEIGHT }}>{String(hour).padStart(2, '0')}:00</div>)}
+        <div>22:00</div>
+      </div>
+      {weekDays.map((day) => {
+        const { positionedTasks, allDayTasks, offHoursTasks } = layoutDayTasks(items, day.dateKey)
+        return <div key={day.dateKey} className="flex-1 min-w-0">
+          <div className="h-24 overflow-hidden text-on-surface">
+            <div className={`text-xs font-semibold mb-1 ${day.isToday ? 'text-secondary' : ''}`}>{day.day}</div>
+            {allDayTasks.slice(0, 2).map((task) => <button key={task.id} title={task.title} className="mb-0.5 block h-5 w-full truncate rounded bg-surface-container-high px-2 text-left text-xs leading-5 hover:bg-surface-container-highest" onClick={() => openDrawer(task.id)}>{task.title} · Весь день</button>)}
+            {allDayTasks.length > 2 && <button type="button" onClick={() => setActivePopoverDay({ dateLabel: new Date(`${day.dateKey}T12:00:00`).toLocaleDateString('ru-RU'), tasks: allDayTasks })} className="mt-0.5 px-1.5 py-0.5 text-[11px] leading-4 font-medium text-outline hover:text-primary transition-colors">+ еще {allDayTasks.length - 2}</button>}
           </div>
-        ))}
-      </div>
-
-      {/* All-Day Section */}
-      <div className="grid grid-cols-8 border-b border-outline-variant/20 min-w-[760px] bg-surface-container/30">
-        <div className="p-2 text-[11px] text-outline text-center border-r border-outline-variant/15 flex items-center justify-center font-medium">
-          Весь день
+          <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
+            {hours.map((hour) => <button key={hour} aria-label={`Создать задачу ${day.dateKey} ${hour}:00`}
+              className="absolute w-full border-t border-outline-variant/20 hover:bg-surface-container/30 cursor-pointer"
+              style={{ top: (hour - START_HOUR) * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+              onClick={() => openQuickCapture({ entityType: 'task', dueDate: day.dateKey, dueTime: `${String(hour).padStart(2, '0')}:00` })} />)}
+            {positionedTasks.map(({ task, top, height, column, totalColumns }) => {
+              const status = getTaskTemporalStatus(task)
+              return <button key={task.id} data-testid={`calendar-event-${task.id}`} onClick={() => openDrawer(task.id)}
+                className={`absolute rounded-lg border-l-4 ${getCategoryBorder(task.categoryTag, task.title)} bg-surface-container text-on-surface text-left px-2 overflow-hidden border border-outline-variant/30 hover:bg-surface-container-high ${task.isFocus || task.isFocused ? 'ring-1 ring-primary' : ''}`}
+                style={{ top, height, left: `${column * 100 / totalColumns}%`, width: `${100 / totalColumns}%` }}>
+                <div className="text-xs font-medium truncate">{task.title}</div>
+                {height > 35 && <div className="text-[11px] text-on-surface-variant">{localTime(taskDeadline(task)!)}{status === 'overdue' ? ' · Просрочена' : status === 'current' ? ' · Сейчас' : ''}</div>}
+              </button>
+            })}
+          </div>
+          {offHoursTasks.length > 0 && <div className="mt-2 border-t border-outline-variant/20 pt-2">
+            <div className="text-xs text-on-surface-variant mb-1">Вне 08:00–22:00</div>
+            {offHoursTasks.map((task) => <button key={task.id} data-testid={`calendar-event-${task.id}`}
+              className="block w-full text-left text-xs rounded bg-surface-container-high p-2 mb-1 text-on-surface"
+              onClick={() => openDrawer(task.id)}>{task.title} · {localTime(taskDeadline(task)!)}</button>)}
+          </div>}
         </div>
-        {weekDays.map((col) => {
-          const allDayTasks = getTasksForDay(col.dateKey).filter((t) => t.isAllDay)
-          return (
-            <div
-              key={`allday-${col.dateKey}`}
-              className="p-1.5 border-r border-outline-variant/15 last:border-r-0 min-h-[36px] flex flex-col gap-1"
-            >
-              {allDayTasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => openDrawer(task.id)}
-                  className="px-2 py-1 rounded bg-secondary-container/20 text-secondary border border-secondary/30 text-[10px] font-semibold truncate cursor-pointer hover:opacity-90"
-                >
-                  {task.title}
-                </div>
-              ))}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Hourly Grid (08:00 - 22:00) */}
-      <div className="min-w-[760px] divide-y divide-outline-variant/15">
-        {hours.map((hour) => {
-          const hourStr = `${hour.toString().padStart(2, '0')}:00`
-
-          return (
-            <div key={hour} className="grid grid-cols-8 min-h-[56px] group">
-              {/* Hour Label */}
-              <div className="p-2 text-xs font-mono text-outline text-center border-r border-outline-variant/15 bg-surface-container-low/60 flex items-start justify-center">
-                {hourStr}
-              </div>
-
-              {/* Day cells for this hour */}
-              {weekDays.map((col) => {
-                const dayTasks = getTasksForDay(col.dateKey).filter((t) => {
-                  if (t.isAllDay) return false
-                  const time = t.dueTime || (t.dueDate?.includes(':') ? t.dueDate : null)
-                  if (!time) return false
-                  const taskHour = parseInt(time.split(':')[0], 10)
-                  return taskHour === hour
-                })
-
-                return (
-                  <div
-                    key={`${col.dateKey}-${hour}`}
-                    onClick={() =>
-                      openQuickCapture({
-                        entityType: 'task',
-                        initialText: `Задача на ${col.day} в ${hourStr}: `,
-                      })
-                    }
-                    className={`p-1.5 border-r border-outline-variant/15 last:border-r-0 relative hover:bg-surface-container/50 cursor-pointer transition-colors ${
-                      col.isToday ? 'bg-primary/5' : ''
-                    }`}
-                  >
-                    {dayTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openDrawer(task.id)
-                        }}
-                        className={`p-1.5 rounded-lg text-[11px] leading-snug border-l-[3px] ${getCategoryBorder(
-                          task.categoryTag,
-                          task.title
-                        )} bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 shadow-xs cursor-pointer truncate font-medium text-on-surface`}
-                      >
-                        <div className="truncate">{task.title}</div>
-                        <div className="text-[10px] text-outline mt-0.5">
-                          {task.dueTime || task.dueDate}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
+      })}
     </div>
-  )
+    </div>
+    {activePopoverDay && <DayTasksPopover {...activePopoverDay} onClose={() => setActivePopoverDay(null)} />}
+  </>
 }

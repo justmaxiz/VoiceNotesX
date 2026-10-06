@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { App } from '../App'
 import { useNavigationStore } from '../store/navigationStore'
 
@@ -7,6 +7,8 @@ describe('VoiceNotes App - Client Routing Integration', () => {
   beforeEach(() => {
     useNavigationStore.setState({ activeTab: 'overview' })
   })
+
+  afterEach(() => vi.useRealTimers())
 
   it('renders Dashboard Overview on initial load', () => {
     render(<App />)
@@ -47,7 +49,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     fireEvent.click(aiBtn)
 
     expect(screen.getByText('ИИ Дайджесты')).toBeInTheDocument()
-    expect(screen.getByText('Google Gemini Flash Engine')).toBeInTheDocument()
+    expect(screen.getByText('Локальные итоги')).toBeInTheDocument()
   })
 
   it('switches to Settings view when clicked in sidebar', () => {
@@ -57,17 +59,20 @@ describe('VoiceNotes App - Client Routing Integration', () => {
 
     expect(screen.getByTestId('view-settings')).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-    expect(screen.getByText('Подключенные устройства')).toBeInTheDocument()
+    expect(screen.getByText('Локальное хранение')).toBeInTheDocument()
   })
 
-  it('preserves state when returning to Overview', () => {
+  it('preserves state when returning to Overview', async () => {
     render(<App />)
     expect(screen.getByTestId('view-overview')).toBeVisible()
 
     // Toggle first task on Overview
     const firstCheckbox = screen.getByLabelText('Отметить задачу: Подготовить отчет по продуктовым метрикам Q3')
     expect(firstCheckbox).not.toBeChecked()
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
     fireEvent.click(firstCheckbox)
+    act(() => vi.advanceTimersByTime(200))
+    vi.useRealTimers()
     expect(firstCheckbox).toBeChecked()
 
     // Enter text into quick input

@@ -44,22 +44,24 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
     <div
       onClick={handleCardClick}
       className={`relative flex ${
-        isCompact ? 'flex-col gap-space-sm' : 'items-center justify-between'
-      } p-space-md rounded-2xl transition-all duration-200 group shadow-xs border ${
+        isCompact ? 'min-h-[168px] flex-col gap-3.5 p-4' : 'items-center justify-between p-space-md'
+      } rounded-2xl transition-all duration-200 group shadow-xs border ${
         task.isFocused
-          ? 'border-primary/50 ring-1 ring-primary/30 bg-surface-container-low'
+          ? 'border-primary/40 ring-1 ring-primary/15 bg-primary/[0.035]'
           : isOverdue && !task.isCompleted
-            ? 'border-error/30 ring-1 ring-error/20 bg-gradient-to-r from-error/5 to-transparent'
-            : 'border-outline-variant/20 hover:border-outline-variant/40'
+            ? 'border-error/25 bg-error/[0.025] hover:border-error/40'
+            : isCompact
+              ? 'border-outline-variant/25 bg-surface-container-lowest hover:border-primary/30 hover:shadow-sm'
+              : 'border-outline-variant/20 hover:border-outline-variant/40'
       } ${
         task.isCompleted
-          ? 'bg-surface-container-lowest/40 hover:bg-surface-container-low/70'
+          ? 'bg-surface-container-lowest/70 hover:bg-surface-container-low/70'
           : task.isFocused || (isOverdue && !task.isCompleted)
             ? ''
-            : 'bg-surface-container-low hover:bg-surface-container'
+            : isCompact ? '' : 'bg-surface-container-low hover:bg-surface-container'
       } cursor-pointer`}
     >
-      <div className={`flex ${isCompact ? 'items-start' : 'items-center'} gap-3 min-w-0 flex-1`}>
+      <div className={`flex ${isCompact ? 'items-start' : 'items-center'} gap-3 min-w-0 flex-1 ${isCompact ? 'w-full' : ''}`}>
         {/* Multi-selection Checkbox when select mode is active */}
         {isSelectMode && (
           <div onClick={(e) => e.stopPropagation()} className={`shrink-0 ${isCompact ? 'pt-0.5' : ''}`}>
@@ -84,9 +86,9 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
 
         {/* Task Title & Tags */}
         <div className="flex flex-col min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <span
-              className={`font-headline-sm text-headline-sm truncate transition-colors ${
+              className={`${isCompact ? 'text-sm leading-5 font-semibold line-clamp-2' : 'font-headline-sm text-headline-sm truncate'} transition-colors ${
                 task.isCompleted
                   ? 'line-through text-outline'
                   : 'text-on-surface group-hover:text-primary'
@@ -108,14 +110,14 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-space-xs mt-1 flex-wrap font-label-sm text-label-sm">
+          <div className={`flex items-center gap-space-xs flex-wrap font-label-sm text-label-sm ${isCompact ? 'mt-2' : 'mt-1'}`}>
             <span
-              className={`px-2 py-0.5 rounded-md bg-surface-container-high/60 text-xs font-medium ${task.categoryClass}`}
+              className={`px-2 py-0.5 rounded-md bg-surface-container-high/70 text-xs font-medium ${task.categoryClass}`}
             >
               {task.category.startsWith('#') ? task.category : `#${task.category}`}
             </span>
 
-            {task.noteSubtitle && (
+            {!isCompact && task.noteSubtitle && (
               <span className="text-outline text-xs truncate max-w-xs">{task.noteSubtitle}</span>
             )}
 
@@ -125,6 +127,11 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
               </span>
             )}
           </div>
+          {isCompact && task.noteSubtitle && (
+            <p className="mt-2 text-xs leading-relaxed text-on-surface-variant/80 line-clamp-2">
+              {task.noteSubtitle}
+            </p>
+          )}
         </div>
       </div>
 
@@ -132,7 +139,7 @@ export const DashboardTaskItem: React.FC<DashboardTaskItemProps> = ({
       <div
         className={`flex items-center ${
           isCompact
-            ? 'justify-between w-full pt-2 border-t border-surface-container-high/30 mt-1'
+            ? 'justify-between w-full pt-2.5 border-t border-outline-variant/20 mt-auto'
             : 'gap-space-md shrink-0'
         }`}
         onClick={(e) => e.stopPropagation()}

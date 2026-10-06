@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
-  getGeminiApiKey,
+  getAIProxyUrl,
   mockLocalStructuring,
   generateGeminiContent,
 } from '../gemini'
@@ -17,8 +17,8 @@ describe('Gemini AI Integration', () => {
   })
 
   describe('gemini client & mock fallback', () => {
-    it('returns empty string if no api key in env', () => {
-      expect(typeof getGeminiApiKey()).toBe('string')
+    it('returns empty string if no proxy in env', () => {
+      expect(typeof getAIProxyUrl()).toBe('string')
     })
 
     it('mockLocalStructuring correctly parses action tasks', () => {
@@ -34,6 +34,12 @@ describe('Gemini AI Integration', () => {
       expect(res.title).toBeTruthy()
     })
 
+    it('marks tasks described as ASAP as high priority', () => {
+      const res = mockLocalStructuring('Please fix the login bug ASAP')
+      expect(res.entity_type).toBe('task')
+      expect(res.priority).toBe('high')
+    })
+
     it('mockLocalStructuring correctly parses reflective notes', () => {
       const res = mockLocalStructuring(
         'Думаю над концепцией нового интерфейса и подбором шрифтовых пар',
@@ -45,8 +51,8 @@ describe('Gemini AI Integration', () => {
       expect(res.priority).toBe('medium')
     })
 
-    it('throws API_KEY_NOT_FOUND when calling generateGeminiContent without key', async () => {
-      await expect(generateGeminiContent('system', 'user')).rejects.toThrow('API_KEY_NOT_FOUND')
+    it('throws AI_PROXY_NOT_CONFIGURED when calling generateGeminiContent without proxy', async () => {
+      await expect(generateGeminiContent('system', 'user')).rejects.toThrow('AI_PROXY_NOT_CONFIGURED')
     })
   })
 
@@ -91,10 +97,10 @@ describe('Gemini AI Integration', () => {
 
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => mockResult,
+        json: async () => ({ text: mockResult.candidates[0].content.parts[0].text }),
       })
 
-      vi.stubEnv('VITE_GEMINI_API_KEY', 'test-key')
+      vi.stubEnv('VITE_AI_PROXY_URL', 'https://example.com/ai')
 
       try {
         const res = await structureVoiceNote('Согласовать бюджет на AI API')

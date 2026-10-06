@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CalendarPage } from '../CalendarPage'
 import { useAppStore } from '../../../store/useAppStore'
 import { Item } from '../../../types/item'
@@ -34,8 +34,12 @@ describe('CalendarPage - Real Due Dates & Backlog (TASK-38)', () => {
   ]
 
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 9, 5, 12))
     useAppStore.setState({ items: testTasks })
   })
+
+  afterEach(() => vi.useRealTimers())
 
   it('renders task on Oct 18 strictly once, and eliminates the 4-day modulo bug', () => {
     render(<CalendarPage />)
@@ -64,6 +68,7 @@ describe('CalendarPage - Real Due Dates & Backlog (TASK-38)', () => {
 
     // Switch to Day
     fireEvent.click(screen.getByRole('button', { name: 'День' }))
-    expect(screen.getByText('Понедельник, 5 октября 2026')).toBeInTheDocument()
+    const calendarHeader = screen.getByText('Календарная сетка').parentElement!
+    expect(within(calendarHeader).getByText(/понедельник, 5 октября 2026/i)).toBeInTheDocument()
   })
 })

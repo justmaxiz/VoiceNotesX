@@ -4,8 +4,6 @@ import {
   resetDatabaseToSeed,
   isDatabaseSeeded,
   SEED_ITEMS,
-  SEED_AUDIO_SESSIONS,
-  DEFAULT_USER_SETTINGS,
   SEEDED_STORAGE_KEY,
 } from '../seedData'
 import { db, clearDatabase } from '../db'

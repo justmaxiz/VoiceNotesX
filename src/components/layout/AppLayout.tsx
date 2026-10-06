@@ -21,8 +21,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     toggleSidebar,
   } = useNavigationStore()
 
+  const error = useAppStore((state) => state.error)
+  const clearError = useAppStore((state) => state.clearError)
+
   // Hotkey / or C for quick capture (TASK-40)
   useQuickCaptureHotkey()
+
+  useEffect(() => {
+    const onError = (event: Event) => useAppStore.setState({ error: (event as CustomEvent<string>).detail })
+    window.addEventListener('voicenotes:storage-error', onError)
+    return () => window.removeEventListener('voicenotes:storage-error', onError)
+  }, [])
 
   // Schedulers for Reminders (TASK-37) and Daily AI Digest (TASK-39)
   useEffect(() => {
@@ -89,13 +98,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Header with sidebar toggle */}
       <Header />
 
-      {/* Main Content Area - pl-72 offset never conflicts with content padding */}
+      {/* Main content offsets to the full sidebar or its compact icon rail. */}
       <main
         role="main"
         className={`relative ${
-          isSidebarCollapsed ? 'pl-0' : 'pl-0 md:pl-72'
+          isSidebarCollapsed ? 'pl-0 md:pl-20' : 'pl-0 md:pl-72'
         } pt-16 bg-surface min-h-screen w-full transition-all duration-200`}
       >
+        {error && <div role="alert" className="mx-4 mt-4 rounded-xl bg-error-container text-on-error-container p-3">{error}<button className="ml-4 underline" onClick={clearError}>Закрыть</button></div>}
         {/* Dynamic Ambient Auras */}
         <div
           aria-hidden="true"

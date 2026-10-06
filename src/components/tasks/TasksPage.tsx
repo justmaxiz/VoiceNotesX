@@ -24,6 +24,8 @@ export const TasksPage: React.FC = () => {
   const { openDrawer } = useDrawerStore()
 
   const [importTargetCol, setImportTargetCol] = useState<KanbanColumnKey | null>(null)
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<KanbanColumnKey | null>(null)
 
   const taskItems = items.filter((i) => i.type === 'task')
 
@@ -52,12 +54,22 @@ export const TasksPage: React.FC = () => {
   }
 
   const handleMoveTask = (task: Item, targetCol: KanbanColumnKey) => {
+    if (task.status === targetCol) return
     updateItem(task.id, {
       status: targetCol,
       // If moving to completed or todo, clear focus if it was focused
       isFocus: targetCol === 'completed' ? false : task.isFocus,
       isFocused: targetCol === 'completed' ? false : task.isFocused,
     })
+  }
+
+  const handleDropTask = (targetCol: KanbanColumnKey, event: React.DragEvent) => {
+    event.preventDefault()
+    const taskId = event.dataTransfer.getData('text/task-id') || draggedTaskId
+    const task = taskItems.find((item) => item.id === taskId)
+    if (task) handleMoveTask(task, targetCol)
+    setDraggedTaskId(null)
+    setDragOverColumn(null)
   }
 
   const handleImportExisting = (item: Item, targetCol: KanbanColumnKey) => {
@@ -110,7 +122,22 @@ export const TasksPage: React.FC = () => {
             <div
               key={col.key}
               data-testid={`kanban-column-${col.key}`}
-              className="flex flex-col rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 p-3 min-h-[460px]"
+              onDragOver={(event) => {
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+                setDragOverColumn(col.key)
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setDragOverColumn((current) => current === col.key ? null : current)
+                }
+              }}
+              onDrop={(event) => handleDropTask(col.key, event)}
+              className={`flex flex-col rounded-2xl border p-3 min-h-[460px] transition-all duration-300 ease-out ${
+                dragOverColumn === col.key
+                  ? 'bg-primary/[0.06] border-primary/50 ring-2 ring-primary/20 scale-[1.01] shadow-md'
+                  : 'bg-surface-container-low/80 border-outline-variant/20'
+              }`}
             >
               {/* Column Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-outline-variant/15 px-1">
@@ -152,10 +179,24 @@ export const TasksPage: React.FC = () => {
                       <article
                         key={task.id}
                         onClick={() => openDrawer(task.id)}
-                        className={`p-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high border transition-all flex flex-col gap-2.5 cursor-pointer group shadow-xs ${
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = 'move'
+                          event.dataTransfer.setData('text/task-id', task.id)
+                          setDraggedTaskId(task.id)
+                        }}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null)
+                          setDragOverColumn(null)
+                        }}
+                        className={`p-3.5 rounded-xl border flex flex-col gap-2.5 cursor-grab active:cursor-grabbing group transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${
+                          draggedTaskId === task.id
+                            ? 'opacity-40 scale-[0.97] rotate-[1deg] shadow-lg'
+                            : 'opacity-100 scale-100 rotate-0'
+                        } ${
                           isFocus
-                            ? 'border-primary/60 ring-1 ring-primary/40 bg-surface-container-high/60 shadow-md'
-                            : 'border-outline-variant/20 hover:border-primary/40'
+                            ? 'border-primary/50 ring-1 ring-primary/20 bg-primary/[0.035] shadow-sm'
+                            : 'border-outline-variant/25 bg-surface-container-lowest hover:border-primary/35'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -199,11 +240,6 @@ export const TasksPage: React.FC = () => {
                             <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-medium">
                               {task.categoryTag}
                             </span>
-                            {task.priority === 'high' && (
-                              <span className="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-medium text-[11px]">
-                                Срочно
-                              </span>
-                            )}
                             {(task.dueTime || task.dueDate) && (
                               <span className="text-[11px] text-outline flex items-center gap-0.5">
                                 <span className="material-symbols-outlined text-xs">schedule</span>

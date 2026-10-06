@@ -5,6 +5,8 @@ import { ChecklistItem } from '../../../types/item'
 import { useAppStore } from '../../../store/useAppStore'
 import { useDrawerStore } from '../../../store/useDrawerStore'
 import { Checkbox } from '../../ui/Checkbox'
+import { calculateFocusedTask, getTaskTemporalStatus } from '../../../lib/focusLogic'
+import { localDateKey, localTime, parseInstant, tasksForToday } from '../../../lib/taskDates'
 
 export interface FocusHeroCardProps {
   isPlaying?: boolean
@@ -13,12 +15,10 @@ export interface FocusHeroCardProps {
   description?: string
   deadlineText?: string
   categoryTag?: string
-  priority?: 'low' | 'medium' | 'high'
   audioUrl?: string
   checklist?: ChecklistItem[]
   onComplete?: () => void
   onSummary?: () => void
-  isCompleted?: boolean
 }
 
 export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
@@ -26,11 +26,9 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
   description: propDescription,
   deadlineText: propDeadLine,
   categoryTag: propCategoryTag,
-  priority: propPriority,
   audioUrl: propAudioUrl,
   checklist: propChecklist,
   onComplete,
-  isCompleted: initialCompleted = false,
   isPlaying,
   onTogglePlay,
   onSummary,
@@ -40,42 +38,70 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
   const [isSwitchFocusOpen, setIsSwitchFocusOpen] = useState(false)
   const switchMenuRef = useRef<HTMLDivElement>(null)
 
-  // Find current focused task from store
+  // Tick for periodic focus recalculation (every 30s)
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Find current focused task using priority algorithm
   const focusedTask = useMemo(() => {
-    const explicitlyFocused = items.find(
-      (i) => i.type === 'task' && (i.isFocus || i.isFocused) && i.status !== 'completed'
-    )
-    if (explicitlyFocused) return explicitlyFocused
+    return calculateFocusedTask(items)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, tick])
 
-    const highPriority = items.find(
-      (i) => i.type === 'task' && i.priority === 'high' && i.status !== 'completed'
-    )
-    if (highPriority) return highPriority
-
-    return items.find((i) => i.type === 'task' && i.status !== 'completed')
-  }, [items])
+  // Determine temporal status for visual badges
+  const temporalStatus = useMemo(() => {
+    if (!focusedTask) return null
+    return getTaskTemporalStatus(focusedTask)
+  }, [focusedTask, tick])
 
   const pendingTasks = useMemo(() => {
     return items.filter(
-      (i) => i.type === 'task' && i.status !== 'completed' && i.id !== focusedTask?.id
+      (i) => i.type === 'task' && i.status !== 'completed' && i.status !== 'archived' && i.id !== focusedTask?.id
     )
   }, [items, focusedTask])
 
   // Derive display values from focusedTask if available, otherwise fallback to props
   const currentTitle = propTitle || focusedTask?.title || 'Нет задач в фокусе'
   const currentDescription = propDescription !== undefined ? propDescription : focusedTask?.description || ''
-  const currentDeadline = propDeadLine || focusedTask?.dueTime || focusedTask?.dueDate || 'Сегодня'
+  const currentDeadline = useMemo(() => {
+    if (propDeadLine) return propDeadLine
+    if (!focusedTask) return 'Сегодня'
+    const deadline = parseInstant(focusedTask.deadline)
+    if (deadline) {
+      const time = localTime(deadline)
+      return localDateKey(deadline) === localDateKey()
+        ? time
+        : `${deadline.toLocaleDateString('ru-RU')} · ${time}`
+    }
+    if (focusedTask.dueDate) {
+      const date = parseInstant(focusedTask.dueDate)
+      const dateKey = date ? localDateKey(date) : focusedTask.dueDate.split('T')[0]
+      const time = focusedTask.dueTime
+      if (dateKey === localDateKey()) return time || 'Сегодня'
+      const formattedDate = date?.toLocaleDateString('ru-RU') || dateKey
+      return time ? `${formattedDate} · ${time}` : formattedDate
+    }
+    return 'Сегодня'
+  }, [propDeadLine, focusedTask, tick])
   const currentCategory = propCategoryTag || focusedTask?.categoryTag || '#Фокус'
-  const currentPriority = propPriority || focusedTask?.priority || 'high'
   const currentAudio = propAudioUrl !== undefined ? propAudioUrl : focusedTask?.audioUrl
   const currentChecklist = propChecklist || focusedTask?.checklist || []
 
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(currentChecklist)
-  const [completed, setCompleted] = useState(initialCompleted)
+  const checklist = currentChecklist
+  const taskItems = items.filter((item) => item.type === 'task' && item.status !== 'archived')
+  const explicitlyFocusedTasks = taskItems.filter((item) => item.isFocus || item.isFocused)
+  const todayTasks = tasksForToday(items)
+  const focusWorkCompleted = (
+    explicitlyFocusedTasks.length > 0 && explicitlyFocusedTasks.every((item) => item.status === 'completed')
+  ) || (
+    todayTasks.length > 0 && todayTasks.every((item) => item.status === 'completed')
+  ) || (
+    taskItems.length > 0 && taskItems.every((item) => item.status === 'completed')
+  )
 
-  useEffect(() => {
-    setChecklist(currentChecklist)
-  }, [focusedTask?.id, propChecklist])
 
   useEffect(() => {
     if (!isSwitchFocusOpen) return
@@ -99,7 +125,6 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
     const updated = checklist.map((item) =>
       item.id === subtaskId ? { ...item, isCompleted: !item.isCompleted } : item
     )
-    setChecklist(updated)
     if (focusedTask) {
       updateItem(focusedTask.id, { checklist: updated }).catch(() => {})
     }
@@ -119,8 +144,6 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
 
     if (focusedTask) {
       toggleTask(focusedTask.id).catch(() => {})
-    } else {
-      setCompleted(true)
     }
 
     if (onComplete) {
@@ -128,7 +151,7 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
     }
   }
 
-  if (completed && !focusedTask) {
+  if (focusWorkCompleted && !focusedTask) {
     return (
       <section
         data-testid="focus-hero-card"
@@ -172,6 +195,19 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
             <span>В фокусе</span>
           </span>
 
+          {/* Temporal status badge */}
+          {temporalStatus === 'overdue' && (
+            <span className="h-6 inline-flex items-center gap-1.5 px-2.5 rounded-full bg-error/10 text-error border border-error/20 text-xs font-medium leading-none select-none animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+              <span>Просрочена</span>
+            </span>
+          )}
+          {temporalStatus === 'current' && (
+            <span className="h-6 inline-flex items-center gap-1.5 px-2.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20 text-xs font-medium leading-none select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
+              <span>Сейчас</span>
+            </span>
+          )}
           {/* Switch Focus Popover */}
           <div className="relative inline-flex items-center" ref={switchMenuRef}>
             <button
@@ -230,12 +266,6 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
             {currentCategory}
           </span>
 
-          {currentPriority === 'high' && (
-            <span className="h-6 inline-flex items-center gap-1.5 px-2.5 rounded-full bg-error/10 text-error text-xs font-medium leading-none select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
-              <span>Высокий приоритет</span>
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
@@ -331,14 +361,16 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
         </div>
 
         {/* Complete Task Button */}
-        <button
-          type="button"
-          onClick={handleMainComplete}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-label-md text-label-md font-medium transition-all shadow-sm cursor-pointer active:scale-95"
-        >
-          <span className="material-symbols-outlined text-body-md">check</span>
-          <span>Завершить задачу</span>
-        </button>
+        {focusedTask && (
+          <button
+            type="button"
+            onClick={handleMainComplete}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-label-md text-label-md font-medium transition-all shadow-sm cursor-pointer active:scale-95"
+          >
+            <span className="material-symbols-outlined text-body-md">check</span>
+            <span>Завершить задачу</span>
+          </button>
+        )}
       </div>
     </section>
   )

@@ -1,9 +1,11 @@
+import { refineStructuredNote } from '../../lib/geminiRefinement'
+import { useSettingsStore } from '../../store/useSettingsStore'
 import React, { useEffect, useState, useRef } from 'react'
 import { useDrawerStore } from '../../store/useDrawerStore'
 import { useAppStore } from '../../store/useAppStore'
 import { MiniAudioPlayer } from '../audio/MiniAudioPlayer'
 import { exportNoteAsMarkdown } from '../../lib/export'
-import { ChecklistItem } from '../../types/item'
+import { ChecklistItem, Item } from '../../types/item'
 import { DateTimePicker } from '../ui/DateTimePicker'
 import { TagInput } from '../ui/TagInput'
 import { Checkbox } from '../ui/Checkbox'
@@ -21,22 +23,70 @@ const REMINDER_OPTIONS = [
 export const SlideOverDrawer: React.FC = () => {
   const { selectedItemId, isDrawerOpen, closeDrawer } = useDrawerStore()
   const { items, updateItem, setFocusedTask } = useAppStore()
+  const selectedItem = items.find((i) => i.id === selectedItemId)
+  const [closingItem, setClosingItem] = useState<Item | null>(null)
+  const closeTimeoutRef = useRef<number | null>(null)
+  const currentItem = selectedItem || closingItem
 
-  const currentItem = items.find((i) => i.id === selectedItemId)
-
+  const [feedback, setFeedback] = useState('')
+  const [refining, setRefining] = useState(false)
+  const [refineError, setRefineError] = useState<string | null>(null)
+  const { aiMode, structuringStyle } = useSettingsStore()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [newChecklistText, setNewChecklistText] = useState('')
+  const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null)
+  const [editingChecklistText, setEditingChecklistText] = useState('')
+  const [reminderMenuOpen, setReminderMenuOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const reminderMenuRef = useRef<HTMLDivElement>(null)
+
+  const handleClose = () => {
+    if (!currentItem) return closeDrawer()
+    if (closeTimeoutRef.current !== null) window.clearTimeout(closeTimeoutRef.current)
+    setClosingItem(currentItem)
+    closeDrawer()
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setClosingItem(null)
+      closeTimeoutRef.current = null
+    }, 260)
+  }
+
+  useEffect(() => {
+    if (!isDrawerOpen) return
+    if (closeTimeoutRef.current !== null) window.clearTimeout(closeTimeoutRef.current)
+    closeTimeoutRef.current = null
+    setClosingItem(null)
+  }, [isDrawerOpen])
+
+  useEffect(() => () => {
+    if (closeTimeoutRef.current !== null) window.clearTimeout(closeTimeoutRef.current)
+  }, [])
 
   useEffect(() => {
     if (currentItem) {
+      setFeedback('')
+      setRefineError(null)
       setTitle(currentItem.title)
       setDescription(currentItem.description || '')
       setChecklist(currentItem.checklist || [])
+      setEditingChecklistId(null)
+      setEditingChecklistText('')
+      setReminderMenuOpen(false)
     }
   }, [currentItem])
+
+  useEffect(() => {
+    if (!reminderMenuOpen) return
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !reminderMenuRef.current?.contains(event.target)) {
+        setReminderMenuOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [reminderMenuOpen])
 
   // ESC key handler
   useEffect(() => {
@@ -44,17 +94,31 @@ export const SlideOverDrawer: React.FC = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        closeDrawer()
+        if (reminderMenuOpen) setReminderMenuOpen(false)
+        else handleClose()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isDrawerOpen, closeDrawer])
+  }, [isDrawerOpen, closeDrawer, currentItem, reminderMenuOpen])
 
-  if (!isDrawerOpen || !currentItem) return null
+  useEffect(() => {
+    if (!isDrawerOpen && !closingItem) return
+    const previousOverflow = document.body.style.overflow
+    const previousRootOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.documentElement.style.overflow = previousRootOverflow
+    }
+  }, [isDrawerOpen, closingItem])
+
+  if ((!isDrawerOpen && !closingItem) || !currentItem) return null
 
   const isFocused = Boolean(currentItem.isFocus || currentItem.isFocused)
+  const currentReminder = REMINDER_OPTIONS.find((option) => option.value === (currentItem.reminderMinutesBefore ?? null)) || REMINDER_OPTIONS[0]
 
   const handleTitleBlur = () => {
     if (title.trim() && title !== currentItem.title) {
@@ -69,11 +133,26 @@ export const SlideOverDrawer: React.FC = () => {
   }
 
   const handleToggleChecklist = (id: string) => {
+    if (editingChecklistId === id) {
+      setEditingChecklistId(null)
+      setEditingChecklistText('')
+    }
     const updated = checklist.map((c) =>
       c.id === id ? { ...c, isCompleted: !c.isCompleted } : c
     )
     setChecklist(updated)
     updateItem(currentItem.id, { checklist: updated })
+  }
+
+  const handleSaveChecklistEdit = (id: string, text: string) => {
+    const nextText = text.trim()
+    if (nextText) {
+      const updated = checklist.map((item) => item.id === id ? { ...item, text: nextText } : item)
+      setChecklist(updated)
+      updateItem(currentItem.id, { checklist: updated })
+    }
+    setEditingChecklistId(null)
+    setEditingChecklistText('')
   }
 
   const handleAddChecklist = (e: React.FormEvent) => {
@@ -113,6 +192,18 @@ export const SlideOverDrawer: React.FC = () => {
     updateItem(currentItem.id, { reminderMinutesBefore: value })
   }
 
+  const handleRefine = async () => {
+    if (!feedback.trim() || refining) return
+    setRefining(true)
+    setRefineError(null)
+    try {
+      const result = await refineStructuredNote({ entity_type: currentItem.type, title: currentItem.title, description: currentItem.description || '', due_date: currentItem.deadline || currentItem.dueDate, priority: currentItem.priority, category_tag: currentItem.categoryTag, transcript_summary: currentItem.transcriptText || '', checklist: currentItem.checklist?.map((item) => item.text) }, feedback, { mode: aiMode, style: structuringStyle })
+      await updateItem(currentItem.id, { type: result.entity_type, title: result.title, description: result.description, ...(result.due_date !== (currentItem.deadline || currentItem.dueDate) ? { dueDate: result.due_date } : {}), ...(result.start_date ? { startDate: result.start_date } : {}), ...(result.deadline ? { deadline: result.deadline } : {}), priority: result.priority, categoryTag: result.category_tag, checklist: result.checklist?.map((text, index) => ({ id: currentItem.checklist?.[index]?.id || crypto.randomUUID(), text, sortOrder: index + 1, isCompleted: currentItem.checklist?.[index]?.isCompleted || false })) })
+      setFeedback('')
+    } catch (error) { setRefineError((error as Error).message) }
+    finally { setRefining(false) }
+  }
+
   const handleExport = () => {
     exportNoteAsMarkdown(currentItem)
   }
@@ -130,17 +221,20 @@ export const SlideOverDrawer: React.FC = () => {
       aria-modal="true"
       aria-label="Детальный просмотр заметки"
       className="fixed inset-0 z-50 overflow-hidden"
+      inert={!isDrawerOpen}
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-        onClick={closeDrawer}
+        className="drawer-backdrop fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        style={{ animation: `${isDrawerOpen ? 'drawer-backdrop-in 180ms ease-out' : 'drawer-backdrop-out 220ms ease-in'} both` }}
+        onClick={() => { if (isDrawerOpen) handleClose() }}
       />
 
       {/* Slide-over panel */}
       <div
         ref={drawerRef}
-        className="fixed inset-y-0 right-0 w-full sm:w-[560px] max-w-full bg-surface-container border-l border-outline-variant/30 shadow-2xl flex flex-col z-10 transition-transform duration-250 ease-out"
+        className="drawer-panel fixed inset-y-0 right-0 w-full sm:w-[560px] max-w-full bg-surface-container border-l border-outline-variant/30 shadow-2xl flex flex-col z-10 overscroll-contain"
+        style={{ animation: `${isDrawerOpen ? 'drawer-panel-in 260ms cubic-bezier(0.22, 1, 0.36, 1)' : 'drawer-panel-out 220ms cubic-bezier(0.4, 0, 1, 1)'} both` }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20 bg-surface-container-high/40">
@@ -194,7 +288,7 @@ export const SlideOverDrawer: React.FC = () => {
             {/* Close button */}
             <button
               type="button"
-              onClick={closeDrawer}
+              onClick={handleClose}
               aria-label="Закрыть панель"
               className="p-1.5 rounded-lg hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors cursor-pointer"
             >
@@ -204,7 +298,7 @@ export const SlideOverDrawer: React.FC = () => {
         </div>
 
         {/* Content body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-5">
           {/* Editable Title */}
           <div>
             <label className="text-label-sm text-outline uppercase tracking-wider block mb-1">
@@ -220,9 +314,17 @@ export const SlideOverDrawer: React.FC = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <label className="text-xs text-outline" htmlFor="refine-feedback">Дополнить / Изменить</label>
+            <input id="refine-feedback" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="Например: переименуй в План релиза" className="w-full rounded bg-surface-container p-2 text-on-surface" />
+            <button disabled={!feedback.trim() || refining} onClick={() => void handleRefine()} className="rounded bg-surface-container-high px-3 py-2 text-xs">{refining ? 'Обработка…' : 'Применить указание'}</button>
+            {refineError && <p role="alert" className="text-error text-xs">{refineError}</p>}
+          </div>
           {/* Date & Time Picker */}
           {currentItem.type === 'task' && (
             <DateTimePicker
+              startDate={currentItem.startDate}
+              deadline={currentItem.deadline}
               dueDate={currentItem.dueDate}
               dueTime={currentItem.dueTime}
               isAllDay={currentItem.isAllDay}
@@ -249,27 +351,49 @@ export const SlideOverDrawer: React.FC = () => {
                 <span className="material-symbols-outlined text-sm">notifications</span>
                 <span>Напоминание</span>
               </label>
-              <select
-                value={
-                  currentItem.reminderMinutesBefore === null ||
-                  currentItem.reminderMinutesBefore === undefined
-                    ? ''
-                    : String(currentItem.reminderMinutesBefore)
-                }
-                onChange={(e) =>
-                  handleReminderChange(e.target.value === '' ? null : Number(e.target.value))
-                }
-                className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface focus:border-primary focus:outline-none cursor-pointer"
-              >
-                {REMINDER_OPTIONS.map((opt) => (
-                  <option
-                    key={String(opt.value)}
-                    value={opt.value === null ? '' : String(opt.value)}
+              <div ref={reminderMenuRef} className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded={reminderMenuOpen}
+                  onClick={() => setReminderMenuOpen((open) => !open)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low px-3 py-2.5 text-left text-sm text-on-surface transition-colors hover:border-primary/50 hover:bg-surface-container-high/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  <span className="truncate">{currentReminder.label}</span>
+                  <span className={`material-symbols-outlined text-base text-outline transition-transform duration-150 ${reminderMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                </button>
+                {reminderMenuOpen && (
+                  <div
+                    role="listbox"
+                    aria-label="Время напоминания"
+                    className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-high p-1.5 text-on-surface shadow-xl shadow-black/20 animate-in fade-in slide-in-from-top-1 duration-150"
                   >
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                    {REMINDER_OPTIONS.map((option) => {
+                      const isSelected = option.value === (currentItem.reminderMinutesBefore ?? null)
+                      return (
+                        <button
+                          key={String(option.value)}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            handleReminderChange(option.value)
+                            setReminderMenuOpen(false)
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50 ${
+                            isSelected
+                              ? 'bg-primary/15 font-medium text-primary'
+                              : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          {isSelected && <span className="material-symbols-outlined text-base">check</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -326,23 +450,52 @@ export const SlideOverDrawer: React.FC = () => {
                       size="sm"
                       ariaLabel={`Пункт: ${item.text}`}
                     />
-                    <span
-                      className={`text-body-sm truncate transition-all strike-linear ${
-                        item.isCompleted
-                          ? 'strike-active text-outline opacity-60'
-                          : 'text-on-surface'
-                      }`}
-                    >
-                      {item.text}
-                    </span>
+                    {editingChecklistId === item.id && !item.isCompleted ? (
+                      <input
+                        autoFocus
+                        value={editingChecklistText}
+                        aria-label={`Редактировать пункт: ${item.text}`}
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={(event) => setEditingChecklistText(event.target.value)}
+                        onBlur={() => handleSaveChecklistEdit(item.id, editingChecklistText)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            handleSaveChecklistEdit(item.id, editingChecklistText)
+                          } else if (event.key === 'Escape') {
+                            event.preventDefault()
+                            setEditingChecklistId(null)
+                            setEditingChecklistText('')
+                          }
+                        }}
+                        className="min-w-0 flex-1 rounded border border-primary/50 bg-surface-container px-1 py-0.5 text-body-sm text-on-surface focus:outline-none"
+                      />
+                    ) : (
+                      <span
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (!item.isCompleted) {
+                            setEditingChecklistId(item.id)
+                            setEditingChecklistText(item.text)
+                          }
+                        }}
+                        className={`text-body-sm truncate transition-all strike-linear ${
+                          item.isCompleted
+                            ? 'strike-active text-outline opacity-60'
+                            : 'cursor-text text-on-surface'
+                        }`}
+                      >
+                        {item.text}
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveChecklist(item.id)}
                     aria-label={`Удалить ${item.text}`}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-outline hover:text-error transition-opacity cursor-pointer"
+                    className="opacity-0 group-hover:opacity-100 p-0.5 text-outline hover:text-error transition-opacity cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-sm">delete</span>
+                    <span className="material-symbols-outlined text-xs">delete</span>
                   </button>
                 </div>
               ))}
@@ -373,7 +526,7 @@ export const SlideOverDrawer: React.FC = () => {
           <span>Создано: {new Date(currentItem.createdAt).toLocaleDateString('ru-RU')}</span>
           <button
             type="button"
-            onClick={closeDrawer}
+            onClick={handleClose}
             className="px-4 py-1.5 rounded-xl bg-surface-container-highest hover:bg-surface-container-high text-on-surface font-medium transition-colors cursor-pointer"
           >
             Закрыть

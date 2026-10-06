@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { DashboardOverview } from '../DashboardOverview'
 import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
 import { useAppStore } from '../../../store/useAppStore'
@@ -7,8 +7,10 @@ import { SEED_ITEMS } from '../../../lib/seedData'
 
 describe('DashboardOverview Component', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-07T09:00:00.000Z'))
     useAppStore.setState({ 
-      items: SEED_ITEMS,
+      items: SEED_ITEMS.map((item) => item.id === 't-1' ? { ...item, audioUrl: 'https://example.com/test.webm' } : item),
       toggleTask: vi.fn().mockImplementation(async (id) => {
         const items = useAppStore.getState().items;
         useAppStore.setState({
@@ -34,9 +36,11 @@ describe('DashboardOverview Component', () => {
     })
   })
 
+  afterEach(() => vi.useRealTimers())
+
   it('renders greetings, metrics, and hero focus task', () => {
     render(<DashboardOverview />)
-    expect(screen.getByText(/Алексей/)).toBeInTheDocument()
+    expect(screen.getByText(/Александр/)).toBeInTheDocument()
     expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Недавние аудиозаписи')[0]).toBeInTheDocument()
     expect(screen.getAllByText('Сводка дня')[0]).toBeInTheDocument()
@@ -49,9 +53,9 @@ describe('DashboardOverview Component', () => {
     expect(playBtn).toBeInTheDocument()
 
     fireEvent.click(playBtn)
-    expect(screen.getByLabelText(/Приостановить/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Пауза аудио/i)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByLabelText(/Приостановить/i))
+    fireEvent.click(screen.getByLabelText(/Пауза аудио/i))
     expect(screen.getAllByLabelText(/Воспроизвести/i).length).toBeGreaterThan(0)
   })
 
@@ -62,7 +66,7 @@ describe('DashboardOverview Component', () => {
 
     fireEvent.click(firstCheckbox)
     
-    await waitFor((wait) => {
+    await waitFor(() => {
       expect(firstCheckbox).toHaveAttribute('aria-checked', 'true')
     })
   })
@@ -72,11 +76,13 @@ describe('DashboardOverview Component', () => {
     expect(screen.queryByPlaceholderText(/Быстрая мысль или задача/)).toBeNull()
   })
 
-  it('filters task list when filter buttons are clicked', () => {
+  it('filters task list to overdue tasks', () => {
     render(<DashboardOverview />)
-    const urgentBtn = screen.getAllByRole('button', { name: /Срочные/i })[0]
-    fireEvent.click(urgentBtn)
+    const overdueBtn = screen.getByRole('button', { name: /Просроченные/i })
+    fireEvent.click(overdueBtn)
 
+    expect(overdueBtn).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('Провести ревью архитектуры микросервисов')).toBeInTheDocument()
+    expect(screen.queryByText('Записать идеи для дизайн-системы 2026')).not.toBeInTheDocument()
   })
 })

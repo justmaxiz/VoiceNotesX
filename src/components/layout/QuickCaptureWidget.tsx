@@ -8,6 +8,7 @@ import { LiveWaveform } from '../audio/LiveWaveform'
 import { structureVoiceNote } from '../../lib/geminiStructuring'
 import { Item } from '../../types/item'
 
+import { useSettingsStore } from '../../store/useSettingsStore'
 import { useSpaceRecordShortcut } from '../../hooks/useSpaceRecordShortcut'
 
 export interface QuickCaptureWidgetProps {
@@ -21,6 +22,8 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
     isOpen,
     entityType,
     targetColumn,
+    dueDate,
+    dueTime,
     text: storeText,
     setEntityType,
     setText: setStoreText,
@@ -32,6 +35,11 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savedNotification, setSavedNotification] = useState<{ id: string; title: string } | null>(null)
   const [isProcessingAI, setIsProcessingAI] = useState(false)
+  const [captureError, setCaptureError] = useState<string | null>(null)
+  const [draftAudio, setDraftAudio] = useState<{ blob: Blob; duration: number } | undefined>()
+  const savingRef = useRef(false)
+  const recordingRef = useRef(false)
+  const { aiMode, structuringStyle } = useSettingsStore()
   const [isExpanded, setIsExpanded] = useState(false)
 
   const widgetRef = useRef<HTMLElement>(null)
@@ -41,8 +49,10 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
 
   const { addItem } = useAppStore()
   const { openDrawer } = useDrawerStore()
-  const { isRecording, stream, startRecording, stopRecording } = useAudioRecorder()
+  const { isRecording, recordingTime, stream, startRecording, stopRecording } = useAudioRecorder()
   const {
+    isSupported,
+    error: speechError,
     transcript,
     interimTranscript,
     startListening,
@@ -112,129 +122,90 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
   })
 
   const handleToggleRecord = async () => {
-    if (isRecording) {
-      stopListening()
-      const blob = await stopRecording()
-      let audioUrl: string | undefined
-      if (blob) {
-        audioUrl = URL.createObjectURL(blob)
-      }
-      if (localText.trim()) {
-        saveItem(localText.trim(), false, audioUrl)
-      }
-      resetTranscript()
-    } else {
-      try {
+    if (recordingRef.current || savingRef.current) return
+    recordingRef.current = true
+    setCaptureError(null)
+    try {
+      if (isRecording) {
+        stopListening()
+        const blob = await stopRecording()
+        if (blob) {
+          const audio = { blob, duration: recordingTime }
+          setDraftAudio(audio)
+          await saveItem(localText.trim() || 'Аудиозаметка', false, audio)
+        }
+        resetTranscript()
+      } else {
+        if (draftAudio) throw new Error('Сначала сохраните текущую аудиозаметку')
         resetTranscript()
         await startRecording()
         startListening()
-        if (inputRef.current) {
-          inputRef.current.focus()
-        }
-      } catch {
-        // Fallback
+        inputRef.current?.focus()
       }
-    }
+    } catch (error) {
+      setCaptureError((error as Error).message)
+    } finally { recordingRef.current = false }
   }
 
-  const saveItem = (
-    textToSave: string,
-    useAI = false,
-    recordedAudioUrl?: string
-  ) => {
-    const trimmed = textToSave.trim()
-    if (!trimmed) return
-
-    if (onSave) {
-      onSave(trimmed)
-    }
-
-    const createdId = 'item-' + Date.now()
-    setLocalText('')
-    setStoreText('')
-    setIsExpanded(false)
-    setSavedNotification({ id: createdId, title: trimmed })
-
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-    }
-    timerRef.current = setTimeout(() => {
-      setSavedNotification(null)
-      timerRef.current = null
-    }, 2000)
-
-    // Background persistence
-    if (useAI) {
-      setIsProcessingAI(true)
-      structureVoiceNote(trimmed)
-        .then((structured) => {
-          const newItem: Item = {
-            id: createdId,
-            type: structured.entity_type,
-            title: structured.title,
-            description: structured.description,
-            transcriptText: trimmed,
-            status:
-              targetColumn === 'completed'
-                ? 'completed'
-                : targetColumn === 'in_progress'
-                ? 'in_progress'
-                : 'todo',
-            isFocus: structured.priority === 'high',
-            isFocused: structured.priority === 'high',
-            priority: structured.priority,
-            dueDate: structured.due_date || undefined,
-            categoryTag: structured.category_tag || selectedTag,
-            tags: [structured.category_tag || selectedTag],
-            audioUrl: recordedAudioUrl,
-            checklist: structured.checklist?.map((text, idx) => ({
-              id: `chk-${Date.now()}-${idx}`,
-              text,
-              isCompleted: false,
-              sortOrder: idx + 1,
-            })),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-          return addItem(newItem)
-        })
-        .finally(() => {
-          setIsProcessingAI(false)
-        })
-    } else {
+  const saveItem = async (textToSave: string, useAI = false, audio = draftAudio) => {
+    const trimmed = textToSave.trim() || (audio ? 'Аудиозаметка' : '')
+    if (!trimmed || savingRef.current || isRecording && !audio) return
+    savingRef.current = true
+    setIsProcessingAI(true)
+    setCaptureError(null)
+    try {
+      const structured = useAI ? await structureVoiceNote(trimmed, undefined, { mode: aiMode, style: structuringStyle }) : undefined
+      const now = new Date().toISOString()
+      const createdId = crypto.randomUUID()
       const newItem: Item = {
         id: createdId,
-        type: entityType,
-        title: trimmed,
-        description: '',
-        status:
-          targetColumn === 'completed'
-            ? 'completed'
-            : targetColumn === 'in_progress'
-            ? 'in_progress'
-            : 'todo',
+        type: structured?.entity_type || entityType,
+        title: structured?.title || trimmed,
+        description: structured?.description || '',
+        transcriptText: audio || structured ? trimmed : undefined,
+        status: targetColumn === 'completed' ? 'completed' : targetColumn === 'in_progress' ? 'in_progress' : 'todo',
+        completedAt: targetColumn === 'completed' ? now : undefined,
         isFocus: false,
         isFocused: false,
-        priority: 'medium',
-        categoryTag: selectedTag,
-        tags: [selectedTag],
-        audioUrl: recordedAudioUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        priority: structured?.priority || 'medium',
+        ...(dueDate ? { dueDate, dueTime, isAllDay: !dueTime } : structured?.due_date ? { dueDate: structured.due_date } : {}),
+        ...(structured?.start_date ? { startDate: structured.start_date } : {}),
+        ...(structured?.deadline && !dueDate ? { deadline: structured.deadline } : {}),
+        categoryTag: structured?.category_tag || selectedTag,
+        tags: [structured?.category_tag || selectedTag],
+        audioDuration: audio?.duration,
+        checklist: structured?.checklist?.map((text, index) => ({ id: `${createdId}-${index}`, text, isCompleted: false, sortOrder: index + 1 })),
+        createdAt: now,
+        updatedAt: now,
       }
-      addItem(newItem).catch(() => {})
+      await addItem(newItem, audio)
+      setDraftAudio(undefined)
+      setLocalText('')
+      setStoreText('')
+      useQuickCaptureStore.setState({ dueDate: null, dueTime: null, targetColumn: null })
+      setIsExpanded(false)
+      setSavedNotification({ id: createdId, title: newItem.title })
+      onSave?.(trimmed)
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => { setSavedNotification(null); timerRef.current = null }, 2000)
+    } catch (error) {
+      // The draft and its Blob remain available for retry.
+      setCaptureError(`Не удалось сохранить: ${(error as Error).message}`)
+    } finally {
+      savingRef.current = false
+      setIsProcessingAI(false)
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    saveItem(localText, false)
+    void saveItem(localText, false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
-      saveItem(localText, true)
+      void saveItem(localText, true)
     } else if (e.key === 'Escape') {
       if (isRecording) {
         handleToggleRecord()
@@ -259,6 +230,9 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
           : 'w-[92%] sm:w-[420px]'
       }`}
     >
+      {captureError && <p role="alert" className="mb-2 rounded-xl bg-error-container text-on-error-container p-3 text-xs">{captureError}</p>}
+      {isRecording && (!isSupported || speechError) && <p role="status" className="mb-2 rounded bg-surface-container p-2 text-xs text-on-surface">{speechError || 'Распознавание речи недоступно; аудио будет сохранено.'}</p>}
+      {draftAudio && <p role="status" className="text-xs text-on-surface">Аудиозаметка ожидает сохранения</p>}
       {/* Toast Notification with Open in Drawer action */}
       {savedNotification && (
         <div
@@ -424,7 +398,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
           {/* Save / Add Button */}
           <button
             type="submit"
-            disabled={!localText.trim() || isProcessingAI}
+            disabled={(!localText.trim() && !draftAudio) || isProcessingAI || isRecording}
             onClick={(e) => e.stopPropagation()}
             aria-label="Сохранить мысль"
             className={`p-2 rounded-full font-label-md text-label-md transition-all flex items-center justify-center cursor-pointer ${

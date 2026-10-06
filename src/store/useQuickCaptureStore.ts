@@ -4,12 +4,16 @@ export interface QuickCaptureState {
   isOpen: boolean
   entityType: 'task' | 'note'
   targetColumn: string | null
+  dueDate: string | null
+  dueTime: string | null
   text: string
   isRecording: boolean
   openQuickCapture: (options?: {
     targetColumn?: string
     entityType?: 'task' | 'note'
     initialText?: string
+    dueDate?: string
+    dueTime?: string
   }) => void
   closeQuickCapture: () => void
   setEntityType: (type: 'task' | 'note') => void
@@ -22,6 +26,8 @@ export const useQuickCaptureStore = create<QuickCaptureState>((set) => ({
   entityType: 'task',
   targetColumn: null,
   text: '',
+  dueDate: null,
+  dueTime: null,
   isRecording: false,
 
   openQuickCapture: (options) => {
@@ -30,6 +36,8 @@ export const useQuickCaptureStore = create<QuickCaptureState>((set) => ({
       targetColumn: options?.targetColumn ?? null,
       entityType: options?.entityType ?? 'task',
       text: options?.initialText ?? '',
+      dueDate: options?.dueDate ?? null,
+      dueTime: options?.dueTime ?? null,
     })
   },
 

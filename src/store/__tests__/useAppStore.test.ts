@@ -47,8 +47,6 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
       },
     ]
     useAppStore.setState({
-      activeTab: 'overview',
-      searchQuery: '',
       isRecording: false,
       activeFilter: 'all',
       sortOrder: 'priority',
@@ -157,7 +155,7 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
     expect(item?.status).toBe('todo')
 
     // Test rollback on failure
-    const spy = vi.spyOn(db, 'toggleTaskComplete').mockRejectedValueOnce(new Error('Toggle error'))
+    const spy = vi.spyOn(db, 'updateItem').mockRejectedValueOnce(new Error('Toggle error'))
     await expect(useAppStore.getState().toggleTask('store-1')).rejects.toThrow('Toggle error')
     expect(useAppStore.getState().items.find((i) => i.id === 'store-1')?.status).toBe('todo')
 
@@ -195,10 +193,9 @@ describe('useAppStore - Reactive State Management (TASK-06)', () => {
 
   
   
-  it('stores and persists API key', () => {
-    useAppStore.getState().setApiKey('AIzaSyTestKey123')
-    expect(useAppStore.getState().apiKey).toBe('AIzaSyTestKey123')
-    expect(localStorage.getItem('voicenotes_api_key')).toBe('AIzaSyTestKey123')
+  it('has no browser API-key action or duplicated navigation fields', () => {
+    expect(useAppStore.getState()).not.toHaveProperty('apiKey')
+    expect(useAppStore.getState()).not.toHaveProperty('activeTab')
   })
 
   it('throws an error when updating, deleting, toggling, or focusing a non-existent item', async () => {

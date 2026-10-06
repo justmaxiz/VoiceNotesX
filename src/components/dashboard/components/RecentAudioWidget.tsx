@@ -10,30 +10,6 @@ export interface AudioMemoItemData {
   bars?: number[]
 }
 
-const DEFAULT_MEMOS: AudioMemoItemData[] = [
-  {
-    id: 'memo-1',
-    title: 'План редизайна мобильного экрана',
-    duration: '0:42 мин',
-    time: '14:30',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=1',
-  },
-  {
-    id: 'memo-2',
-    title: 'Брейншторм фичи Voice-to-SQL',
-    duration: '2:18 мин',
-    time: '12:10',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=2',
-  },
-  {
-    id: 'memo-3',
-    title: 'Заметки к встрече 1-на-1 с тимлидом',
-    duration: '1:05 мин',
-    time: '10:45',
-    audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg?id=3',
-  },
-]
-
 export interface RecentAudioWidgetProps {
   memos?: AudioMemoItemData[]
   onViewAll?: () => void
@@ -41,7 +17,7 @@ export interface RecentAudioWidgetProps {
 }
 
 export const RecentAudioWidget: React.FC<RecentAudioWidgetProps> = ({
-  memos = DEFAULT_MEMOS,
+  memos = [],
   onViewAll,
 }) => {
   return (
@@ -68,7 +44,8 @@ export const RecentAudioWidget: React.FC<RecentAudioWidgetProps> = ({
       </div>
 
       <div className="flex flex-col gap-space-xs">
-        {memos.map((memo) => (
+        {memos.length === 0 && <p className="text-xs text-outline">Аудиозаписей пока нет</p>}
+      {memos.map((memo) => (
           <div
             key={memo.id}
             className="flex items-center justify-between p-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high transition-all group"

@@ -1,4 +1,5 @@
 import React from 'react'
+import { localDateKey } from '../../lib/taskDates'
 import { Item } from '../../types/item'
 import { useDrawerStore } from '../../store/useDrawerStore'
 
@@ -16,7 +17,7 @@ export const UnscheduledTasksSidebar: React.FC<UnscheduledTasksSidebarProps> = (
   onAssignDate,
 }) => {
   const { openDrawer } = useDrawerStore()
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localDateKey()
 
   return (
     <aside

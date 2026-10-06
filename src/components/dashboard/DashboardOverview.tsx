@@ -1,3 +1,6 @@
+import { useSettingsStore } from '../../store/useSettingsStore'
+import { tasksForToday } from '../../lib/taskDates'
+import { generateDigestData } from '../../lib/dailyDigestScheduler'
 import React, { useState, useMemo } from 'react'
 import { TaskItemData, TaskFilter, ViewMode } from '../../types/item'
 import { useNavigationStore } from '../../store/navigationStore'
@@ -12,16 +15,16 @@ import { DailySummaryCard } from './components/DailySummaryCard'
 import { DashboardCustomizerModal } from './DashboardCustomizerModal'
 
 export const DashboardOverview: React.FC = () => {
+  const userName = useSettingsStore((state) => state.userName)
+  const summary = generateDigestData('today', useAppStore((state) => state.items))
   const { items, toggleTask } = useAppStore()
-  const [isPlaying, setIsPlaying] = useState(false)
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const { setActiveTab, setRecordingModalOpen } = useNavigationStore()
+  const { setActiveTab } = useNavigationStore()
   const { modules } = useDashboardConfigStore()
 
   // Convert real store tasks to TaskItemData
   const tasks: TaskItemData[] = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0]
     return items
       .filter((i) => {
         if (i.type !== 'task') return false
@@ -43,12 +46,14 @@ export const DashboardOverview: React.FC = () => {
           category: item.categoryTag,
           categoryClass,
           time: item.dueTime || item.dueDate || '',
+          priority: item.priority,
           dueDate: item.dueDate,
           dueTime: item.dueTime,
+          startDate: item.startDate,
+          deadline: item.deadline,
           isCompleted: item.status === 'completed',
           hasAudio: Boolean(item.audioUrl || item.audioDuration),
           audioDuration: item.audioDuration ? `${Math.floor(item.audioDuration / 60)}:${String(item.audioDuration % 60).padStart(2, '0')}` : undefined,
-          isUrgent: item.priority === 'high',
           noteSubtitle: item.description,
           completedTime: item.completedAt ? `Выполнено` : undefined,
           isFocused: Boolean(item.isFocus || item.isFocused),
@@ -62,16 +67,16 @@ export const DashboardOverview: React.FC = () => {
     toggleTask(id).catch(() => {})
   }
 
-  const completedCount = tasks.filter((t) => t.isCompleted).length
-  const totalCount = tasks.length
+  const todayTasks = tasksForToday(items)
+  const completedCount = todayTasks.filter((t) => t.status === 'completed').length
+  const totalCount = todayTasks.length
   const plannedCount = totalCount - completedCount
 
   return (
     <div className="flex flex-col w-full pb-12">
       {/* Header with Greetings and Actions */}
       <DashboardHeader
-        userName="Алексей"
-        onStartRecording={() => setRecordingModalOpen(true)}
+        userName={userName}
         onNewNote={() => setActiveTab('notes')}
       />
 
@@ -82,9 +87,6 @@ export const DashboardOverview: React.FC = () => {
           {/* Hero Priority Focus Task */}
           {modules.focusTask && (
             <FocusHeroCard
-              isPlaying={isPlaying}
-              onTogglePlay={() => setIsPlaying((prev) => !prev)}
-              onComplete={() => {}}
               onSummary={() => setActiveTab('ai-summaries')}
             />
           )}
@@ -116,6 +118,7 @@ export const DashboardOverview: React.FC = () => {
           {/* Recent Audio Memos Widget (modular, shown when enabled) */}
           {modules.recentAudio && (
             <RecentAudioWidget
+              memos={items.filter((item) => item.audioUrl && item.status !== 'archived').sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3).map((item) => ({ id: item.id, title: item.title, audioUrl: item.audioUrl, duration: `${Math.floor((item.audioDuration || 0) / 60)}:${String((item.audioDuration || 0) % 60).padStart(2, '0')}`, time: new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }))}
               onViewAll={() => setActiveTab('notes')}
             />
           )}
@@ -123,6 +126,9 @@ export const DashboardOverview: React.FC = () => {
           {/* AI Daily Insights Card */}
           {modules.dailySummary && (
             <DailySummaryCard
+              tags={summary.tags}
+              notesAnalyzedCount={items.filter((item) => item.type === 'note' && item.status !== 'archived').length}
+              summaryText={summary.rawText}
               onGenerateReport={() => setActiveTab('ai-summaries')}
             />
           )}

@@ -1,4 +1,4 @@
-import { Item, AudioSession, UserSettings } from '../types'
+import { Item } from '../types'
 import { db } from './db'
 
 export const SEEDED_STORAGE_KEY = 'voicenotes_seeded'
@@ -15,9 +15,14 @@ export const SEED_ITEMS: Item[] = [
     audioDuration: 102,
     status: 'todo',
     priority: 'high',
-    dueTime: '21:00', dueDate: '2026-10-06',
+    startDate: '2026-10-06T19:00:00.000Z',
+    deadline: '2026-10-06T21:00:00.000Z',
+    dueTime: '21:00',
+    dueDate: '2026-10-06',
+    estimatedMinutes: 120,
     categoryTag: 'Работа',
     isFocus: true,
+    isFocused: true,
     checklist: [
       {
         id: 'cl-1',
@@ -49,7 +54,11 @@ export const SEED_ITEMS: Item[] = [
     title: 'Подготовить отчет по продуктовым метрикам Q3',
     description: 'Встреча с инвесторами',
     categoryTag: '#Аналитика',
-    dueTime: '16:00', dueDate: '2026-10-06',
+    startDate: '2026-10-06T14:30:00.000Z',
+    deadline: '2026-10-06T16:00:00.000Z',
+    dueTime: '16:00',
+    dueDate: '2026-10-06',
+    estimatedMinutes: 90,
     status: 'todo',
     priority: 'medium',
     audioDuration: 75,
@@ -63,7 +72,11 @@ export const SEED_ITEMS: Item[] = [
     title: 'Провести ревью архитектуры микросервисов',
     description: 'PR #142 • Саммари готово',
     categoryTag: '#Разработка',
-    dueTime: '18:30', dueDate: '2026-10-06',
+    startDate: '2026-10-06T17:00:00.000Z',
+    deadline: '2026-10-06T18:30:00.000Z',
+    dueTime: '18:30',
+    dueDate: '2026-10-06',
+    estimatedMinutes: 90,
     status: 'todo',
     priority: 'high',
     isFocus: false,
@@ -76,7 +89,11 @@ export const SEED_ITEMS: Item[] = [
     title: 'Записать идеи для дизайн-системы 2026',
     description: '3 заметки',
     categoryTag: '#Дизайн',
+    startDate: '2026-10-07T10:00:00.000Z',
+    deadline: '2026-10-07T12:00:00.000Z',
     dueDate: '2026-10-07',
+    dueTime: '12:00',
+    estimatedMinutes: 120,
     status: 'todo',
     priority: 'low',
     audioDuration: 180,
@@ -90,7 +107,11 @@ export const SEED_ITEMS: Item[] = [
     title: 'Согласовать бюджет на AI API',
     description: 'Выполнено в 14:15',
     categoryTag: '#Финансы',
-    dueTime: '14:15', dueDate: '2026-10-06',
+    startDate: '2026-10-06T13:15:00.000Z',
+    deadline: '2026-10-06T14:15:00.000Z',
+    dueTime: '14:15',
+    dueDate: '2026-10-06',
+    estimatedMinutes: 60,
     completedAt: '2026-10-05T14:15:00.000Z',
     status: 'completed',
     priority: 'medium',
@@ -145,34 +166,6 @@ export const SEED_ITEMS: Item[] = [
 ]
 
 
-export const DEFAULT_USER_SETTINGS: UserSettings = {
-  id: 'default',
-  userName: 'Александр',
-  subscriptionStatus: 'pro',
-  aiMode: 'fast',
-  structuringStyle: 'concise',
-  theme: 'dark',
-  fontScale: 'standard',
-  language: 'ru-RU',
-  devices: [
-    {
-      id: 'dev-1',
-      name: 'MacBook Pro 16"',
-      type: 'laptop',
-      lastSyncAt: 'Сегодня, 17:45',
-      isCurrent: true,
-    },
-    {
-      id: 'dev-2',
-      name: 'iPhone 16 Pro',
-      type: 'mobile',
-      lastSyncAt: 'Сегодня, 16:30',
-      isCurrent: false,
-    },
-  ],
-  updatedAt: '2026-10-05T12:00:00.000Z',
-}
-
 export function isDatabaseSeeded(): boolean {
   if (typeof localStorage === 'undefined') return false
   return Boolean(localStorage.getItem(SEEDED_STORAGE_KEY))
@@ -192,13 +185,13 @@ export async function seedDatabase(force: boolean = false): Promise<void> {
     }
   }
 
-  await db.transaction('rw', [db.items], async () => {
+  await db.transaction('rw', [db.items, db.audioSessions, db.settings], async () => {
     if (force) {
       await db.items.clear()
-      
+      await db.audioSessions.clear()
+      await db.settings.clear()
     }
     await db.items.bulkPut(SEED_ITEMS)
-    
   })
 
   if (typeof localStorage !== 'undefined') {

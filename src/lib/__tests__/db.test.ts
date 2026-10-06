@@ -1,4 +1,6 @@
+import { localDeadline } from '../taskDates'
 import { describe, it, expect, beforeEach } from 'vitest'
+import Dexie from 'dexie'
 import {
   VoiceNotesDB,
   db,
@@ -274,7 +276,20 @@ describe('VoiceNotesDB - Local-First Dexie Storage (TASK-05)', () => {
     expect(t1?.isFocus).toBe(false)
     expect(t2?.isFocus).toBe(true)
   })
-})
+
+  it('enforces single focus invariant when updating an item with isFocus: true', async () => {
+    await createItem({
+      id: 'focus-t1',
+      type: 'task',
+      title: 'Задача 1',
+      categoryTag: '#Фокус',
+      status: 'todo',
+      priority: 'medium',
+      isFocus: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
     await createItem({
       id: 'focus-t2',
       type: 'task',
@@ -293,5 +308,183 @@ describe('VoiceNotesDB - Local-First Dexie Storage (TASK-05)', () => {
     const t2 = await getItem('focus-t2')
     expect(t1?.isFocus).toBe(false)
     expect(t2?.isFocus).toBe(true)
+  })
+
+  it('persists and retrieves startDate and deadline with index querying', async () => {
+    const task: Item = {
+      id: 'task-temporal-1',
+      type: 'task',
+      title: 'Временная задача с интервалом',
+      categoryTag: '#Календарь',
+      status: 'todo',
+      priority: 'high',
+      isFocus: false,
+      startDate: '2026-10-06T10:00:00.000Z',
+      deadline: '2026-10-06T12:00:00.000Z',
+      dueDate: '2026-10-06',
+      dueTime: '12:00',
+      estimatedMinutes: 120,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    await createItem(task)
+
+    const retrieved = await getItem('task-temporal-1')
+    expect(retrieved).toBeDefined()
+    expect(retrieved?.startDate).toBe('2026-10-06T10:00:00.000Z')
+    expect(retrieved?.deadline).toBe('2026-10-06T12:00:00.000Z')
+
+    // Query via Dexie index
+    const byDeadline = await db.items.where('deadline').equals('2026-10-06T12:00:00.000Z').toArray()
+    expect(byDeadline).toHaveLength(1)
+    expect(byDeadline[0].id).toBe('task-temporal-1')
+
+    const byStartDate = await db.items.where('startDate').equals('2026-10-06T10:00:00.000Z').toArray()
+    expect(byStartDate).toHaveLength(1)
+    expect(byStartDate[0].id).toBe('task-temporal-1')
+  })
+
+  it('migrates legacy schema v1 to v2 without data loss and computes startDate/deadline', async () => {
+    const testDbName = 'MigrationTestDB_' + Date.now()
+    // Step 1: Initialize database with Dexie v1 schema
+    const v1Db = new Dexie(testDbName)
+    v1Db.version(1).stores({
+      items: 'id, type, status, priority, categoryTag, isFocus, createdAt, dueDate',
+      audioSessions: 'id, recordedAt',
+      settings: 'id',
+    })
+    await v1Db.open()
+
+    // Add legacy items with different date/time representations
+    await v1Db.table('items').bulkAdd([
+      {
+        id: 'legacy-task-1',
+        type: 'task',
+        title: 'Задача с dueDate и dueTime',
+        categoryTag: '#Legacy',
+        status: 'todo',
+        priority: 'high',
+        isFocus: false,
+        dueDate: '2026-10-10',
+        dueTime: '15:00',
+        estimatedMinutes: 45,
+        createdAt: '2026-10-01T08:00:00.000Z',
+        updatedAt: '2026-10-01T08:00:00.000Z',
+      },
+      {
+        id: 'legacy-task-2',
+        type: 'task',
+        title: 'Задача только с dueDate',
+        categoryTag: '#Legacy',
+        status: 'todo',
+        priority: 'medium',
+        isFocus: false,
+        dueDate: '2026-10-12',
+        estimatedMinutes: 60,
+        createdAt: '2026-10-01T09:00:00.000Z',
+        updatedAt: '2026-10-01T09:00:00.000Z',
+      },
+      {
+        id: 'legacy-task-3',
+        type: 'task',
+        title: 'Задача с ISO dueDate',
+        categoryTag: '#Legacy',
+        status: 'todo',
+        priority: 'low',
+        isFocus: false,
+        dueDate: '2026-10-15T18:00:00.000Z',
+        createdAt: '2026-10-01T10:00:00.000Z',
+        updatedAt: '2026-10-01T10:00:00.000Z',
+      },
+      {
+        id: 'legacy-note-1',
+        type: 'note',
+        title: 'Заметка без дедлайна',
+        categoryTag: '#Заметки',
+        status: 'todo',
+        priority: 'low',
+        isFocus: false,
+        createdAt: '2026-10-01T11:00:00.000Z',
+        updatedAt: '2026-10-01T11:00:00.000Z',
+      },
+    ])
+    await v1Db.close()
+
+    // Step 2: Open database with VoiceNotesDB (which includes version 2 schema and upgrade)
+    const v2Db = new VoiceNotesDB(testDbName)
+    await v2Db.open()
+
+    // Step 3: Verify all items survived migration without data loss
+    const count = await v2Db.items.count()
+    expect(count).toBe(4)
+
+    // Verify legacy-task-1: deadline mapped from dueDate + dueTime, startDate = deadline - 45 min
+    const item1 = await v2Db.getItem('legacy-task-1')
+    expect(item1).toBeDefined()
+    expect(item1?.dueDate).toBe('2026-10-10')
+    expect(item1?.dueTime).toBe('15:00')
+    expect(item1?.deadline).toBe(localDeadline('2026-10-10', '15:00')!.toISOString())
+    expect(item1?.startDate).toBeDefined()
+    const diff1 = new Date(item1!.deadline!).getTime() - new Date(item1!.startDate!).getTime()
+    expect(diff1).toBe(45 * 60 * 1000)
+
+    // Verify legacy-task-2: deadline mapped from dueDate, default duration 60 min
+    const item2 = await v2Db.getItem('legacy-task-2')
+    expect(item2).toBeDefined()
+    expect(item2?.dueDate).toBe('2026-10-12')
+    expect(item2?.deadline).toBeDefined()
+    expect(item2?.startDate).toBeDefined()
+    const diff2 = new Date(item2!.deadline!).getTime() - new Date(item2!.startDate!).getTime()
+    expect(diff2).toBe(60 * 60 * 1000)
+
+    // Verify legacy-task-3: ISO dueDate used as deadline
+    const item3 = await v2Db.getItem('legacy-task-3')
+    expect(item3).toBeDefined()
+    expect(item3?.deadline).toBe('2026-10-15T18:00:00.000Z')
+    expect(item3?.startDate).toBeDefined()
+
+    // Verify legacy-note-1: without deadline, preserved
+    const note1 = await v2Db.getItem('legacy-note-1')
+    expect(note1).toBeDefined()
+    expect(note1?.title).toBe('Заметка без дедлайна')
+
+    await v2Db.delete()
+  })
+
+  it('provides helpers for audio sessions and settings management', async () => {
+    const audioId = await db.createAudioSession({
+      id: '',
+      title: 'Сессия с микрофона',
+      duration: 45,
+      recordedAt: '12:00',
+      transcriptSnippet: 'Тестовый сниппет',
+      tags: ['#Тест'],
+    })
+    expect(audioId).toBeTruthy()
+
+    const audio = await db.getAudioSession(audioId)
+    expect(audio?.title).toBe('Сессия с микрофона')
+
+    const allAudio = await db.getAllAudioSessions()
+    expect(allAudio.length).toBeGreaterThanOrEqual(1)
+
+    await db.deleteAudioSession(audioId)
+    expect(await db.getAudioSession(audioId)).toBeUndefined()
+
+    await db.saveSettings({
+      id: 'default',
+      userName: 'Иван',
+      subscriptionStatus: 'pro',
+      aiMode: 'fast',
+      structuringStyle: 'concise',
+      theme: 'dark',
+      fontScale: 'standard',
+      language: 'ru-RU',
+      devices: [],
+      updatedAt: new Date().toISOString(),
+    })
+    const settings = await db.getSettings()
+    expect(settings?.userName).toBe('Иван')
   })
 })

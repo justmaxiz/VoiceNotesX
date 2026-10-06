@@ -6,6 +6,7 @@ import { EmptyState } from '../../ui/EmptyState'
 import { useAppStore } from '../../../store/useAppStore'
 import { useDrawerStore } from '../../../store/useDrawerStore'
 import { BulkActionToolbar } from '../../tasks/BulkActionToolbar'
+import { taskDeadline } from '../../../lib/taskDates'
 
 export interface DashboardTaskListProps {
   tasks: TaskItemData[]
@@ -36,26 +37,32 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
   } = useAppStore()
 
   const { openDrawer } = useDrawerStore()
+  const now = new Date()
+  const getDeadline = (task: TaskItemData) => taskDeadline({
+    deadline: task.deadline,
+    dueDate: task.dueDate,
+    dueTime: task.dueTime,
+  })
 
   const filteredTasks = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0]
     return tasks.filter((t) => {
-      if (filter === 'urgent') return t.isUrgent
-      if (filter === 'overdue') return t.dueDate && t.dueDate < todayStr && !t.isCompleted
+      if (filter === 'overdue') {
+        const deadline = getDeadline(t)
+        return deadline && deadline < now && !t.isCompleted
+      }
       return true
     })
-  }, [tasks, filter])
+  }, [tasks, filter, now])
 
   // Sort tasks according to criteria and direction
   const { sortedTasks, unscheduledTasks } = useMemo(() => {
     let list = [...filteredTasks]
 
     if (sortBy === 'priority') {
-      const pWeights: Record<string, number> = { high: 3, medium: 2, low: 1 }
+      const weights = { high: 3, medium: 2, low: 1 }
       list.sort((a, b) => {
-        const pA = a.isUrgent ? pWeights.high : pWeights.medium
-        const pB = b.isUrgent ? pWeights.high : pWeights.medium
-        return sortDirection === 'asc' ? pB - pA : pA - pB
+        const delta = weights[a.priority || 'medium'] - weights[b.priority || 'medium']
+        return sortDirection === 'asc' ? -delta : delta
       })
     } else if (sortBy === 'created') {
       if (sortDirection === 'desc') {
@@ -102,27 +109,21 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
 
     // Move completed to bottom, overdue to top (sorted by date/time ascending)
     const sortSpecial = (arr: TaskItemData[]) => {
-      const todayStr = new Date().toISOString().split('T')[0]
-      
       return [...arr].sort((a, b) => {
         if (a.isCompleted && !b.isCompleted) return 1
         if (!a.isCompleted && b.isCompleted) return -1
         if (a.isCompleted && b.isCompleted) return 0
 
-        const isOverdueA = a.dueDate && a.dueDate < todayStr
-        const isOverdueB = b.dueDate && b.dueDate < todayStr
+        const deadlineA = getDeadline(a)
+        const deadlineB = getDeadline(b)
+        const isOverdueA = deadlineA && deadlineA < now
+        const isOverdueB = deadlineB && deadlineB < now
 
         if (isOverdueA && !isOverdueB) return -1
         if (!isOverdueA && isOverdueB) return 1
 
         if (isOverdueA && isOverdueB) {
-          const dateA = a.dueDate || ''
-          const dateB = b.dueDate || ''
-          if (dateA !== dateB) return dateA.localeCompare(dateB)
-          
-          const timeA = a.time || ''
-          const timeB = b.time || ''
-          return timeA.localeCompare(timeB)
+          return deadlineA!.getTime() - deadlineB!.getTime()
         }
 
         return 0
@@ -133,11 +134,13 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
       sortedTasks: sortSpecial(finalSorted), 
       unscheduledTasks: sortSpecial(finalUnscheduled) 
     }
-  }, [filteredTasks, sortBy, sortDirection])
+  }, [filteredTasks, sortBy, sortDirection, now])
 
-  const urgentCount = tasks.filter((t) => t.isUrgent).length
-  const todayStr = new Date().toISOString().split('T')[0]
-  const overdueCount = tasks.filter((t) => t.dueDate && t.dueDate < todayStr && !t.isCompleted).length
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const overdueCount = tasks.filter((t) => {
+    const deadline = getDeadline(t)
+    return deadline && deadline < now && !t.isCompleted
+  }).length
 
   const handleRescheduleToday = (id: string) => {
     updateItem(id, { dueDate: todayStr }).catch(() => {})
@@ -161,18 +164,6 @@ export const DashboardTaskList: React.FC<DashboardTaskListProps> = ({
             }`}
           >
             Все <span className="text-xs opacity-75">{tasks.length}</span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={filter === 'urgent'}
-            onClick={() => onFilterChange('urgent')}
-            className={`px-3 py-1 rounded-xl font-label-md text-label-md transition-all duration-200 cursor-pointer border ${
-              filter === 'urgent'
-                ? 'bg-primary/15 text-primary font-medium border-primary/25 shadow-xs'
-                : 'border-transparent text-outline hover:text-on-surface hover:bg-surface-container-high/40'
-            }`}
-          >
-            Срочные <span className={`text-xs ${urgentCount > 0 ? 'text-error font-medium' : 'opacity-75'}`}>{urgentCount}</span>
           </button>
           <button
             type="button"

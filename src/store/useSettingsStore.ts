@@ -1,21 +1,5 @@
 import { create } from 'zustand'
-import { UserSettings, DeviceItem } from '../types/settings'
-
-const DEFAULT_DEVICES: DeviceItem[] = [
-  {
-    id: 'd-1',
-    name: 'MacBook Pro 16"',
-    type: 'laptop',
-    lastSyncAt: 'Только что',
-    isCurrent: true,
-  },
-  {
-    id: 'd-2',
-    name: 'iPhone 16 Pro',
-    type: 'mobile',
-    lastSyncAt: '12 минут назад',
-  },
-]
+import { UserSettings } from '../types/settings'
 
 const DEFAULT_SETTINGS: UserSettings = {
   id: 'user-settings-default',
@@ -27,7 +11,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   theme: 'dark',
   fontScale: 'standard',
   language: 'ru-RU',
-  devices: DEFAULT_DEVICES,
+  devices: [],
   updatedAt: new Date().toISOString(),
 }
 
@@ -55,15 +39,12 @@ const persistSettings = (settings: UserSettings) => {
 }
 
 export interface SettingsState extends UserSettings {
-  isSyncing: boolean
   updateSettings: (partial: Partial<UserSettings>) => void
-  syncDevices: () => Promise<void>
   clearCache: () => Promise<void>
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...loadSettings(),
-  isSyncing: false,
 
   updateSettings: (partial) => {
     const current = get()
@@ -84,22 +65,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set(updated)
   },
 
-  syncDevices: async () => {
-    set({ isSyncing: true })
-    await new Promise((r) => setTimeout(r, 600))
-    const now = 'Только что'
-    const updatedDevices = get().devices.map((d) => ({
-      ...d,
-      lastSyncAt: now,
-    }))
-    get().updateSettings({ devices: updatedDevices })
-    set({ isSyncing: false })
-  },
-
   clearCache: async () => {
     if (typeof localStorage !== 'undefined') {
       try {
-        localStorage.clear()
+        for (const key of ['voicenotes_user_settings', 'voicenotes_task_sort', 'voicenotes_dashboard_modules', 'voicenotes_api_key']) {
+          localStorage.removeItem(key)
+        }
       } catch {
         // ignore
       }

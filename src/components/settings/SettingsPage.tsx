@@ -16,15 +16,13 @@ export const SettingsPage: React.FC = () => {
     theme,
     fontScale,
     language,
-    devices,
-    isSyncing,
     updateSettings,
-    syncDevices,
     clearCache,
   } = useSettingsStore()
 
   const { items } = useAppStore()
 
+  const [exportError, setExportError] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isSavedFeedback, setIsSavedFeedback] = useState(false)
 
@@ -41,6 +39,7 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-space-lg pt-space-md max-w-4xl">
+      {exportError && <p role="alert" className="text-error">{exportError}</p>}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
         <div>
@@ -230,58 +229,9 @@ export const SettingsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* 4. Connected Devices Section */}
-        <section className="p-space-lg rounded-2xl bg-surface-container-low border border-surface-container-high/30 flex flex-col gap-space-md shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-space-xs">
-              <span className="material-symbols-outlined text-secondary text-body-lg">devices</span>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                Подключенные устройства
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={syncDevices}
-              disabled={isSyncing}
-              className="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-label-md font-medium transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <span className={`material-symbols-outlined text-base text-secondary ${isSyncing ? 'animate-spin' : ''}`}>
-                sync
-              </span>
-              <span>{isSyncing ? 'Синхронизация...' : 'Синхронизировать сейчас'}</span>
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {devices.map((device) => (
-              <div
-                key={device.id}
-                className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/20 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary text-xl">
-                    {device.type === 'laptop' ? 'laptop_mac' : 'smartphone'}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-body-md font-medium text-on-surface flex items-center gap-2">
-                      {device.name}
-                      {device.isCurrent && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-secondary-container text-on-secondary font-semibold">
-                          Текущее устройство
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-xs text-outline">
-                      Последняя синхронизация: {device.lastSyncAt}
-                    </span>
-                  </div>
-                </div>
-
-                <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.8)]" />
-              </div>
-            ))}
-          </div>
+        <section className="p-space-lg rounded-2xl bg-surface-container-low border border-surface-container-high/30 text-on-surface">
+          <h2 className="font-semibold">Локальное хранение</h2>
+          <p className="text-sm text-on-surface-variant mt-2">Данные находятся в этом браузере. Синхронизация между устройствами не подключена. Для переноса используйте экспорт.</p>
         </section>
 
         {/* 5. AI Engine & Structuring Style Section */}
@@ -393,7 +343,7 @@ export const SettingsPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => exportNotesAsZip(items)}
+              onClick={() => { setExportError(null); void exportNotesAsZip(items).catch((error) => setExportError(error.message)) }}
               className="p-3 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 text-on-surface text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-primary text-base">folder_zip</span>

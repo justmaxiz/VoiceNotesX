@@ -1,3 +1,4 @@
+import { localDateKey } from '../../lib/taskDates'
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { triggerDownload } from '../../lib/export'
@@ -8,66 +9,25 @@ import {
   generateDigestData,
 } from '../../lib/dailyDigestScheduler'
 
-const INITIAL_FALLBACK_REPORTS: GeneratedDigest[] = [
-  {
-    id: 'rep-fallback-1',
-    title: 'Дайджест дня: Понедельник, 5 октября',
-    period: 'За сегодня',
-    date: 'Сегодня, 18:30',
-    dateKey: '2026-10-05',
-    updatedAtTime: '18:30',
-    tags: ['#Микросервисы', '#Q3 Метрики', '#Дизайн-система'],
-    achievements: [
-      'Согласован бюджет на AI API и проверена модель Gemini 2.0 Flash',
-      'Завершен ревью PR #142 по микросервисной архитектуре',
-    ],
-    bottlenecks: [
-      'Требуется финальное согласование дедлайна с продуктовой командой',
-    ],
-    recommendations: [
-      'Зафиксировать релизный таймлайн до конца четверга',
-      'Проверить локальный индекс MiniSearch на нагрузочных данных',
-    ],
-    rawText:
-      'Сегодня обработано 6 аудиозаписей. Главный вектор усилий: финализация PR #142 по микросервисам и подготовка релиза VoiceNotes AI v2.5.',
-  },
-  {
-    id: 'rep-fallback-2',
-    title: 'Еженедельный отчет (W40)',
-    period: 'За неделю',
-    date: '3 октября, 19:00',
-    dateKey: '2026-10-03',
-    updatedAtTime: '19:00',
-    tags: ['#Дизайн-система', '#Продуктивность', '#Календарь'],
-    achievements: [
-      'Закрыто 18 задач из спринта',
-      'Внедрена высококонтрастная цветовая схема календаря (WCAG AAA)',
-      'Интегрирован нативный захват аудио MediaRecorder и Web Speech STT',
-    ],
-    bottlenecks: [
-      'Были задержки по тестированию стриминга аудио в Firefox',
-    ],
-    recommendations: [
-      'Сфокусироваться на чистом тексте и быстром Quick Capture виджете',
-    ],
-    rawText:
-      'Все ключевые цели спринта достигнуты. Переход на дизайн Obsidian Lumina 2.0 завершен успешно.',
-  },
-]
-
 export const AiSummariesPage: React.FC = () => {
   const { items } = useAppStore()
   const [reports, setReports] = useState<GeneratedDigest[]>(() => {
     const stored = getStoredSummaries()
-    return stored.length > 0 ? stored : INITIAL_FALLBACK_REPORTS
+    return stored
   })
 
-  const [isGenerating, setIsGenerating] = useState<string | null>(null)
+  const [generationError, setGenerationError] = useState<string | null>(null)
+  useEffect(() => {
+    const refresh = () => setReports(getStoredSummaries())
+    window.addEventListener('voicenotes:summaries-updated', refresh)
+    window.addEventListener('storage', refresh)
+    return () => { window.removeEventListener('voicenotes:summaries-updated', refresh); window.removeEventListener('storage', refresh) }
+  }, [])
   const [cooldownSeconds, setCooldownSeconds] = useState(0)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState('#Разработка')
 
-  const todayKey = new Date().toISOString().split('T')[0]
+  const todayKey = localDateKey()
   const todayReport = reports.find((r) => r.dateKey === todayKey && r.period === 'За сегодня')
 
   const tasksCount = items.filter((i) => i.type === 'task').length
@@ -85,34 +45,15 @@ export const AiSummariesPage: React.FC = () => {
   const handleGenerate = (type: 'today' | 'weekly' | 'tag') => {
     if (cooldownSeconds > 0) return
 
-    setIsGenerating(type)
-    setTimeout(() => {
+    setGenerationError(null)
+    try {
       const generated = generateDigestData(type, items, selectedTag)
-
-      setReports((prev) => {
-        let updated: GeneratedDigest[]
-        if (type === 'today') {
-          // If today's report already exists, update in-place!
-          const exists = prev.some((r) => r.id === generated.id || (r.dateKey === todayKey && r.period === 'За сегодня'))
-          if (exists) {
-            updated = prev.map((r) =>
-              r.id === generated.id || (r.dateKey === todayKey && r.period === 'За сегодня')
-                ? generated
-                : r
-            )
-          } else {
-            updated = [generated, ...prev]
-          }
-        } else {
-          updated = [generated, ...prev]
-        }
-        saveStoredSummaries(updated)
-        return updated
-      })
-
-      setIsGenerating(null)
+      const current = getStoredSummaries()
+      const updated = [generated, ...current.filter((report) => report.id !== generated.id)]
+      saveStoredSummaries(updated)
+      setReports(updated)
       setCooldownSeconds(30)
-    }, 500)
+    } catch (error) { setGenerationError((error as Error).message) }
   }
 
   const handleCopyReport = (report: GeneratedDigest) => {
@@ -134,13 +75,15 @@ export const AiSummariesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-space-lg pt-space-md">
+      {generationError && <p role="alert" className="text-error">{generationError}</p>}
+      <p className="text-xs text-outline">Локальные отчеты по вашим записям. Семантический AI-анализ не подключен.</p>
       {/* Header - Duplicate button removed per TASK-39 DoD */}
       <div>
         <div className="flex items-center gap-space-xs text-outline font-label-sm text-label-sm mb-1">
           <span className="material-symbols-outlined text-secondary text-sm">auto_awesome</span>
           <span className="uppercase tracking-wider">ИИ Дайджесты</span>
           <span>•</span>
-          <span>Google Gemini Flash Engine</span>
+          <span>Локальные итоги</span>
         </div>
         <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
           AI Сводки
@@ -195,17 +138,15 @@ export const AiSummariesPage: React.FC = () => {
 
             <button
               type="button"
-              disabled={Boolean(isGenerating) || cooldownSeconds > 0}
+              disabled={cooldownSeconds > 0}
               onClick={() => handleGenerate('today')}
               className="w-full py-2 px-3 rounded-xl bg-secondary text-on-secondary hover:bg-secondary/90 font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs glow-emerald"
             >
-              <span className={`material-symbols-outlined text-sm ${isGenerating === 'today' ? 'animate-spin' : ''}`}>
-                {isGenerating === 'today' ? 'sync' : 'auto_awesome'}
+              <span className={`material-symbols-outlined text-sm `}>
+                auto_awesome
               </span>
               <span>
-                {isGenerating === 'today'
-                  ? 'Анализ...'
-                  : todayReport
+                {todayReport
                   ? 'Обновить сводку за сегодня'
                   : 'Сформировать за сегодня'}
               </span>
@@ -232,15 +173,15 @@ export const AiSummariesPage: React.FC = () => {
 
             <button
               type="button"
-              disabled={Boolean(isGenerating) || cooldownSeconds > 0}
+              disabled={cooldownSeconds > 0}
               onClick={() => handleGenerate('weekly')}
               className="w-full py-2 px-3 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs glow-violet"
             >
-              <span className={`material-symbols-outlined text-sm ${isGenerating === 'weekly' ? 'animate-spin' : ''}`}>
-                {isGenerating === 'weekly' ? 'sync' : 'auto_awesome'}
+              <span className={`material-symbols-outlined text-sm `}>
+                auto_awesome
               </span>
               <span>
-                {isGenerating === 'weekly' ? 'Анализ недели...' : 'Сформировать ретро недели'}
+                Сформировать ретро недели
               </span>
             </button>
           </div>
@@ -278,15 +219,15 @@ export const AiSummariesPage: React.FC = () => {
 
             <button
               type="button"
-              disabled={Boolean(isGenerating) || cooldownSeconds > 0}
+              disabled={cooldownSeconds > 0}
               onClick={() => handleGenerate('tag')}
               className="w-full py-2 px-3 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
             >
-              <span className={`material-symbols-outlined text-sm ${isGenerating === 'tag' ? 'animate-spin' : ''}`}>
-                {isGenerating === 'tag' ? 'sync' : 'analytics'}
+              <span className={`material-symbols-outlined text-sm `}>
+                analytics
               </span>
               <span>
-                {isGenerating === 'tag' ? 'Анализ тега...' : `Сформировать отчет ${selectedTag}`}
+                {`Сформировать отчет ${selectedTag}`}
               </span>
             </button>
           </div>

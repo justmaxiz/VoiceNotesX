@@ -43,6 +43,8 @@ export function useAudioRecorder(): AudioRecorderState {
   const [error, setError] = useState<string | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioUrlRef = useRef<string | null>(null)
+  audioUrlRef.current = audioUrl
   const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -187,11 +189,9 @@ export function useAudioRecorder(): AudioRecorderState {
     return () => {
       clearTimer()
       cleanupStream()
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl)
-      }
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current)
     }
-  }, [clearTimer, cleanupStream, audioUrl])
+  }, [clearTimer, cleanupStream])
 
   return {
     isRecording,

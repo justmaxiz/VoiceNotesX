@@ -56,10 +56,11 @@ describe('SlideOverDrawer - Task Details, Tags & Reminders (TASK-37)', () => {
     render(<SlideOverDrawer />)
 
     expect(screen.getByText('Напоминание')).toBeInTheDocument()
-    const select = screen.getByRole('combobox')
-    expect(select).toHaveValue('15')
+    const reminderButton = screen.getByRole('button', { name: /За 15 минут до начала/i })
+    expect(reminderButton).toHaveAttribute('aria-haspopup', 'listbox')
 
-    fireEvent.change(select, { target: { value: '60' } })
+    fireEvent.click(reminderButton)
+    fireEvent.click(screen.getByRole('option', { name: /За 1 час до начала/i }))
     expect(useAppStore.getState().items[0].reminderMinutesBefore).toBe(60)
   })
 

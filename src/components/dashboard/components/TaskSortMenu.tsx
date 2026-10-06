@@ -8,7 +8,7 @@ export interface TaskSortMenuProps {
 }
 
 const SORT_OPTIONS: Array<{ key: TaskSortCriteria; label: string; icon: string; ascDescDesc: [string, string] }> = [
-  { key: 'priority', label: 'По приоритету', icon: 'flag', ascDescDesc: ['Сначала срочные', 'Сначала несрочные'] },
+  { key: 'priority', label: 'По приоритету', icon: 'flag', ascDescDesc: ['Высокий приоритет сначала', 'Низкий приоритет сначала'] },
   { key: 'time', label: 'По времени / дедлайну', icon: 'schedule', ascDescDesc: ['Ближайшие первые', 'Поздние первые'] },
   { key: 'created', label: 'По дате создания', icon: 'history', ascDescDesc: ['Свежие первые', 'Старые первые'] },
   { key: 'title', label: 'По названию', icon: 'sort_by_alpha', ascDescDesc: ['А — Я', 'Я — А'] },

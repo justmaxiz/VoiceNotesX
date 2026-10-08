@@ -3,18 +3,20 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { QuickCaptureWidget } from './QuickCaptureWidget'
 import { SlideOverDrawer } from './SlideOverDrawer'
-import { CommandPaletteModal } from '../ui/CommandPaletteModal'
 import { useNavigationStore, normalizeTab } from '../../store/navigationStore'
 import { useQuickCaptureHotkey } from '../../hooks/useQuickCaptureHotkey'
 import { startReminderScheduler } from '../../lib/remindersService'
-import { startDailyDigestScheduler } from '../../lib/dailyDigestScheduler'
 import { useAppStore } from '../../store/useAppStore'
+import { LocalMigration } from '../auth/LocalMigration'
+import { AudioProcessingWidget } from '../audio/AudioProcessingWidget'
+import { useSummaryTimeZone } from '../../hooks/useSummary'
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  useSummaryTimeZone()
   const {
     setActiveTab,
     isSidebarCollapsed,
@@ -33,13 +35,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return () => window.removeEventListener('voicenotes:storage-error', onError)
   }, [])
 
-  // Schedulers for Reminders (TASK-37) and Daily AI Digest (TASK-39)
+  // Browser reminders only; summaries run on the backend even with a closed client.
   useEffect(() => {
     const stopReminders = startReminderScheduler(() => useAppStore.getState().items)
-    const stopDigest = startDailyDigestScheduler(() => useAppStore.getState().items)
     return () => {
       stopReminders()
-      stopDigest()
     }
   }, [])
 
@@ -103,7 +103,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         role="main"
         className={`relative ${
           isSidebarCollapsed ? 'pl-0 md:pl-20' : 'pl-0 md:pl-72'
-        } pt-16 bg-surface min-h-screen w-full transition-all duration-200`}
+        } pt-16 bg-surface min-h-screen w-full overflow-x-clip transition-all duration-200`}
       >
         {error && <div role="alert" className="mx-4 mt-4 rounded-xl bg-error-container text-on-error-container p-3">{error}<button className="ml-4 underline" onClick={clearError}>Закрыть</button></div>}
         {/* Dynamic Ambient Auras */}
@@ -118,6 +118,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         {/* Dynamic Page Views with bottom spacing for floating QuickCaptureWidget */}
         <div className="flex flex-col w-full pb-36 px-space-md md:px-space-xl">
+          <LocalMigration />
           {children}
         </div>
       </main>
@@ -127,9 +128,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Global Slide-Over Details Drawer */}
       <SlideOverDrawer />
-
-      {/* Global Command Palette (⌘K) */}
-      <CommandPaletteModal />
+      <AudioProcessingWidget />
 
     </div>
   )

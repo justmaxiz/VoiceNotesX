@@ -1,18 +1,23 @@
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { App } from '../App'
+import { useAppStore } from '../store/useAppStore'
+import { SEED_ITEMS } from '../lib/seedData'
+import { installApiDouble } from '../test/apiDouble'
 import { useNavigationStore } from '../store/navigationStore'
 
 describe('VoiceNotes App - Client Routing Integration', () => {
   beforeEach(() => {
     useNavigationStore.setState({ activeTab: 'overview' })
+    useAppStore.getState().setItems(SEED_ITEMS)
+    vi.stubGlobal('fetch', installApiDouble(SEED_ITEMS).fetch)
   })
 
   afterEach(() => vi.useRealTimers())
 
   it('renders Dashboard Overview on initial load', () => {
     render(<App />)
-    expect(screen.getAllByText(/Алексей/).length).toBeGreaterThan(0)
+    expect(screen.getByTestId('view-overview')).toBeVisible()
   })
 
   it('switches to Notes view when clicked in sidebar', () => {
@@ -48,8 +53,7 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     const aiBtn = screen.getByTestId('nav-item-ai-summaries')
     fireEvent.click(aiBtn)
 
-    expect(screen.getByText('ИИ Дайджесты')).toBeInTheDocument()
-    expect(screen.getByText('Локальные итоги')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'AI Сводки' })).toBeInTheDocument()
   })
 
   it('switches to Settings view when clicked in sidebar', () => {
@@ -58,14 +62,15 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     fireEvent.click(settingsBtn)
 
     expect(screen.getByTestId('view-settings')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-    expect(screen.getByText('Локальное хранение')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Профиль' })).toBeInTheDocument()
+    expect(screen.getByText('Хранение в аккаунте')).toBeInTheDocument()
   })
 
   it('preserves state when returning to Overview', async () => {
     render(<App />)
     expect(screen.getByTestId('view-overview')).toBeVisible()
 
+    await waitFor(() => expect(useAppStore.getState().isLoading).toBe(false))
     // Toggle first task on Overview
     const firstCheckbox = screen.getByLabelText('Отметить задачу: Подготовить отчет по продуктовым метрикам Q3')
     expect(firstCheckbox).not.toBeChecked()
@@ -73,10 +78,10 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     fireEvent.click(firstCheckbox)
     act(() => vi.advanceTimersByTime(200))
     vi.useRealTimers()
-    expect(firstCheckbox).toBeChecked()
+    await waitFor(() => expect(firstCheckbox).toBeChecked())
 
     // Enter text into quick input
-    const quickInput = screen.getAllByPlaceholderText(/Быстрая мысль или задача/)[0]
+    const quickInput = screen.getAllByPlaceholderText(/Мысль или задача/)[0]
     fireEvent.change(quickInput, { target: { value: 'Черновик идеи для релиза' } })
     expect(quickInput).toHaveValue('Черновик идеи для релиза')
 
@@ -95,4 +100,3 @@ describe('VoiceNotes App - Client Routing Integration', () => {
     expect(quickInput).toHaveValue('Черновик идеи для релиза')
   })
 })
-

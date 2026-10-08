@@ -19,7 +19,6 @@ describe('Edge Cases and Boundary Values', () => {
     })
 
     // Should still display Overview safely without crash
-    expect(screen.getAllByText(/Алексей/).length).toBeGreaterThan(0)
     expect(screen.getByTestId('view-overview')).toBeVisible()
   })
 
@@ -39,7 +38,7 @@ describe('Edge Cases and Boundary Values', () => {
   it('rejects empty or whitespace-only submissions in quick input', () => {
     const onSave = vi.fn()
     render(<QuickCaptureWidget onSave={onSave} />)
-    const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    const input = screen.getByPlaceholderText(/Мысль или задача/)
     const submitBtn = screen.getByLabelText('Сохранить мысль')
 
     // Submit pure spaces
@@ -51,7 +50,7 @@ describe('Edge Cases and Boundary Values', () => {
 
   it('does not trigger spacebar recording shortcut while typing space inside an input', () => {
     render(<App />)
-    const input = screen.getAllByPlaceholderText(/Быстрая мысль или задача/)[0]
+    const input = screen.getAllByPlaceholderText(/Мысль или задача/)[0]
     input.focus()
 
     // Trigger Space keydown while focused on input

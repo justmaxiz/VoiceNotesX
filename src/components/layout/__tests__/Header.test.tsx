@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { Header } from '../Header'
 import { useNavigationStore } from '../../../store/navigationStore'
 import { useSettingsStore } from '../../../store/useSettingsStore'
+import { useCommandPaletteStore } from '../../../store/useCommandPaletteStore'
 
 describe('Header Component', () => {
   beforeEach(() => {
@@ -10,15 +11,21 @@ describe('Header Component', () => {
       searchQuery: '',
       isRecordingModalOpen: false,
     })
+    useCommandPaletteStore.setState({ isOpen: false, returnFocusElement: null })
   })
 
-  it('renders search input and updates query in store', () => {
+  it('opens the search widget from the header search field', () => {
     render(<Header />)
-    const input = screen.getByRole('searchbox')
-    expect(input).toBeInTheDocument()
+    const search = screen.getByRole('combobox', { name: 'Поиск заметок и задач' })
+    expect(search).toBeInTheDocument()
 
-    fireEvent.change(input, { target: { value: 'новые мысли' } })
-    expect(useNavigationStore.getState().searchQuery).toBe('новые мысли')
+    fireEvent.focus(search)
+    expect(useCommandPaletteStore.getState().isOpen).toBe(true)
+    expect(useCommandPaletteStore.getState().returnFocusElement).toBe(search)
+    const widget = screen.getByTestId('command-palette-widget')
+    expect(widget).toBeInTheDocument()
+    expect(widget).toHaveClass('absolute')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('renders date badge, notifications button, and profile avatar', () => {
@@ -28,6 +35,12 @@ describe('Header Component', () => {
     expect(screen.getByLabelText('Уведомления')).toBeInTheDocument()
     expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument()
     expect(screen.getByTestId('header-user-avatar')).toBeInTheDocument()
+
+    for (const button of [screen.getByLabelText('Уведомления'), screen.getByTestId('header-theme-toggle')]) {
+      expect(button).toHaveClass('p-2')
+      expect(button).not.toHaveClass('rounded-xl')
+      expect(button.className).not.toMatch(/bg-surface-container/)
+    }
   })
 
   it('toggles theme when clicking theme toggle button', () => {
@@ -51,13 +64,13 @@ describe('Header Component', () => {
     expect(useNavigationStore.getState().isSidebarCollapsed).toBe(true)
   })
 
-  it('focuses search input on Cmd+K / Ctrl+K shortcut', () => {
+  it('opens and focuses the header search on Cmd+K / Ctrl+K', () => {
     render(<Header />)
-    const input = screen.getByRole('searchbox')
-    expect(document.activeElement).not.toBe(input)
+    expect(screen.queryByTestId('command-palette-widget')).not.toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
-    expect(document.activeElement).toBe(input)
+    expect(document.activeElement).toBe(screen.getByRole('combobox'))
+    expect(screen.getByTestId('command-palette-widget')).toBeInTheDocument()
   })
 
   it('navigates to settings when clicking user profile avatar', () => {
@@ -82,4 +95,3 @@ describe('Header Component', () => {
     window.innerWidth = 1024
   })
 })
-

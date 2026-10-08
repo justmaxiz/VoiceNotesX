@@ -1,4 +1,12 @@
-# VoiceNotes — актуальная реализация, 2026-10-06
+# VoiceNotes — актуальная реализация, 2026-10-08
+
+Основной клиент использует Node API, серверную авторизацию, PostgreSQL и закрытое файловое хранилище аудио. Dexie остаётся источником для явной миграции старых данных. Production AI — Alice/SpeechKit; Gemini — только development на синтетических данных. Блок 9: [приёмка 45–60](tasks/ACCEPTANCE-45-60.md).
+
+Блок 10 реализован в `server/src/summaryContracts.ts`, `summaryFacts.ts`, `summaryAI.ts`, `summaries.ts` и миграции `003-summaries.sql`. Метрики рассчитываются по полным данным владельца; LLM получает только выбранные разрешённые поля. Очередь, версии, кеш и вечерний scheduler работают в PostgreSQL/Node при закрытом клиенте. UI читает общее состояние `useSummaryStore` через typed repository; page/dashboard/export используют один сохранённый снимок. Старый браузерный генератор удалён; legacy-архив сохранён read-only с owner scope.
+
+Контракты/лимиты/операционная модель: [SUMMARY-CONTRACTS.md](docs/SUMMARY-CONTRACTS.md). Проверки и ограничения live/staging: [приёмка 61–72](tasks/ACCEPTANCE-61-72.md). Историю событий задач, повторные переносы и фактические часы в эту версию не добавляли.
+
+## Состояние до облачного перехода (история)
 
 Продуктовые требования остаются в PRD.md и tasks/TASK-01..TASK-41, требования интервалов/фокуса/календаря — tasks/task-1..3 и `.agents/teamwork/ORIGINAL_REQUEST.md`. Названия модулей и типы из прежнего плана ниже не являются контрактом продукта.
 
@@ -7,7 +15,9 @@
 - `calendarLayout.ts` используется общей дневной/недельной сеткой: пропорциональная высота, локальные границы, колонки пересечений и all-day. Искусственный minHeight и дублирующий timelineLayout отсутствуют.
 - Аудио хранится в существующей audioSessions; objectURL создаются для playback и отзываются. Старые таблицы settings/audioSessions сохраняются для совместимости; настройки имеют один действующий источник — localStorage.
 - Режим и стиль AI передаются capture/refinement. Без endpoint работает ограниченная локальная эвристика; отчеты считают реальные записи и не объявляются семантическими AI-сводками.
-- Опциональный `VITE_AI_PROXY_URL`: HTTPS или HTTP localhost/127.0.0.1, POST JSON `{systemInstruction,userPrompt,mode,style,responseSchema}`, ответ `{text:string}`; text содержит JSON структурирования/refinement. Тайм-аут 30 секунд, ошибки видимы, draft сохраняется. Ключ Gemini в браузер не передается. CORS, ключ, ограничения запросов и реализация AI остаются обязанностью внешнего сервера; сервер не создан и интеграция не проверена. При настроенном, но отказавшем endpoint нет молчаливой подмены результата локальной эвристикой.
+- В `server/` добавлен отдельный Node.js 24 / TypeScript / Fastify 5 каркас с `GET /api/v1/health`. Запуск: `npm run backend:dev`, сборка: `npm run backend:build`. Авторизация, база данных и AI routes пока не реализованы; клиент пока не подключён к новому API.
+- Целевой серверный стек: Node.js + PostgreSQL, авторизация в Node API, исходное аудио в закрытой папке backend. Подключение pool/миграций — `TASK-45A`, авторизация — `TASK-46`, заметки/jobs — `TASK-48`, файловый адаптер — `TASK-48A`. Production-данные и backups размещаются в РФ.
+- Существующий опциональный `VITE_AI_PROXY_URL`: HTTPS или HTTP localhost/127.0.0.1, POST JSON `{systemInstruction,userPrompt,mode,style,responseSchema}`, ответ `{text:string}`; text содержит JSON структурирования/refinement. Тайм-аут 30 секунд, ошибки видимы, draft сохраняется. Ключ Gemini в браузер не передается. Текущий backend ещё не реализует этот AI-контракт; задача `TASK-54` задаёт серверную интеграцию Gemini для разработки и Alice для production. При настроенном, но отказавшем endpoint нет молчаливой подмены результата локальной эвристикой.
 - Экспорт: настоящий Markdown, JSON метаданных и ZIP через fflate с оригинальным audio Blob и уникальными именами. JSON не является резервной копией аудио.
 
 Проверено: build exit 0; полный Vitest 237 passed / 0 failed / 0 skipped. Это модульные/интеграционные проверки, не browser E2E. Оценка и пробелы — `reviews/refactoring-2026-10-06.md`.

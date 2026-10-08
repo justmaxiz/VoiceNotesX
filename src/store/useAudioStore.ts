@@ -44,6 +44,7 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
       try {
         const audio = new Audio(url)
+        audio.crossOrigin = 'use-credentials'
         activeAudioElement = audio
 
         audio.onended = () => {

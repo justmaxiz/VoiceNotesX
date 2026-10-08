@@ -6,6 +6,8 @@ import {
   removeSearchItem,
   rebuildSearchIndex,
   clearSearchIndex,
+  performSearchWithMatches,
+  createSearchSnippet,
 } from '../search'
 import { Item } from '../../types'
 
@@ -44,6 +46,7 @@ describe('MiniSearch FTS - Full-Text Search Engine (TASK-08)', () => {
       description: 'Черновик палитры и темной темы для веб-клиента',
       transcriptText: 'Сделать акцент на изумрудных индикаторах и высокой контрастности текста',
       categoryTag: '#Дизайн',
+      tags: ['личное', 'Obsidian идеи'],
       status: 'todo',
       priority: 'low',
       isFocus: false,
@@ -86,6 +89,61 @@ describe('MiniSearch FTS - Full-Text Search Engine (TASK-08)', () => {
     const retentionResults = performSearch('retention')
     expect(retentionResults.length).toBeGreaterThanOrEqual(1)
     expect(retentionResults[0].id).toBe('s-1')
+  })
+
+  it('searches descriptions, custom tags and categories with or without a hash', () => {
+    expect(performSearch('инвесторами').some((item) => item.id === 's-1')).toBe(true)
+    expect(performSearch('личное').some((item) => item.id === 's-3')).toBe(true)
+    expect(performSearch('#личное').some((item) => item.id === 's-3')).toBe(true)
+    expect(performSearch('Аналитика').some((item) => item.id === 's-1')).toBe(true)
+  })
+
+  it('uses OR semantics and includes archived notes and tasks', () => {
+    const archivedNote: Item = {
+      ...sampleItems[2],
+      id: 'archived-note',
+      title: 'Архивная заметка',
+      description: 'Уникальная архивная фраза',
+      status: 'archived',
+    }
+    const archivedTask: Item = {
+      ...sampleItems[1],
+      id: 'archived-task',
+      title: 'Архивная задача',
+      description: 'Другая сохраненная фраза',
+      status: 'archived',
+    }
+    rebuildSearchIndex([...sampleItems, archivedNote, archivedTask])
+
+    expect(performSearch('инвесторами несуществующее').some((item) => item.id === 's-1')).toBe(true)
+    expect(performSearch('уникальная').some((item) => item.id === 'archived-note')).toBe(true)
+    expect(performSearch('сохраненная').some((item) => item.id === 'archived-task')).toBe(true)
+  })
+
+  it('keeps MiniSearch relevance order and returns match fields for a highlighted snippet', () => {
+    const titleHit: Item = {
+      ...sampleItems[0], id: 'title-hit', title: 'Kafka в заголовке', description: 'Другой текст',
+    }
+    const bodyHit: Item = {
+      ...sampleItems[1], id: 'body-hit', title: 'Без совпадения', description: 'Kafka в описании', transcriptText: undefined,
+    }
+    rebuildSearchIndex([bodyHit, titleHit])
+
+    const results = performSearchWithMatches('Kafka')
+    expect(results[0].item.id).toBe('title-hit')
+    expect(results[0].fields).toContain('title')
+    expect(createSearchSnippet(results[1]).text).toContain('Kafka в описании')
+    expect(createSearchSnippet(results[1]).terms).toContain('kafka')
+  })
+
+  it('returns all matching items without a fixed result cap', () => {
+    const manyMatches = Array.from({ length: 25 }, (_, index): Item => ({
+      ...sampleItems[index % sampleItems.length],
+      id: `many-${index}`,
+      title: `Тестовый результат ${index}`,
+    }))
+    rebuildSearchIndex(manyMatches)
+    expect(performSearch('тестовый')).toHaveLength(25)
   })
 
   it('supports bilingual Russian and English search terms', () => {
@@ -156,12 +214,16 @@ describe('MiniSearch FTS - Full-Text Search Engine (TASK-08)', () => {
     }
     rebuildSearchIndex(largeCorpus)
 
-    const startTime = performance.now()
     const searchResults = performSearch('оптимизации')
-    const elapsed = performance.now() - startTime
+    const samples = Array.from({ length: 7 }, () => {
+      const startTime = performance.now()
+      performSearch('оптимизации')
+      return performance.now() - startTime
+    }).sort((a, b) => a - b)
+    const medianElapsed = samples[Math.floor(samples.length / 2)]
 
     expect(searchResults.length).toBeGreaterThan(0)
-    expect(elapsed).toBeLessThan(15) // Vitest overhead buffer, comfortably within target
+    expect(medianElapsed).toBeLessThan(5)
   })
 
   it('exposes underlying searchIndex and supports clearSearchIndex', () => {

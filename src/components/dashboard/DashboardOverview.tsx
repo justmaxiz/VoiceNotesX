@@ -1,6 +1,5 @@
-import { useSettingsStore } from '../../store/useSettingsStore'
+import { useProfile } from '../../hooks/useProfile'
 import { tasksForToday } from '../../lib/taskDates'
-import { generateDigestData } from '../../lib/dailyDigestScheduler'
 import React, { useState, useMemo } from 'react'
 import { TaskItemData, TaskFilter, ViewMode } from '../../types/item'
 import { useNavigationStore } from '../../store/navigationStore'
@@ -15,8 +14,7 @@ import { DailySummaryCard } from './components/DailySummaryCard'
 import { DashboardCustomizerModal } from './DashboardCustomizerModal'
 
 export const DashboardOverview: React.FC = () => {
-  const userName = useSettingsStore((state) => state.userName)
-  const summary = generateDigestData('today', useAppStore((state) => state.items))
+  const { name: userName } = useProfile()
   const { items, toggleTask } = useAppStore()
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
@@ -126,9 +124,6 @@ export const DashboardOverview: React.FC = () => {
           {/* AI Daily Insights Card */}
           {modules.dailySummary && (
             <DailySummaryCard
-              tags={summary.tags}
-              notesAnalyzedCount={items.filter((item) => item.type === 'note' && item.status !== 'archived').length}
-              summaryText={summary.rawText}
               onGenerateReport={() => setActiveTab('ai-summaries')}
             />
           )}

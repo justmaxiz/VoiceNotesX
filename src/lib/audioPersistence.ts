@@ -1,4 +1,4 @@
-import { db } from './db'
+import { useAppStore } from '../store/useAppStore'
 
 const playbackUrls = new Map<string, string>()
 
@@ -9,10 +9,5 @@ export function releaseAudioUrl(id: string): void {
 }
 
 export async function audioPlaybackUrl(id: string): Promise<string | undefined> {
-  const audio = await db.getAudioSession(id)
-  if (!audio?.audioBlob) return undefined
-  releaseAudioUrl(id)
-  const url = URL.createObjectURL(audio.audioBlob)
-  playbackUrls.set(id, url)
-  return url
+  return useAppStore.getState().items.find(item => item.id === id)?.audioUrl
 }

@@ -1,0 +1,620 @@
+<svg width="1440" height="3180" viewBox="0 0 1440 3180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="landing-title landing-description">
+  <title id="landing-title">VoiceNotes AI — скажите вслух, сохраните главное</title>
+  <desc id="landing-description">Лендинг голосовых заметок, задач, планов дня и хранения записей в аккаунте.</desc>
+  <defs>
+    <style>
+      text {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="112%" height="118%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0F172A" flood-opacity="0.08" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.03" />
+    </filter>
+    <filter id="pill-shadow" x="-10%" y="-15%" width="120%" height="135%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.12" />
+    </filter>
+    <linearGradient id="bg-grad" x1="720" y1="0" x2="720" y2="3180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCFDFE" />
+      <stop offset="100%" stop-color="#F8FAFC" />
+    </linearGradient>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect id="Artboard_Background" width="1440" height="3180" fill="url(#bg-grad)" />
+
+  <!-- ========================================== -->
+  <!-- NAVBAR -->
+  <!-- ========================================== -->
+  <g id="Navbar">
+    <!-- Brand Logo -->
+    <g id="Logo">
+      <rect x="80" y="22" width="42" height="42" rx="11" fill="#D9EDF2" />
+      <!-- Mic Icon -->
+      <rect x="95" y="30" width="12" height="16" rx="6" stroke="#245B6D" stroke-width="2.2" fill="none" />
+      <path d="M91 39C91 46.5 111 46.5 111 39" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" fill="none" />
+      <path d="M101 46.5V52M95 52H107" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" />
+      <text x="134" y="49" font-size="20" font-weight="700" fill="#0F172A">VoiceNotes AI</text>
+    </g>
+
+    <!-- Nav Links -->
+    <g id="Nav_Links">
+      <text x="500" y="48" font-size="14.5" font-weight="500" fill="#475569">Возможности</text>
+      <text x="640" y="48" font-size="14.5" font-weight="500" fill="#475569">Как это работает</text>
+      <text x="800" y="48" font-size="14.5" font-weight="500" fill="#475569">Хранение данных</text>
+    </g>
+
+    <!-- Nav Buttons -->
+    <g id="Nav_Actions">
+      <!-- Secondary navigation action -->
+      <rect x="1086" y="22" width="92" height="42" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" />
+      <text x="1132" y="48" text-anchor="middle" font-size="14" font-weight="600" fill="#0F172A">Пример</text>
+
+      <!-- Primary navigation action -->
+      <rect x="1190" y="22" width="170" height="42" rx="8" fill="#245B6D" />
+      <text x="1275" y="48" text-anchor="middle" font-size="14" font-weight="600" fill="#FFFFFF">Как начать</text>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- HERO LEFT COLUMN -->
+  <!-- ========================================== -->
+  <g id="Hero_Left">
+    <!-- Overline -->
+    <text x="80" y="160" font-size="14" font-weight="600" fill="#245B6D">Для мыслей, которые приходят на ходу</text>
+
+    <!-- Main Headline H1 -->
+    <g id="Main_Heading">
+      <text x="80" y="228" font-size="50" font-weight="800" fill="#0F172A" letter-spacing="-1.2">Скажите вслух.</text>
+      <text x="80" y="290" font-size="50" font-weight="800" fill="#0F172A" letter-spacing="-1.2">Остальное — по полочкам.</text>
+    </g>
+
+    <!-- Subtitle -->
+    <g id="Subtitle">
+      <text x="80" y="352" font-size="18" font-weight="400" fill="#475569">VoiceNotes превращает голосовые мысли</text>
+      <text x="80" y="382" font-size="18" font-weight="400" fill="#475569">в заметки, задачи и планы дня.</text>
+    </g>
+
+    <!-- CTA Buttons -->
+    <g id="Hero_CTAs">
+      <!-- Primary Button -->
+      <rect x="80" y="432" width="252" height="52" rx="10" fill="#245B6D" />
+      <text x="104" y="464" font-size="16" font-weight="600" fill="#FFFFFF">Посмотреть пример</text>
+      <!-- Arrow Icon -->
+      <path d="M296 458L306 458M302 453L307 458L302 463" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+
+      <!-- Secondary Button -->
+      <circle cx="368" cy="458" r="16" stroke="#245B6D" stroke-width="2" fill="none" />
+      <path d="M364 451L374 458L364 465V451Z" fill="#245B6D" />
+      <text x="396" y="464" font-size="15" font-weight="600" fill="#245B6D">Как это работает</text>
+    </g>
+
+    <!-- Trust Badges -->
+    <g id="Trust_Badges">
+      <!-- Mic Icon -->
+      <g transform="translate(80, 524)">
+        <rect x="2" y="0" width="6" height="9" rx="3" stroke="#64748B" stroke-width="1.4" fill="none" />
+        <path d="M0 4.5C0 8.5 10 8.5 10 4.5" stroke="#64748B" stroke-width="1.4" stroke-linecap="round" fill="none" />
+        <path d="M5 8.5V12M2 12H8" stroke="#64748B" stroke-width="1.4" stroke-linecap="round" />
+      </g>
+      <text x="98" y="534" font-size="13" font-weight="500" fill="#64748B">Голосом или текстом</text>
+
+      <!-- Dot Separator -->
+      <circle cx="276" cy="530" r="2.5" fill="#94A3B8" />
+
+      <!-- Account icon -->
+      <g transform="translate(290, 522)">
+        <rect x="1" y="5" width="12" height="9" rx="2" stroke="#64748B" stroke-width="1.4" fill="none" />
+        <path d="M4 5V3.5C4 1.8 5.3 0.5 7 0.5C8.7 0.5 10 1.8 10 3.5V5" stroke="#64748B" stroke-width="1.4" stroke-linecap="round" fill="none" />
+        <circle cx="7" cy="9.5" r="1" fill="#64748B" />
+      </g>
+      <text x="310" y="534" font-size="13" font-weight="500" fill="#64748B">Заметки в вашем аккаунте</text>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- HERO RIGHT: APP MOCKUP PREVIEW -->
+  <!-- ========================================== -->
+  <g id="Mockup_Container" transform="translate(568, 110)">
+    <!-- Window Card -->
+    <rect width="792" height="495" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)" />
+
+    <!-- Mockup Header -->
+    <g id="Mockup_Header">
+      <line x1="0" y1="44" x2="792" y2="44" stroke="#F1F5F9" stroke-width="1" />
+      <!-- Left Logo -->
+      <rect x="16" y="12" width="20" height="20" rx="5" fill="#D9EDF2" />
+      <rect x="22" y="15" width="6" height="8" rx="3" stroke="#245B6D" stroke-width="1.2" fill="none" />
+      <path d="M20 19C20 23 30 23 30 19" stroke="#245B6D" stroke-width="1.2" fill="none" />
+      <text x="44" y="27" font-size="11" font-weight="700" fill="#0F172A">VoiceNotes AI</text>
+
+      <!-- Sidebar toggle icon -->
+      <rect x="136" y="13" width="18" height="18" rx="3" stroke="#94A3B8" stroke-width="1" fill="none" />
+      <line x1="142" y1="13" x2="142" y2="31" stroke="#94A3B8" stroke-width="1" />
+
+      <!-- Center Search Bar -->
+      <rect x="170" y="9" width="270" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8" />
+      <!-- Search Icon -->
+      <circle cx="182" cy="21" r="3.5" stroke="#94A3B8" stroke-width="1" fill="none" />
+      <line x1="184.5" y1="23.5" x2="188" y2="27" stroke="#94A3B8" stroke-width="1" />
+      <text x="194" y="26" font-size="9.5" fill="#94A3B8">Поиск заметок, аудио, сводок...</text>
+      <!-- Shortcut ⌘K -->
+      <rect x="410" y="13" width="22" height="17" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="0.8" />
+      <text x="421" y="25" text-anchor="middle" font-size="8.5" font-weight="600" fill="#64748B">⌘K</text>
+
+      <!-- Right Header Actions -->
+      <!-- Date Pill -->
+      <rect x="480" y="11" width="98" height="22" rx="5" fill="#F1F5F9" />
+      <text x="529" y="26" text-anchor="middle" font-size="9" font-weight="500" fill="#475569">Сегодня, 8 окт</text>
+
+      <!-- Notification Bell -->
+      <g transform="translate(594, 15)">
+        <path d="M6 1C4 1 2 2.5 2 5V8L1 9V10H11V9L10 8V5C10 2.5 8 1 6 1Z" stroke="#64748B" stroke-width="1" fill="none" />
+        <circle cx="9" cy="2" r="2" fill="#10B981" />
+      </g>
+
+      <!-- Moon Toggle -->
+      <path d="M625 15C622 17 622 21 625 23C623 23 620 21 620 18C620 16 622 15 625 15Z" fill="#64748B" />
+
+      <!-- User Avatar -->
+      <circle cx="646" cy="22" r="11" fill="#245B6D" />
+      <text x="646" y="26" text-anchor="middle" font-size="8.5" font-weight="700" fill="#FFFFFF">AO</text>
+    </g>
+
+    <!-- Mockup Sidebar -->
+    <g id="Mockup_Sidebar">
+      <line x1="136" y1="44" x2="136" y2="495" stroke="#F1F5F9" stroke-width="1" />
+
+      <!-- Workspace Switcher -->
+      <rect x="12" y="54" width="112" height="32" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8" />
+      <circle cx="24" cy="70" r="4" stroke="#245B6D" stroke-width="1" fill="none" />
+      <text x="34" y="66" font-size="8" font-weight="700" fill="#1E293B">Личное пространство</text>
+      <text x="34" y="77" font-size="7" fill="#94A3B8">Ваш аккаунт</text>
+      <text x="114" y="72" font-size="8" fill="#94A3B8">▾</text>
+
+      <!-- Sidebar Menu Items -->
+      <!-- Item 1: Главная / Обзор (Active) -->
+      <rect x="12" y="94" width="112" height="24" rx="6" fill="#D9EDF2" />
+      <rect x="20" y="101" width="4" height="4" rx="1" fill="#245B6D" />
+      <rect x="26" y="101" width="4" height="4" rx="1" fill="#245B6D" />
+      <rect x="20" y="107" width="4" height="4" rx="1" fill="#245B6D" />
+      <rect x="26" y="107" width="4" height="4" rx="1" fill="#245B6D" />
+      <text x="36" y="110" font-size="8.5" font-weight="700" fill="#1E4E5F">Главная / Обзор</text>
+
+      <!-- Item 2: Заметки -->
+      <path d="M22 130H28V138H22Z" stroke="#64748B" stroke-width="1" fill="none" />
+      <text x="36" y="136" font-size="8.5" font-weight="500" fill="#475569">Заметки</text>
+      <rect x="104" y="127" width="18" height="13" rx="4" fill="#F1F5F9" />
+      <text x="113" y="137" text-anchor="middle" font-size="7.5" font-weight="600" fill="#64748B">42</text>
+
+      <!-- Item 3: Задачи -->
+      <circle cx="24" cy="158" r="4" stroke="#64748B" stroke-width="1" fill="none" />
+      <text x="36" y="161" font-size="8.5" font-weight="500" fill="#475569">Задачи</text>
+      <rect x="104" y="152" width="18" height="13" rx="4" fill="#F1F5F9" />
+      <text x="113" y="162" text-anchor="middle" font-size="7.5" font-weight="600" fill="#64748B">12</text>
+
+      <!-- Item 4: Календарь -->
+      <rect x="20" y="180" width="8" height="8" rx="1" stroke="#64748B" stroke-width="1" fill="none" />
+      <text x="36" y="187" font-size="8.5" font-weight="500" fill="#475569">Календарь</text>
+
+      <!-- Item 5: AI Сводки -->
+      <path d="M24 204L25 208L29 209L25 210L24 214L23 210L19 209L23 208Z" fill="#245B6D" />
+      <text x="36" y="211" font-size="8.5" font-weight="500" fill="#475569">AI Сводки</text>
+      <circle cx="113" cy="208" r="2.5" fill="#10B981" />
+
+      <!-- Item 6: Настройки -->
+      <circle cx="24" cy="234" r="3.5" stroke="#64748B" stroke-width="1" fill="none" />
+      <text x="36" y="237" font-size="8.5" font-weight="500" fill="#475569">Настройки</text>
+    </g>
+
+    <!-- Mockup Main Content -->
+    <g id="Mockup_Main_Content" transform="translate(148, 48)">
+      <!-- Greeting Header -->
+      <g id="Mockup_Greeting">
+        <text x="8" y="24" font-size="15" font-weight="700" fill="#0F172A">Добрый день, Анна</text>
+        <text x="8" y="38" font-size="8.5" fill="#64748B">Четверг, 8 октября • <tspan fill="#059669" font-weight="600">План на сегодня</tspan></text>
+
+        <!-- Widgets Button -->
+        <rect x="556" y="12" width="70" height="22" rx="5" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="0.8" />
+        <text x="591" y="26" text-anchor="middle" font-size="8" font-weight="500" fill="#475569">🎛 Виджеты</text>
+      </g>
+
+      <!-- Left Column: Focus Card & Tasks -->
+      <g id="Mockup_Focus_Card" transform="translate(8, 52)">
+        <!-- Card Frame -->
+        <rect width="362" height="178" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+
+        <!-- Tags Row -->
+        <g id="Focus_Tags">
+          <!-- Tag 'В фокусе' -->
+          <rect x="10" y="10" width="54" height="15" rx="4" fill="#E0F2FE" />
+          <circle cx="16" cy="17.5" r="2" fill="#0284C7" />
+          <text x="38" y="21" text-anchor="middle" font-size="7" font-weight="600" fill="#0284C7">В фокусе</text>
+
+          <!-- Button 'Сменить фокус' -->
+          <rect x="68" y="10" width="68" height="15" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="0.8" />
+          <text x="102" y="21" text-anchor="middle" font-size="6.5" fill="#64748B">⇄ Сменить фокус</text>
+
+          <!-- Tag 'Работа' -->
+          <rect x="140" y="10" width="34" height="15" rx="4" fill="#F1F5F9" />
+          <text x="157" y="21" text-anchor="middle" font-size="7" fill="#475569">Работа</text>
+
+          <!-- Deadline -->
+          <text x="180" y="21" font-size="7" fill="#64748B">Срок: 09.10 · 12:00</text>
+        </g>
+
+        <!-- Task Title -->
+        <text x="10" y="42" font-size="12" font-weight="700" fill="#0F172A">Подготовить вопросы для интервью</text>
+        <text x="10" y="54" font-size="8" fill="#64748B">Собрать темы из заметок о запуске и договорённостей</text>
+
+        <!-- Subtasks List -->
+        <g id="Subtasks" transform="translate(10, 68)">
+          <text x="0" y="2" font-size="6.5" font-weight="700" fill="#94A3B8" letter-spacing="0.5">СЛЕДУЮЩИЕ ШАГИ</text>
+
+          <!-- Subtask 1 -->
+          <circle cx="4" cy="15" r="4" stroke="#94A3B8" stroke-width="1" fill="none" />
+          <text x="14" y="18" font-size="7.5" fill="#334155">Собрать вопросы о первых решениях</text>
+
+          <!-- Subtask 2 -->
+          <circle cx="4" cy="29" r="4" stroke="#94A3B8" stroke-width="1" fill="none" />
+          <text x="14" y="32" font-size="7.5" fill="#334155">Уточнить время записи у Марины</text>
+
+          <!-- Subtask 3 -->
+          <circle cx="4" cy="43" r="4" stroke="#94A3B8" stroke-width="1" fill="none" />
+          <text x="14" y="46" font-size="7.5" fill="#334155">Отправить план разговора</text>
+        </g>
+
+        <!-- Action Buttons -->
+        <g id="Focus_Card_Actions" transform="translate(10, 142)">
+          <rect x="0" y="0" width="68" height="22" rx="5" fill="#E0F2FE" />
+          <text x="34" y="14" text-anchor="middle" font-size="7.5" font-weight="600" fill="#0369A1">Открыть заметку</text>
+
+          <rect x="244" y="0" width="98" height="22" rx="5" fill="#245B6D" />
+          <text x="293" y="14" text-anchor="middle" font-size="7.5" font-weight="600" fill="#FFFFFF">Сохранить задачу</text>
+        </g>
+      </g>
+
+      <!-- Right Column: Bento Widgets -->
+      <g id="Mockup_Right_Widgets" transform="translate(380, 52)">
+        <!-- Widget 1: Progress Metrics -->
+        <g id="Widget_Progress">
+          <rect width="246" height="66" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+          <text x="10" y="14" font-size="6.5" font-weight="700" fill="#94A3B8">СЕГОДНЯ</text>
+          <rect x="174" y="6" width="62" height="13" rx="3" fill="#ECFDF5" />
+          <text x="205" y="15" text-anchor="middle" font-size="6.5" font-weight="600" fill="#059669">Хороший темп</text>
+
+          <text x="10" y="30" font-size="11" font-weight="800" fill="#0F172A">4 <tspan font-size="8" font-weight="500" fill="#64748B">из 6 задач</tspan></text>
+
+          <!-- 6 Green Segments -->
+          <g transform="translate(10, 36)">
+            <rect x="0" y="0" width="34" height="4" rx="2" fill="#10B981" />
+            <rect x="38" y="0" width="34" height="4" rx="2" fill="#10B981" />
+            <rect x="76" y="0" width="34" height="4" rx="2" fill="#10B981" />
+            <rect x="114" y="0" width="34" height="4" rx="2" fill="#10B981" />
+            <rect x="152" y="0" width="34" height="4" rx="2" fill="#E2E8F0" />
+            <rect x="190" y="0" width="34" height="4" rx="2" fill="#E2E8F0" />
+          </g>
+          <text x="10" y="56" font-size="7" font-weight="600" fill="#059669">Осталось две задачи</text>
+        </g>
+
+        <!-- Widget 2: Sprout Alert -->
+        <g id="Widget_Sprout" transform="translate(0, 72)">
+          <rect width="246" height="30" rx="6" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="0.8" />
+          <!-- Leaf / Sprout Icon -->
+          <path d="M12 18C12 12 16 8 20 8C20 12 16 16 12 18Z" fill="#10B981" />
+          <path d="M12 18C12 14 9 11 6 11C6 14 9 17 12 18Z" fill="#059669" />
+          <text x="28" y="14" font-size="7" font-weight="700" fill="#047857">План постепенно складывается</text>
+          <text x="28" y="23" font-size="6.5" fill="#059669">Четыре дела уже завершены.</text>
+        </g>
+
+        <!-- Widget 3: Recent Audio -->
+        <g id="Widget_Audio" transform="translate(0, 108)">
+          <rect width="246" height="36" rx="6" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+          <text x="10" y="14" font-size="7.5" font-weight="700" fill="#0F172A">◆ Недавние аудиозаписи</text>
+          <text x="190" y="14" font-size="6.5" fill="#2563EB">Смотреть все</text>
+          <text x="10" y="27" font-size="7" fill="#94A3B8">Аудиозаписей пока нет</text>
+        </g>
+
+        <!-- Widget 4: Day Summary -->
+        <g id="Widget_Summary" transform="translate(0, 150)">
+          <rect width="246" height="86" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+          <text x="10" y="14" font-size="8" font-weight="700" fill="#0F172A">Итог дня</text>
+          <text x="200" y="14" font-size="6.5" fill="#94A3B8">сегодня</text>
+          <text x="10" y="26" font-size="6.5" fill="#64748B">Обсудили запуск и распределили следующие шаги.</text>
+
+          <!-- Chips -->
+          <rect x="10" y="36" width="34" height="12" rx="3" fill="#F1F5F9" />
+          <text x="27" y="45" text-anchor="middle" font-size="6.5" fill="#475569">Работа</text>
+
+          <rect x="48" y="36" width="42" height="12" rx="3" fill="#F1F5F9" />
+          <text x="69" y="45" text-anchor="middle" font-size="6.5" fill="#475569">Аналитика</text>
+
+          <rect x="94" y="36" width="34" height="12" rx="3" fill="#F1F5F9" />
+          <text x="111" y="45" text-anchor="middle" font-size="6.5" fill="#475569">Дизайн</text>
+
+          <!-- Button -->
+          <rect x="10" y="56" width="226" height="20" rx="4" fill="#245B6D" />
+          <text x="123" y="69" text-anchor="middle" font-size="7.5" font-weight="600" fill="#FFFFFF">Открыть итог дня</text>
+        </g>
+      </g>
+
+      <!-- Bottom Task List & Quick Input -->
+      <g id="Mockup_Bottom_Section" transform="translate(8, 236)">
+        <!-- Filter Tabs -->
+        <rect x="0" y="0" width="32" height="15" rx="4" fill="#E2E8F0" />
+        <text x="16" y="11" text-anchor="middle" font-size="6.5" font-weight="600" fill="#334155">Все 8</text>
+        <text x="40" y="11" font-size="6.5" fill="#94A3B8">Просроченные 0</text>
+        <text x="116" y="11" font-size="6.5" fill="#475569">Список</text>
+        <text x="146" y="11" font-size="6.5" fill="#475569">Доска</text>
+        <text x="180" y="11" font-size="6.5" fill="#64748B">Сортировка: По времени / дедлайну ↑</text>
+
+        <!-- Task Item 1 -->
+        <rect x="0" y="20" width="176" height="52" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8" />
+        <text x="8" y="32" font-size="7" font-weight="600" fill="#0F172A">Подготовить вопросы к интервью</text>
+        <rect x="132" y="24" width="38" height="10" rx="2" fill="#E0F2FE" />
+        <text x="151" y="32" text-anchor="middle" font-size="5.5" font-weight="600" fill="#0284C7">В фокусе</text>
+        <text x="8" y="42" font-size="6" fill="#64748B">#Работа</text>
+        <text x="8" y="51" font-size="5.5" fill="#94A3B8">Контекстное связывание...</text>
+        <text x="8" y="62" font-size="6" fill="#64748B">🕒 14:35</text>
+
+        <!-- Task Item 2 -->
+        <rect x="184" y="20" width="178" height="52" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8" />
+        <text x="192" y="33" font-size="7" fill="#10B981">✓</text>
+        <text x="202" y="33" font-size="7" font-weight="600" fill="#0F172A">Уточнить время записи</text>
+        <text x="192" y="43" font-size="6" fill="#64748B">#Работа</text>
+        <text x="192" y="53" font-size="5.5" fill="#94A3B8">Интервью с Мариной</text>
+
+        <!-- Floating Quick Input Pill -->
+        <g id="Quick_Input_Bar" transform="translate(150, 80)">
+          <rect width="240" height="32" rx="16" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1" filter="url(#pill-shadow)" />
+          <text x="16" y="20" font-size="8" fill="#94A3B8">Быстрая мысль или задача... (Enter — сохран</text>
+          <!-- Mic Icon -->
+          <circle cx="208" cy="16" r="4" stroke="#64748B" stroke-width="1" fill="none" />
+          <path d="M208 19V21" stroke="#64748B" stroke-width="1" />
+          <!-- Send Triangle -->
+          <path d="M222 13L229 16L222 19Z" fill="#64748B" />
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- BOTTOM 3 FEATURE CARDS (BENTO ROW) -->
+  <!-- ========================================== -->
+  <g id="Feature_Cards" transform="translate(80, 646)">
+    <!-- Step 1: spoken thought -->
+    <g id="Card_Voice" transform="translate(0, 0)">
+      <rect width="410" height="128" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+      <!-- Icon Container -->
+      <rect x="22" y="24" width="50" height="50" rx="12" fill="#E6F4F7" />
+      <circle cx="70" cy="28" r="9" fill="#FFFFFF" stroke="#DCE7EA" />
+      <text x="70" y="31" text-anchor="middle" font-size="8" font-weight="700" fill="#245B6D">1</text>
+      <!-- Mic Vector -->
+      <rect x="40" y="35" width="14" height="18" rx="7" stroke="#245B6D" stroke-width="2.2" fill="none" />
+      <path d="M35 45C35 53 59 53 59 45" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" fill="none" />
+      <path d="M47 53V59M40 59H54" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" />
+      <!-- Text -->
+      <text x="92" y="46" font-size="17" font-weight="700" fill="#0F172A">Скажите это вслух</text>
+      <text x="92" y="72" font-size="13" font-weight="400" fill="#64748B">Запишите короткую мысль или разговор.</text>
+      <text x="92" y="92" font-size="13" font-weight="400" fill="#64748B">VoiceNotes сохранит слова и контекст.</text>
+    </g>
+
+    <!-- Step 2: organize the thought -->
+    <g id="Card_Tasks" transform="translate(435, 0)">
+      <rect width="410" height="128" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+      <!-- Icon Container -->
+      <rect x="22" y="24" width="50" height="50" rx="12" fill="#E6F4F7" />
+      <circle cx="70" cy="28" r="9" fill="#FFFFFF" stroke="#DCE7EA" />
+      <text x="70" y="31" text-anchor="middle" font-size="8" font-weight="700" fill="#245B6D">2</text>
+      <!-- List Vector -->
+      <circle cx="38" cy="41" r="2.5" fill="#245B6D" />
+      <line x1="46" y1="41" x2="58" y2="41" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" />
+      <circle cx="38" cy="49" r="2.5" fill="#245B6D" />
+      <line x1="46" y1="49" x2="58" y2="49" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" />
+      <circle cx="38" cy="57" r="2.5" fill="#245B6D" />
+      <line x1="46" y1="57" x2="58" y2="57" stroke="#245B6D" stroke-width="2.2" stroke-linecap="round" />
+      <!-- Text -->
+      <text x="92" y="46" font-size="17" font-weight="700" fill="#0F172A">Соберите суть</text>
+      <text x="92" y="72" font-size="13" font-weight="400" fill="#64748B">В заметке останутся ключевые идеи</text>
+      <text x="92" y="92" font-size="13" font-weight="400" fill="#64748B">и действия, к которым стоит вернуться.</text>
+    </g>
+
+    <!-- Step 3: plan the next action -->
+    <g id="Card_Focus" transform="translate(870, 0)">
+      <rect width="410" height="128" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+      <!-- Icon Container -->
+      <rect x="22" y="24" width="50" height="50" rx="12" fill="#E6F4F7" />
+      <circle cx="70" cy="28" r="9" fill="#FFFFFF" stroke="#DCE7EA" />
+      <text x="70" y="31" text-anchor="middle" font-size="8" font-weight="700" fill="#245B6D">3</text>
+      <!-- Calendar Vector -->
+      <rect x="35" y="37" width="24" height="22" rx="4" stroke="#245B6D" stroke-width="2" fill="none" />
+      <line x1="35" y1="44" x2="59" y2="44" stroke="#245B6D" stroke-width="1.8" />
+      <line x1="41" y1="33" x2="41" y2="37" stroke="#245B6D" stroke-width="2" stroke-linecap="round" />
+      <line x1="53" y1="33" x2="53" y2="37" stroke="#245B6D" stroke-width="2" stroke-linecap="round" />
+      <!-- Check in Calendar -->
+      <path d="M42 51L46 54L52 48" stroke="#245B6D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- Text -->
+      <text x="92" y="46" font-size="17" font-weight="700" fill="#0F172A">Выберите следующий шаг</text>
+      <text x="92" y="72" font-size="13" font-weight="400" fill="#64748B">Задачи попадают в план, а итог дня</text>
+      <text x="92" y="92" font-size="13" font-weight="400" fill="#64748B">помогает вспомнить, что получилось.</text>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- SECTION DIVIDER & HEADING BELOW -->
+  <!-- ========================================== -->
+  <g id="Capabilities_Section" transform="translate(0, 836)">
+    <!-- Divider lines & Label -->
+    <line x1="80" y1="0" x2="640" y2="0" stroke="#E2E8F0" stroke-width="1" />
+    <text x="720" y="4" text-anchor="middle" font-size="14" font-weight="600" fill="#64748B">Когда нужно продолжить</text>
+    <line x1="800" y1="0" x2="1360" y2="0" stroke="#E2E8F0" stroke-width="1" />
+
+    <!-- Main Section Heading -->
+    <text x="720" y="62" text-anchor="middle" font-size="36" font-weight="800" fill="#0F172A" letter-spacing="-0.8">Вернитесь к важному за пару секунд</text>
+    <text x="720" y="96" text-anchor="middle" font-size="14" fill="#536873">Заметки, расшифровки и следующие шаги связаны между собой — нужная мысль всегда под рукой.</text>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- SEARCH AND CONNECTED CONTEXT -->
+  <!-- ========================================== -->
+  <g id="Search_And_Context" transform="translate(0, 1020)">
+    <text x="80" y="8" font-size="14" font-weight="600" fill="#245B6D">Заметки, запись и план</text>
+    <text x="80" y="66" font-size="36" font-weight="800" fill="#102A33" letter-spacing="-0.8">Найдите мысль,</text>
+    <text x="80" y="110" font-size="36" font-weight="800" fill="#102A33" letter-spacing="-0.8">к которой нужно</text>
+    <text x="80" y="154" font-size="36" font-weight="800" fill="#102A33" letter-spacing="-0.8">вернуться</text>
+    <text x="80" y="202" font-size="16" fill="#536873">Ищите по заметкам и расшифровкам.</text>
+    <text x="80" y="226" font-size="16" fill="#536873">Откройте запись или продолжите</text>
+    <text x="80" y="250" font-size="16" fill="#536873">с готовой задачи.</text>
+
+    <g id="Context_Benefits" transform="translate(80, 292)">
+      <circle cx="9" cy="9" r="9" fill="#D9EDF2" />
+      <path d="M5 9L8 12L13 6" stroke="#245B6D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="28" y="14" font-size="13" fill="#334155">Аудио и текст в общей ленте</text>
+      <circle cx="9" cy="48" r="9" fill="#D9EDF2" />
+      <path d="M5 48L8 51L13 45" stroke="#245B6D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="28" y="53" font-size="13" fill="#334155">Задачи с датами и контекстом</text>
+      <circle cx="9" cy="87" r="9" fill="#D9EDF2" />
+      <path d="M5 87L8 90L13 84" stroke="#245B6D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="28" y="92" font-size="13" fill="#334155">Итог дня по сохранённым записям</text>
+    </g>
+
+    <g id="Search_Preview" transform="translate(620, 0)">
+      <rect width="740" height="450" rx="20" fill="#FFFFFF" stroke="#DCE7EA" stroke-width="1.2" filter="url(#card-shadow)" />
+      <rect x="24" y="24" width="692" height="46" rx="10" fill="#F8FAFC" stroke="#DCE7EA" />
+      <circle cx="43" cy="46" r="7" stroke="#64748B" stroke-width="1.5" fill="none" />
+      <path d="M48 51L54 57" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" />
+      <text x="68" y="51" font-size="13" fill="#64748B">Поиск по заметкам и расшифровкам</text>
+      <rect x="660" y="35" width="38" height="23" rx="5" fill="#FFFFFF" stroke="#DCE7EA" />
+      <text x="679" y="51" text-anchor="middle" font-size="10" font-weight="600" fill="#536873">⌘ K</text>
+
+      <g id="Search_Result" transform="translate(24, 90)">
+        <rect width="692" height="208" rx="13" fill="#FFFFFF" stroke="#DCE7EA" />
+        <circle cx="17" cy="21" r="4" fill="#D89A54" />
+        <text x="30" y="25" font-size="11" font-weight="600" fill="#245B6D">Аудиозаметка</text>
+        <text x="660" y="25" text-anchor="end" font-size="11" fill="#64748B">8 октября · 12:41</text>
+        <text x="20" y="63" font-size="18" font-weight="700" fill="#102A33">Подготовка интервью с Мариной</text>
+        <text x="20" y="91" font-size="13" fill="#536873">«Хочу спросить, как она решилась открыть первую мастерскую</text>
+        <text x="20" y="111" font-size="13" fill="#536873">и что помогло пережить первый сезон…»</text>
+        <g id="Audio_Waveform" transform="translate(22, 143)" fill="#5D9CAA">
+          <rect x="0" y="8" width="4" height="13" rx="2" />
+          <rect x="12" y="1" width="4" height="27" rx="2" />
+          <rect x="24" y="6" width="4" height="17" rx="2" />
+          <rect x="36" y="0" width="4" height="30" rx="2" fill="#245B6D" />
+          <rect x="48" y="4" width="4" height="22" rx="2" />
+          <rect x="60" y="8" width="4" height="13" rx="2" />
+          <rect x="72" y="2" width="4" height="27" rx="2" fill="#245B6D" />
+          <rect x="84" y="5" width="4" height="20" rx="2" />
+          <rect x="96" y="1" width="4" height="28" rx="2" />
+          <rect x="108" y="7" width="4" height="15" rx="2" />
+          <rect x="120" y="0" width="4" height="30" rx="2" fill="#245B6D" />
+          <rect x="132" y="5" width="4" height="20" rx="2" />
+          <rect x="144" y="2" width="4" height="27" rx="2" />
+          <rect x="156" y="8" width="4" height="13" rx="2" />
+          <rect x="168" y="1" width="4" height="28" rx="2" fill="#245B6D" />
+        </g>
+        <text x="220" y="163" font-size="11" fill="#64748B">Расшифровка доступна</text>
+      </g>
+
+      <g id="Next_Action_Card" transform="translate(24, 314)">
+        <rect width="692" height="112" rx="12" fill="#F2F8F9" />
+        <rect x="16" y="18" width="36" height="36" rx="9" fill="#FFFFFF" />
+        <circle cx="34" cy="36" r="9" stroke="#245B6D" stroke-width="1.4" fill="none" />
+        <path d="M29 36L33 40L40 31" stroke="#245B6D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        <text x="68" y="34" font-size="13" font-weight="700" fill="#102A33">Следующий шаг</text>
+        <text x="68" y="58" font-size="13" fill="#536873">Отправить Марине план разговора · завтра, 12:00</text>
+        <rect x="610" y="22" width="62" height="24" rx="6" fill="#FFFFFF" />
+        <text x="641" y="38" text-anchor="middle" font-size="10" fill="#536873">Задача</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- ACCOUNT AND DATA DETAILS -->
+  <!-- ========================================== -->
+  <g id="Privacy_Section" transform="translate(80, 1570)">
+    <rect width="1280" height="330" rx="26" fill="#EDF6F4" stroke="#D6E9E8" stroke-width="1" />
+    <text x="48" y="72" font-size="14" font-weight="600" fill="#245B6D">Ваши записи и ваш выбор</text>
+    <text x="48" y="132" font-size="32" font-weight="800" fill="#102A33" letter-spacing="-0.8">История остаётся с вами</text>
+    <text x="48" y="180" font-size="15" fill="#536873">Заметки сохраняются в аккаунте и доступны</text>
+    <text x="48" y="204" font-size="15" fill="#536873">после входа на других устройствах.</text>
+
+    <g id="Audio_Retention" transform="translate(634, 74)">
+      <rect width="282" height="202" rx="16" fill="#FFFFFF" />
+      <circle cx="28" cy="31" r="12" fill="#EAF7F3" />
+      <path d="M28 24V32L33 35" stroke="#245B6D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="22" y="78" font-size="17" font-weight="700" fill="#102A33">Аудио хранится</text>
+      <text x="22" y="101" font-size="17" font-weight="700" fill="#102A33">14 дней</text>
+      <text x="22" y="135" font-size="12.5" fill="#536873">Исходные файлы удаляются</text>
+      <text x="22" y="155" font-size="12.5" fill="#536873">по сроку хранения. Текст</text>
+      <text x="22" y="175" font-size="12.5" fill="#536873">заметки остаётся.</text>
+    </g>
+
+    <g id="Export_Options" transform="translate(938, 74)">
+      <rect width="294" height="202" rx="16" fill="#FFFFFF" />
+      <circle cx="28" cy="31" r="12" fill="#EAF7F3" />
+      <path d="M28 23V35M23 30L28 35L33 30M21 39H35" stroke="#245B6D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="22" y="78" font-size="17" font-weight="700" fill="#102A33">Можно забрать</text>
+      <text x="22" y="101" font-size="17" font-weight="700" fill="#102A33">копию</text>
+      <text x="22" y="135" font-size="12.5" fill="#536873">Экспортируйте заметки</text>
+      <text x="22" y="155" font-size="12.5" fill="#536873">в Markdown, ZIP или JSON</text>
+      <text x="22" y="175" font-size="12.5" fill="#536873">в настройках приложения.</text>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- FREQUENT QUESTIONS -->
+  <!-- ========================================== -->
+  <g id="FAQ_Section" transform="translate(0, 2030)">
+    <text x="80" y="62" font-size="38" font-weight="800" fill="#102A33" letter-spacing="-0.8">Частые вопросы</text>
+    <text x="80" y="102" font-size="15" fill="#536873">Коротко о голосовом вводе, заметках</text>
+    <text x="80" y="125" font-size="15" fill="#536873">и ваших данных.</text>
+
+    <g id="FAQ_Items" transform="translate(520, 0)">
+      <line x1="0" y1="0" x2="840" y2="0" stroke="#DCE7EA" />
+      <text x="0" y="34" font-size="16" font-weight="700" fill="#102A33">Можно ли писать текстом?</text>
+      <text x="0" y="61" font-size="13" fill="#536873">Да. Сохраняйте мысль голосом или текстом — обе формы</text>
+      <text x="0" y="81" font-size="13" fill="#536873">остаются в общей ленте и доступны для поиска.</text>
+
+      <line x1="0" y1="112" x2="840" y2="112" stroke="#DCE7EA" />
+      <text x="0" y="146" font-size="16" font-weight="700" fill="#102A33">Где хранятся мои заметки?</text>
+      <text x="0" y="173" font-size="13" fill="#536873">В вашем аккаунте. После входа заметки доступны</text>
+      <text x="0" y="193" font-size="13" fill="#536873">на других устройствах.</text>
+
+      <line x1="0" y1="224" x2="840" y2="224" stroke="#DCE7EA" />
+      <text x="0" y="258" font-size="16" font-weight="700" fill="#102A33">Что происходит с аудиофайлом?</text>
+      <text x="0" y="285" font-size="13" fill="#536873">Исходное аудио хранится 14 дней. Текст заметки</text>
+      <text x="0" y="305" font-size="13" fill="#536873">и расшифровка остаются.</text>
+
+      <line x1="0" y1="336" x2="840" y2="336" stroke="#DCE7EA" />
+      <text x="0" y="370" font-size="16" font-weight="700" fill="#102A33">Можно ли экспортировать свои записи?</text>
+      <text x="0" y="397" font-size="13" fill="#536873">Да. В настройках можно скачать заметки в Markdown,</text>
+      <text x="0" y="417" font-size="13" fill="#536873">ZIP или JSON.</text>
+      <line x1="0" y1="448" x2="840" y2="448" stroke="#DCE7EA" />
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- CLOSING ACTION AND FOOTER -->
+  <!-- ========================================== -->
+  <g id="Closing_Action" transform="translate(80, 2610)">
+    <rect width="1280" height="242" rx="26" fill="#D9EDF2" />
+    <text x="48" y="90" font-size="38" font-weight="800" fill="#102A33" letter-spacing="-0.8">Сохраните следующую мысль</text>
+    <text x="48" y="130" font-size="16" fill="#536873">Начните с короткой записи — VoiceNotes поможет</text>
+    <text x="48" y="155" font-size="16" fill="#536873">продолжить с понятного шага.</text>
+    <rect x="1018" y="91" width="214" height="54" rx="11" fill="#245B6D" />
+    <text x="1125" y="124" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">Посмотреть пример</text>
+    <path d="M1196 118L1206 118M1202 113L1207 118L1202 123" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <g id="Footer" transform="translate(0, 2940)">
+    <line x1="80" y1="0" x2="1360" y2="0" stroke="#DCE7EA" />
+    <rect x="80" y="34" width="32" height="32" rx="9" fill="#D9EDF2" />
+    <rect x="92" y="40" width="8" height="14" rx="4" stroke="#245B6D" stroke-width="1.7" fill="none" />
+    <path d="M89 47C89 54 103 54 103 47M96 54V59M92 59H100" stroke="#245B6D" stroke-width="1.7" stroke-linecap="round" />
+    <text x="124" y="55" font-size="16" font-weight="700" fill="#102A33">VoiceNotes AI</text>
+    <text x="80" y="94" font-size="13" fill="#64748B">Мысли, заметки и планы дня — в одном месте.</text>
+    <text x="930" y="54" font-size="13" font-weight="500" fill="#536873">Возможности</text>
+    <text x="1060" y="54" font-size="13" font-weight="500" fill="#536873">Хранение данных</text>
+    <text x="1240" y="54" font-size="13" font-weight="500" fill="#536873">Вопросы</text>
+  </g>
+</svg>

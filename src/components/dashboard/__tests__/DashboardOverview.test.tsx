@@ -4,6 +4,11 @@ import { DashboardOverview } from '../DashboardOverview'
 import { useDashboardConfigStore } from '../../../store/dashboardConfigStore'
 import { useAppStore } from '../../../store/useAppStore'
 import { SEED_ITEMS } from '../../../lib/seedData'
+import { summaryRepository } from '../../../lib/summaryRepository'
+import { useSummaryStore,summaryStateKey } from '../../../store/useSummaryStore'
+import { presetPeriod,type SummaryReport } from '../../../../server/src/summaryContracts'
+import { buildSummaryContext,factualSummary } from '../../../../server/src/summaryFacts'
+import { setSession } from '../../../lib/api'
 
 describe('DashboardOverview Component', () => {
   beforeEach(() => {
@@ -19,7 +24,7 @@ describe('DashboardOverview Component', () => {
       })
     })
     useDashboardConfigStore.setState({
-      modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true, focusTask: true, taskList: true },
+      modules: { ...useDashboardConfigStore.getState().modules, recentAudio: true, focusTask: true, taskList: true, dailySummary: true },
     })
     
     // Mock the toggleTask so it doesn't call IndexedDB
@@ -36,11 +41,27 @@ describe('DashboardOverview Component', () => {
     })
   })
 
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {setSession(null);vi.useRealTimers();vi.restoreAllMocks()})
+
+  it('reads the shared report without generating and respects module visibility',async()=>{
+    setSession({accessToken:'dashboard-test',user:{id:'dashboard-owner',email:'dashboard@test.invalid'}})
+    const zone=Intl.DateTimeFormat().resolvedOptions().timeZone,p=presetPeriod('day',zone),c=buildSummaryContext([],p,new Date())
+    const report:SummaryReport={...factualSummary(c),id:'shared-report',slotKey:'shared-slot',version:1,period:p,asOf:c.asOf,generatedAt:c.asOf,metrics:c.metrics,facts:c.facts,coverage:c.coverage,sources:[],sourceFingerprint:c.sourceFingerprint,generationMode:'facts',freshness:'current',overview:{text:'Сохранённый общий итог',noteIds:[],factIds:['fact:completed']}}
+    vi.spyOn(summaryRepository,'facts').mockResolvedValue({...c,report})
+    const generate=vi.spyOn(summaryRepository,'generate')
+    useSummaryStore.setState({entries:{}})
+    useDashboardConfigStore.setState({modules:{...useDashboardConfigStore.getState().modules,dailySummary:true}})
+    const view=render(<DashboardOverview/>);await screen.findByText('Сохранённый общий итог')
+    expect(useSummaryStore.getState().entries[summaryStateKey(p)].report?.id).toBe('shared-report');expect(generate).not.toHaveBeenCalled()
+    view.unmount();useDashboardConfigStore.setState({modules:{...useDashboardConfigStore.getState().modules,dailySummary:false}})
+    render(<DashboardOverview/>);expect(screen.queryByText('Сохранённый общий итог')).not.toBeInTheDocument()
+  })
 
   it('renders greetings, metrics, and hero focus task', () => {
+    localStorage.setItem('voicenotes_profile:test-user', JSON.stringify({ name: 'Мария Иванова' }))
     render(<DashboardOverview />)
-    expect(screen.getByText(/Александр/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Мария Иванова/ })).toBeInTheDocument()
+    localStorage.removeItem('voicenotes_profile:test-user')
     expect(screen.getAllByText('Добавить новую фичу в VoiceNotes').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Недавние аудиозаписи')[0]).toBeInTheDocument()
     expect(screen.getAllByText('Сводка дня')[0]).toBeInTheDocument()

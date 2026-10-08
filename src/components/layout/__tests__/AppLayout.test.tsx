@@ -68,7 +68,7 @@ describe('AppLayout Shell Component', () => {
     )
 
     expect(screen.getByLabelText('Быстрый ввод мыслей и задач')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/Быстрая мысль или задача/)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Мысль или задача/)).toBeInTheDocument()
   })
 
 
@@ -119,7 +119,7 @@ describe('AppLayout Shell Component', () => {
       </AppLayout>
     )
 
-    const input = screen.getByPlaceholderText(/Быстрая мысль или задача/)
+    const input = screen.getByPlaceholderText(/Мысль или задача/)
     fireEvent.change(input, { target: { value: 'Тестовая мысль' } })
     fireEvent.submit(input.closest('form')!)
 

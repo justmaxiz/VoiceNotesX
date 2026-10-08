@@ -2,8 +2,8 @@ import { Item } from '../types/item'
 import { localDayBounds, parseInstant, taskDeadline, taskDuration } from './taskDates'
 
 export const HOUR_HEIGHT = 56
-export const START_HOUR = 8
-export const END_HOUR = 22
+export const START_HOUR = 0
+export const END_HOUR = 24
 export const INSTANT_MARKER_HEIGHT = 8
 
 export function itemsForDay(items: Item[], dateKey: string): Item[] {
@@ -20,8 +20,9 @@ export function itemsForDay(items: Item[], dateKey: string): Item[] {
 export function layoutDayTasks(items: Item[], dateKey: string) {
   const dayItems = itemsForDay(items, dateKey)
   const allDayTasks = dayItems.filter((item) => item.isAllDay || item.dueTime === null)
-  const start = new Date(`${dateKey}T08:00:00`).getTime()
-  const end = new Date(`${dateKey}T22:00:00`).getTime()
+  const [dayStart, dayEnd] = localDayBounds(dateKey)
+  const start = dayStart.getTime()
+  const end = dayEnd.getTime()
   const offHoursTasks = dayItems.filter((task) => {
     if (allDayTasks.includes(task)) return false
     const deadline = taskDeadline(task)!.getTime()

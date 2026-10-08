@@ -10,6 +10,8 @@ import { DateTimePicker } from '../ui/DateTimePicker'
 import { TagInput } from '../ui/TagInput'
 import { Checkbox } from '../ui/Checkbox'
 import { requestNotificationPermission } from '../../lib/remindersService'
+import { CaptureDraftDrawer } from './CaptureDraftDrawer'
+import { useCaptureAIStore } from '../../store/useCaptureAIStore'
 
 const REMINDER_OPTIONS = [
   { label: 'Без напоминания', value: null },
@@ -22,6 +24,7 @@ const REMINDER_OPTIONS = [
 
 export const SlideOverDrawer: React.FC = () => {
   const { selectedItemId, isDrawerOpen, closeDrawer } = useDrawerStore()
+  const captureDraft = useCaptureAIStore(state => state.draft)
   const { items, updateItem, setFocusedTask } = useAppStore()
   const selectedItem = items.find((i) => i.id === selectedItemId)
   const [closingItem, setClosingItem] = useState<Item | null>(null)
@@ -115,6 +118,7 @@ export const SlideOverDrawer: React.FC = () => {
     }
   }, [isDrawerOpen, closingItem])
 
+  if (isDrawerOpen && captureDraft?.id === selectedItemId) return <CaptureDraftDrawer />
   if ((!isDrawerOpen && !closingItem) || !currentItem) return null
 
   const isFocused = Boolean(currentItem.isFocus || currentItem.isFocused)
@@ -197,8 +201,8 @@ export const SlideOverDrawer: React.FC = () => {
     setRefining(true)
     setRefineError(null)
     try {
-      const result = await refineStructuredNote({ entity_type: currentItem.type, title: currentItem.title, description: currentItem.description || '', due_date: currentItem.deadline || currentItem.dueDate, priority: currentItem.priority, category_tag: currentItem.categoryTag, transcript_summary: currentItem.transcriptText || '', checklist: currentItem.checklist?.map((item) => item.text) }, feedback, { mode: aiMode, style: structuringStyle })
-      await updateItem(currentItem.id, { type: result.entity_type, title: result.title, description: result.description, ...(result.due_date !== (currentItem.deadline || currentItem.dueDate) ? { dueDate: result.due_date } : {}), ...(result.start_date ? { startDate: result.start_date } : {}), ...(result.deadline ? { deadline: result.deadline } : {}), priority: result.priority, categoryTag: result.category_tag, checklist: result.checklist?.map((text, index) => ({ id: currentItem.checklist?.[index]?.id || crypto.randomUUID(), text, sortOrder: index + 1, isCompleted: currentItem.checklist?.[index]?.isCompleted || false })) })
+      const result = await refineStructuredNote({ title: currentItem.title, description: currentItem.description || '', due_date: currentItem.deadline || currentItem.dueDate, estimated_minutes: currentItem.estimatedMinutes, priority: currentItem.priority, category_tag: currentItem.categoryTag, transcript_summary: currentItem.transcriptText || '', checklist: currentItem.checklist?.map((item) => item.text) }, feedback, { mode: aiMode, style: structuringStyle })
+      await updateItem(currentItem.id, { title: result.title, description: result.description, ...(result.due_date !== (currentItem.deadline || currentItem.dueDate) ? { dueDate: result.due_date } : {}), ...(result.start_date ? { startDate: result.start_date } : {}), ...(result.deadline ? { deadline: result.deadline } : {}), ...(result.estimated_minutes !== undefined ? { estimatedMinutes: result.estimated_minutes } : {}), priority: result.priority, categoryTag: result.category_tag, checklist: result.checklist?.map((text, index) => ({ id: currentItem.checklist?.[index]?.id || crypto.randomUUID(), text, sortOrder: index + 1, isCompleted: currentItem.checklist?.[index]?.isCompleted || false })) })
       setFeedback('')
     } catch (error) { setRefineError((error as Error).message) }
     finally { setRefining(false) }
@@ -320,82 +324,6 @@ export const SlideOverDrawer: React.FC = () => {
             <button disabled={!feedback.trim() || refining} onClick={() => void handleRefine()} className="rounded bg-surface-container-high px-3 py-2 text-xs">{refining ? 'Обработка…' : 'Применить указание'}</button>
             {refineError && <p role="alert" className="text-error text-xs">{refineError}</p>}
           </div>
-          {/* Date & Time Picker */}
-          {currentItem.type === 'task' && (
-            <DateTimePicker
-              startDate={currentItem.startDate}
-              deadline={currentItem.deadline}
-              dueDate={currentItem.dueDate}
-              dueTime={currentItem.dueTime}
-              isAllDay={currentItem.isAllDay}
-              estimatedMinutes={currentItem.estimatedMinutes}
-              onChange={(updates) => updateItem(currentItem.id, updates)}
-            />
-          )}
-
-          {/* Interactive Tag Manager */}
-          <TagInput
-            tags={tagsList}
-            onChange={(newTags) =>
-              updateItem(currentItem.id, {
-                tags: newTags,
-                categoryTag: newTags[0] || currentItem.categoryTag,
-              })
-            }
-          />
-
-          {/* Reminders Selector */}
-          {currentItem.type === 'task' && (
-            <div className="space-y-1.5">
-              <label className="text-label-sm text-outline uppercase tracking-wider font-medium flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm">notifications</span>
-                <span>Напоминание</span>
-              </label>
-              <div ref={reminderMenuRef} className="relative">
-                <button
-                  type="button"
-                  aria-haspopup="listbox"
-                  aria-expanded={reminderMenuOpen}
-                  onClick={() => setReminderMenuOpen((open) => !open)}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low px-3 py-2.5 text-left text-sm text-on-surface transition-colors hover:border-primary/50 hover:bg-surface-container-high/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                >
-                  <span className="truncate">{currentReminder.label}</span>
-                  <span className={`material-symbols-outlined text-base text-outline transition-transform duration-150 ${reminderMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
-                </button>
-                {reminderMenuOpen && (
-                  <div
-                    role="listbox"
-                    aria-label="Время напоминания"
-                    className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-high p-1.5 text-on-surface shadow-xl shadow-black/20 animate-in fade-in slide-in-from-top-1 duration-150"
-                  >
-                    {REMINDER_OPTIONS.map((option) => {
-                      const isSelected = option.value === (currentItem.reminderMinutesBefore ?? null)
-                      return (
-                        <button
-                          key={String(option.value)}
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => {
-                            handleReminderChange(option.value)
-                            setReminderMenuOpen(false)
-                          }}
-                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50 ${
-                            isSelected
-                              ? 'bg-primary/15 font-medium text-primary'
-                              : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'
-                          }`}
-                        >
-                          <span>{option.label}</span>
-                          {isSelected && <span className="material-symbols-outlined text-base">check</span>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Description / Content Body */}
           <div>
@@ -412,19 +340,6 @@ export const SlideOverDrawer: React.FC = () => {
               className="w-full text-body-md text-on-surface bg-surface-container-low p-3 rounded-xl border border-outline-variant/20 hover:border-outline-variant/40 focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed"
             />
           </div>
-
-          {/* Transcript Snippet if present */}
-          {currentItem.transcriptText && (
-            <div className="p-3.5 rounded-xl bg-surface-container-high/30 border border-secondary/20">
-              <div className="flex items-center gap-1.5 text-label-sm text-secondary font-medium mb-1.5">
-                <span className="material-symbols-outlined text-sm">record_voice_over</span>
-                <span>Исходный транскрипт речи</span>
-              </div>
-              <p className="text-body-sm text-on-surface-variant italic leading-relaxed">
-                «{currentItem.transcriptText}»
-              </p>
-            </div>
-          )}
 
           {/* Checklist Section */}
           <div className="space-y-3">
@@ -519,6 +434,95 @@ export const SlideOverDrawer: React.FC = () => {
               </button>
             </form>
           </div>
+
+          {/* Date & Time Picker */}
+          {(<DateTimePicker
+              startDate={currentItem.startDate}
+              deadline={currentItem.deadline}
+              dueDate={currentItem.dueDate}
+              dueTime={currentItem.dueTime}
+              isAllDay={currentItem.isAllDay}
+              estimatedMinutes={currentItem.estimatedMinutes}
+              onChange={(updates) => updateItem(currentItem.id, updates)}
+            />
+          )}
+
+          {/* Interactive Tag Manager */}
+          <TagInput
+            tags={tagsList}
+            onChange={(newTags) =>
+              updateItem(currentItem.id, {
+                tags: newTags,
+                categoryTag: newTags[0] || currentItem.categoryTag,
+              })
+            }
+          />
+
+          {/* Reminders Selector */}
+          {currentItem.type === 'task' && (
+            <div className="space-y-1.5">
+              <label className="text-label-sm text-outline uppercase tracking-wider font-medium flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">notifications</span>
+                <span>Напоминание</span>
+              </label>
+              <div ref={reminderMenuRef} className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded={reminderMenuOpen}
+                  onClick={() => setReminderMenuOpen((open) => !open)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low px-3 py-2.5 text-left text-sm text-on-surface transition-colors hover:border-primary/50 hover:bg-surface-container-high/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  <span className="truncate">{currentReminder.label}</span>
+                  <span className={`material-symbols-outlined text-base text-outline transition-transform duration-150 ${reminderMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                </button>
+                {reminderMenuOpen && (
+                  <div
+                    role="listbox"
+                    aria-label="Время напоминания"
+                    className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-high p-1.5 text-on-surface shadow-xl shadow-black/20 animate-in fade-in slide-in-from-top-1 duration-150"
+                  >
+                    {REMINDER_OPTIONS.map((option) => {
+                      const isSelected = option.value === (currentItem.reminderMinutesBefore ?? null)
+                      return (
+                        <button
+                          key={String(option.value)}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            handleReminderChange(option.value)
+                            setReminderMenuOpen(false)
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50 ${
+                            isSelected
+                              ? 'bg-primary/15 font-medium text-primary'
+                              : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          {isSelected && <span className="material-symbols-outlined text-base">check</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Transcript Snippet if present */}
+          {currentItem.transcriptText && (
+            <div className="p-3.5 rounded-xl bg-surface-container-high/30 border border-secondary/20">
+              <div className="flex items-center gap-1.5 text-label-sm text-secondary font-medium mb-1.5">
+                <span className="material-symbols-outlined text-sm">record_voice_over</span>
+                <span>Исходный транскрипт речи</span>
+              </div>
+              <p className="text-body-sm text-on-surface-variant italic leading-relaxed">
+                «{currentItem.transcriptText}»
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

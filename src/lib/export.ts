@@ -1,5 +1,4 @@
 import { zipSync, strToU8 } from 'fflate'
-import { db } from './db'
 import { Item } from '../types/item'
 
 export function slugify(text: string): string {
@@ -85,10 +84,12 @@ export async function createNotesZip(items: Item[]): Promise<Uint8Array> {
     while (names.has(filename)) filename = `${base}-${suffix++}`
     names.add(filename)
     files[`${filename}.md`] = strToU8(generateNoteMarkdown(item))
-    const session = await db.getAudioSession(item.id)
-    if (session?.audioBlob) {
-      const extension = session.audioBlob.type.includes('ogg') ? 'ogg' : session.audioBlob.type.includes('mp4') ? 'm4a' : 'webm'
-      files[`audio/${filename}.${extension}`] = new Uint8Array(await session.audioBlob.arrayBuffer())
+    if (item.audioUrl) {
+      const response = await fetch(item.audioUrl, { credentials: 'include' })
+      if (!response.ok) throw new Error('Аудио недоступно для экспорта')
+      const mime = response.headers.get('Content-Type') || ''
+      const extension = mime.includes('ogg') ? 'ogg' : mime.includes('mp4') ? 'm4a' : mime.includes('wav') ? 'wav' : mime.includes('mpeg') ? 'mp3' : 'webm'
+      files[`audio/${filename}.${extension}`] = new Uint8Array(await response.arrayBuffer())
     }
   }
   return zipSync(files)

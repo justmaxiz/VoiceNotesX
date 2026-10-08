@@ -12,7 +12,7 @@ export const NotesPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  const noteItems = items.filter((i) => i.status !== 'archived' && (i.type === 'note' || i.transcriptText))
+  const noteItems = items.filter((i) => i.status !== 'archived' && i.type === 'note')
 
   // Collect distinct tags
   const tagsSet = new Set<string>()

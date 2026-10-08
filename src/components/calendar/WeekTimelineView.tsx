@@ -24,7 +24,7 @@ export const WeekTimelineView: React.FC<WeekTimelineViewProps> = ({ weekDays, it
       <div className="w-12 shrink-0 text-xs font-mono text-outline">
         <div className="h-24">Время</div>
         {hours.map((hour) => <div key={hour} style={{ height: HOUR_HEIGHT }}>{String(hour).padStart(2, '0')}:00</div>)}
-        <div>22:00</div>
+        <div>23:59</div>
       </div>
       {weekDays.map((day) => {
         const { positionedTasks, allDayTasks, offHoursTasks } = layoutDayTasks(items, day.dateKey)
@@ -50,7 +50,7 @@ export const WeekTimelineView: React.FC<WeekTimelineViewProps> = ({ weekDays, it
             })}
           </div>
           {offHoursTasks.length > 0 && <div className="mt-2 border-t border-outline-variant/20 pt-2">
-            <div className="text-xs text-on-surface-variant mb-1">Вне 08:00–22:00</div>
+            <div className="text-xs text-on-surface-variant mb-1">Вне 00:00–23:59</div>
             {offHoursTasks.map((task) => <button key={task.id} data-testid={`calendar-event-${task.id}`}
               className="block w-full text-left text-xs rounded bg-surface-container-high p-2 mb-1 text-on-surface"
               onClick={() => openDrawer(task.id)}>{task.title} · {localTime(taskDeadline(task)!)}</button>)}

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VoiceNotes превращает голосовые заметки в задачи, планы дня и понятные итоги.">
+  <title>VoiceNotes AI — скажите вслух, сохраните главное</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #F8FAFC;
+      --paper: #FFFFFF;
+      --ink: #102A33;
+      --muted: #536873;
+      --teal: #245B6D;
+      --teal-deep: #1D4A59;
+      --mist: #D9EDF2;
+      --mint: #EAF7F3;
+      --line: #DCE7EA;
+      --amber: #D89A54;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 88px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--canvas);
+      color: var(--ink);
+    }
+
+    a, button, summary {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--amber);
+      outline-offset: 3px;
+    }
+
+    .faq-row + .faq-row {
+      border-top: 1px solid var(--line);
+    }
+
+    .faq-mark {
+      color: var(--teal);
+      font-size: 0;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq-mark::before {
+      content: "+";
+      font-size: 20px;
+    }
+
+    .faq-row[open] .faq-mark::before {
+      content: "−";
+    }
+
+    .workflow-card,
+    .feature-search-card {
+      background-color: var(--paper);
+      border-color: var(--line);
+    }
+
+    #privacy {
+      background-color: var(--mint);
+      border-color: var(--line);
+    }
+
+    #start {
+      background-color: var(--mist);
+    }
+
+    .figma-download {
+      background-color: var(--teal);
+    }
+
+    .figma-download:hover {
+      background-color: var(--teal-deep);
+    }
+
+    @media (max-width: 900px) {
+      .app-sidebar { display: none !important; }
+      .app-main-content { padding: 14px !important; }
+      .app-mockup-body { height: auto !important; min-height: 0; }
+      .app-top-search { display: none !important; }
+      .app-dashboard-grid { grid-template-columns: 1fr !important; }
+      .app-dashboard-grid > * { grid-column: 1 / -1 !important; }
+      .app-focus-deadline { margin-left: 0 !important; }
+    }
+
+    @media (max-width: 640px) {
+      html { scroll-padding-top: 68px; }
+      .figma-toolbar { padding-inline: 14px !important; }
+      .figma-toolbar-inner { align-items: flex-start !important; }
+      .figma-toolbar-copy { width: 100%; }
+      .figma-download { width: 100%; justify-content: center; }
+      .site-nav { margin-bottom: 48px !important; }
+      .site-nav-links { display: none !important; }
+      .site-nav-actions .login-link { display: none !important; }
+      .site-nav-actions a { padding-inline: 13px !important; }
+      .app-topbar-right { display: none !important; }
+      .app-main-content { padding: 12px !important; }
+      .app-task-copy { line-height: 1.55; }
+      .app-main-content h2 { font-size: 16px !important; }
+      .app-main-content h3 { font-size: 14px !important; line-height: 1.4; }
+      .app-main-content p,
+      .app-main-content label,
+      .app-main-content button { font-size: 11px !important; line-height: 1.5; }
+      .app-main-content input[type="checkbox"] { width: 14px; height: 14px; }
+      .trust-row { align-items: flex-start !important; flex-direction: column; gap: 8px !important; }
+      .trust-divider { display: none !important; }
+      .workflow-card { min-height: 0 !important; }
+      .feature-search-card { min-height: 0 !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen antialiased">
+
+  <!-- Figma Helper Toolbar -->
+  <header class="figma-toolbar sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-xs">
+    <div class="figma-toolbar-inner max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="figma-toolbar-copy flex items-center gap-3">
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" aria-hidden="true"></span>
+        <span class="text-sm font-semibold text-slate-800">Макет готов к переносу в Figma</span>
+        <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">1440 × 3180 · вся страница</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="voicenotes_landing_figma.svg" download="VoiceNotes-Landing.svg" class="figma-download flex items-center gap-2 px-4 py-2 bg-[#245B6D] hover:bg-[#1D4A59] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>Скачать SVG для Figma</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Canvas Preview (1440px container) -->
+  <main class="max-w-[1440px] mx-auto px-6 lg:px-16 py-8">
+
+    <!-- Navigation Bar -->
+    <nav class="site-nav flex items-center justify-between py-4 mb-16" aria-label="Главная навигация">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#D9EDF2] flex items-center justify-center text-[#245B6D]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 10a7 7 0 0 0 14 0" stroke-linecap="round"></path>
+            <path d="M12 17v4m-3 0h6" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight text-slate-900">VoiceNotes AI</span>
+      </div>
+
+      <!-- Links -->
+      <div class="site-nav-links hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+        <a href="#features" class="hover:text-slate-900 transition-colors">Возможности</a>
+        <a href="#how-it-works" class="hover:text-slate-900 transition-colors">Как это работает</a>
+        <a href="#privacy" class="hover:text-slate-900 transition-colors">Хранение данных</a>
+      </div>
+
+      <!-- Actions -->
+      <div class="site-nav-actions flex items-center gap-3">
+        <a href="#product-preview" class="login-link px-5 py-2.5 rounded-lg border border-slate-200 text-slate-800 text-sm font-semibold hover:bg-slate-50 transition-colors">
+          Посмотреть пример
+        </a>
+        <a href="#how-it-works" class="px-5 py-2.5 rounded-lg bg-[#245B6D] hover:bg-[#1D4A59] text-white text-sm font-semibold shadow-xs transition-colors">
+          Как начать
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="top" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24">
+
+      <!-- Left Column -->
+      <div class="lg:col-span-5 space-y-8">
+        <div class="space-y-4">
+          <p class="text-sm font-semibold text-[#245B6D]">
+            Для мыслей, которые приходят на ходу
+          </p>
+          <h1 class="text-4xl lg:text-5xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+            Скажите вслух.<br>
+            Остальное — по полочкам.
+          </h1>
+          <p class="text-lg text-slate-600 leading-relaxed">
+            VoiceNotes превращает голосовые мысли в понятные заметки, задачи и планы дня.
+          </p>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="#product-preview" class="inline-flex items-center gap-3 px-6 py-3.5 bg-[#245B6D] hover:bg-[#1D4A59] text-white font-semibold rounded-xl shadow-md transition-colors">
+            <span>Посмотреть пример</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </a>
+
+          <a href="#how-it-works" class="inline-flex items-center gap-2.5 px-4 py-3 text-[#245B6D] hover:text-[#183F4D] font-semibold text-sm transition-colors">
+            <span class="w-8 h-8 rounded-full border-2 border-[#245B6D] flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"></path>
+              </svg>
+            </span>
+            <span>Как это работает</span>
+          </a>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="trust-row flex items-center gap-4 text-xs font-medium text-slate-500 pt-2">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path>
+            </svg>
+            <span>Голосом или текстом</span>
+          </div>
+          <span class="trust-divider">•</span>
+          <div class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11V7a5 5 0 0110 0v4"></path>
+            </svg>
+            <span>Заметки в вашем аккаунте</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Mockup Card -->
+      <div id="product-preview" class="lg:col-span-7 scroll-mt-24">
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-[0_20px_50px_rgba(15,23,42,0.08)] overflow-hidden">
+
+          <!-- Mockup Topbar -->
+          <div class="app-topbar flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-white">
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 rounded bg-[#D9EDF2] flex items-center justify-center text-[#245B6D]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+                  <path d="M5 10a7 7 0 0 0 14 0"></path>
+                </svg>
+              </div>
+              <span class="text-xs font-bold text-slate-900">VoiceNotes AI</span>
+              <button class="text-slate-400 hover:text-slate-600 p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div class="app-top-search flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-400 w-56">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <span class="truncate">Поиск заметок, аудио, сводок...</span>
+              <kbd class="ml-auto px-1 rounded bg-white border border-slate-200 text-[10px] text-slate-500 font-mono">⌘K</kbd>
+            </div>
+
+            <!-- Header Right -->
+            <div class="app-topbar-right flex items-center gap-2.5">
+              <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">Сегодня, 8 окт</span>
+              <div class="relative text-slate-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                <span class="absolute top-0 right-0 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-[#245B6D] text-white text-[10px] font-bold flex items-center justify-center" aria-label="Профиль Анны">А</div>
+            </div>
+          </div>
+
+          <!-- Mockup Body -->
+          <div class="app-mockup-body flex h-[400px]">
+            <!-- Sidebar -->
+            <div class="app-sidebar w-40 border-r border-slate-100 p-2.5 flex flex-col justify-between bg-white text-xs">
+              <div class="space-y-3">
+                <div class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+                  <div class="truncate">
+                    <p class="font-bold text-[10px] text-slate-800">Личное пространство</p>
+                    <p class="text-[9px] text-slate-400">Ваш аккаунт</p>
+                  </div>
+                  <span class="text-slate-400 text-[10px]">▾</span>
+                </div>
+
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#D9EDF2] text-[#1E4E5F] font-bold">
+                    <span>❖</span>
+                    <span>Главная / Обзор</span>
+                  </div>
+                  <div class="flex items-center justify-between px-2 py-1.5 rounded-md text-slate-600 hover:bg-slate-50">
+                    <div class="flex items-center gap-2"><span>📄</span><span>Заметки</span></div>
+                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-[9px] font-semibold text-slate-500">42</span>
+                  </div>
+                  <div class="flex items-center justify-between px-2 py-1.5 rounded-md text-slate-600 hover:bg-slate-50">
+                    <div class="flex items-center gap-2"><span>☑</span><span>Задачи</span></div>
+                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-[9px] font-semibold text-slate-500">12</span>
+                  </div>
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded-md text-slate-600 hover:bg-slate-50">
+                    <span>📅</span><span>Календарь</span>
+                  </div>
+                  <div class="flex items-center justify-between px-2 py-1.5 rounded-md text-slate-600 hover:bg-slate-50">
+                    <div class="flex items-center gap-2"><span>✦</span><span>AI Сводки</span></div>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded-md text-slate-600 hover:bg-slate-50">
+                    <span>⚙</span><span>Настройки</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Content inside mockup -->
+            <div class="app-main-content flex-1 p-4 overflow-y-auto space-y-3 bg-[#FBFDFE]">
+              <!-- Greeting -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-sm font-bold text-slate-900">Добрый день, Анна</h2>
+                  <p class="text-[10px] text-slate-500">
+                    Четверг, 8 октября • <span class="text-emerald-600 font-semibold">План на сегодня</span>
+                  </p>
+                </div>
+                <button class="px-2 py-1 text-[10px] rounded border border-slate-200 bg-white text-slate-600 font-medium">🎛 Виджеты</button>
+              </div>
+
+              <!-- Central 2-col content -->
+              <div class="app-dashboard-grid grid grid-cols-12 gap-3 items-start">
+
+                <!-- Left: Focus Task Card -->
+                <div class="col-span-7 bg-white rounded-xl border border-slate-200 p-3 space-y-2.5">
+                  <div class="flex flex-wrap items-center gap-1.5 text-[9px]">
+                    <span class="px-2 py-0.5 rounded bg-sky-100 text-sky-700 font-semibold">• В фокусе</span>
+                    <span class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">⇄ Сменить фокус</span>
+                    <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Работа</span>
+                    <span class="app-focus-deadline text-slate-400 ml-auto">Срок: 09.10 · 12:00</span>
+                  </div>
+
+                  <div>
+                    <h3 class="text-xs font-bold text-slate-900">Подготовить вопросы для интервью</h3>
+                    <p class="app-task-copy text-[9px] text-slate-500">Собрать темы из заметок о запуске и договорённостей с командой</p>
+                  </div>
+
+                  <div class="space-y-1 pt-1">
+                    <p class="text-[8px] font-bold text-slate-400 tracking-wider">СЛЕДУЮЩИЕ ШАГИ</p>
+                    <label class="flex items-center gap-1.5 text-[9px] text-slate-700"><input type="checkbox" class="rounded text-sky-600"> <span>Собрать вопросы о первых решениях</span></label>
+                    <label class="flex items-center gap-1.5 text-[9px] text-slate-700"><input type="checkbox" class="rounded text-sky-600"> <span>Уточнить время записи у Марины</span></label>
+                    <label class="flex items-center gap-1.5 text-[9px] text-slate-700"><input type="checkbox" class="rounded text-sky-600"> <span>Отправить план разговора</span></label>
+                  </div>
+
+                  <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <button class="px-2.5 py-1 rounded bg-sky-100 text-sky-800 text-[10px] font-semibold">Открыть заметку</button>
+                    <button class="px-3 py-1 rounded bg-[#245B6D] text-white text-[10px] font-semibold">Сохранить задачу</button>
+                  </div>
+                </div>
+
+                <!-- Right: Bento Widgets -->
+                <div class="col-span-5 space-y-2">
+                  <!-- Progress Widget -->
+                  <div class="bg-white rounded-lg border border-slate-200 p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between text-[8px] font-bold text-slate-400">
+                      <span>СЕГОДНЯ</span>
+                      <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-semibold">Хороший темп</span>
+                    </div>
+                    <p class="text-xs font-black text-slate-900">4 <span class="text-[9px] font-medium text-slate-500">из 6 задач</span></p>
+                    <div class="flex gap-1">
+                      <div class="h-1 flex-1 rounded bg-emerald-500"></div>
+                      <div class="h-1 flex-1 rounded bg-emerald-500"></div>
+                      <div class="h-1 flex-1 rounded bg-emerald-500"></div>
+                      <div class="h-1 flex-1 rounded bg-emerald-500"></div>
+                      <div class="h-1 flex-1 rounded bg-slate-100"></div>
+                      <div class="h-1 flex-1 rounded bg-slate-100"></div>
+                    </div>
+                    <p class="text-[9px] text-emerald-600 font-semibold">Осталось две задачи</p>
+                  </div>
+
+                  <!-- Alert Sprout -->
+                  <div class="bg-emerald-50 border border-emerald-200/80 rounded-lg p-2 flex items-center gap-2">
+                    <span class="text-emerald-600 text-sm" aria-hidden="true">↗</span>
+                    <div>
+                      <p class="text-[9px] font-bold text-emerald-900">План постепенно складывается</p>
+                      <p class="text-[8px] text-emerald-700">Четыре дела уже завершены.</p>
+                    </div>
+                  </div>
+
+                  <!-- Summary Card -->
+                  <div class="bg-white rounded-lg border border-slate-200 p-2 space-y-1.5">
+                    <div class="flex items-center justify-between text-[9px] font-bold text-slate-900">
+                      <span>Итог дня</span>
+                      <span class="text-[8px] text-slate-400">сегодня</span>
+                    </div>
+                    <p class="text-[8px] text-slate-500">Обсудили запуск, выбрали дату интервью и распределили следующие шаги.</p>
+                    <div class="flex gap-1 text-[8px]">
+                      <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Работа</span>
+                      <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Аналитика</span>
+                      <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Дизайн</span>
+                    </div>
+                    <button class="w-full py-1 rounded bg-[#245B6D] text-white text-[9px] font-semibold">Открыть итог дня</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Bottom Feature Cards (Bento 3 Cards) -->
+    <section id="how-it-works" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 scroll-mt-24" aria-label="Как VoiceNotes превращает мысль в план">
+
+      <!-- Card 1 -->
+      <div class="workflow-card bg-white rounded-2xl border border-slate-200 p-6 flex items-start gap-4 shadow-xs">
+        <div class="relative w-12 h-12 rounded-xl bg-[#E6F4F7] flex items-center justify-center shrink-0 text-[#245B6D]">
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-[#245B6D] shadow-sm">1</span>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 10a7 7 0 0 0 14 0" stroke-linecap="round"></path>
+            <path d="M12 17v4m-3 0h6" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="font-bold text-slate-900 text-base">Скажите это вслух</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Запишите короткую мысль или разговор. VoiceNotes сохранит слова и контекст.
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="workflow-card bg-white rounded-2xl border border-slate-200 p-6 flex items-start gap-4 shadow-xs">
+        <div class="relative w-12 h-12 rounded-xl bg-[#E6F4F7] flex items-center justify-center shrink-0 text-[#245B6D]">
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-[#245B6D] shadow-sm">2</span>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <line x1="8" y1="6" x2="21" y2="6" stroke-linecap="round"></line>
+            <line x1="8" y1="12" x2="21" y2="12" stroke-linecap="round"></line>
+            <line x1="8" y1="18" x2="21" y2="18" stroke-linecap="round"></line>
+            <circle cx="4" cy="6" r="1.5" fill="currentColor"></circle>
+            <circle cx="4" cy="12" r="1.5" fill="currentColor"></circle>
+            <circle cx="4" cy="18" r="1.5" fill="currentColor"></circle>
+          </svg>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="font-bold text-slate-900 text-base">Соберите суть</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            В заметке останутся ключевые идеи и действия, к которым стоит вернуться.
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="workflow-card bg-white rounded-2xl border border-slate-200 p-6 flex items-start gap-4 shadow-xs">
+        <div class="relative w-12 h-12 rounded-xl bg-[#E6F4F7] flex items-center justify-center shrink-0 text-[#245B6D]">
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-[#245B6D] shadow-sm">3</span>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+            <line x1="16" y1="2" x2="16" y2="6" stroke-linecap="round"></line>
+            <line x1="8" y1="2" x2="8" y2="6" stroke-linecap="round"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <path d="M9 16l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="font-bold text-slate-900 text-base">Выберите следующий шаг</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Задачи попадают в план, а итог дня помогает вспомнить, что уже получилось.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Bottom Capabilities Heading -->
+    <section class="text-center space-y-5 pt-4 pb-16">
+      <div class="flex items-center justify-center gap-6">
+        <div class="h-px bg-slate-200 flex-1 max-w-xs"></div>
+        <span class="text-sm font-semibold text-slate-500">Когда нужно продолжить</span>
+        <div class="h-px bg-slate-200 flex-1 max-w-xs"></div>
+      </div>
+      <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+        Вернитесь к важному за пару секунд
+      </h2>
+      <p class="mx-auto max-w-2xl text-base text-slate-600 leading-relaxed">Заметки, расшифровки и следующие шаги связаны между собой — вам не придётся вспоминать, где осталась нужная мысль.</p>
+    </section>
+
+    <!-- Search and connected context -->
+    <section id="features" class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center py-10 md:py-16 mb-20 scroll-mt-24">
+      <div class="lg:col-span-5 space-y-6">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">Найдите мысль, к которой нужно вернуться</h2>
+        <p class="text-base md:text-lg text-slate-600 leading-relaxed">Ищите по заметкам и расшифровкам. Откройте исходную запись, перечитайте контекст или продолжите с готовой задачи.</p>
+        <ul class="space-y-3 text-sm text-slate-700">
+          <li class="flex items-start gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#D9EDF2] text-[#245B6D]" aria-hidden="true">✓</span><span>Аудио и текст в общей ленте заметок</span></li>
+          <li class="flex items-start gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#D9EDF2] text-[#245B6D]" aria-hidden="true">✓</span><span>Задачи с датами и календарным контекстом</span></li>
+          <li class="flex items-start gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#D9EDF2] text-[#245B6D]" aria-hidden="true">✓</span><span>Итог дня по сохранённым заметкам и делам</span></li>
+        </ul>
+      </div>
+
+      <div class="feature-search-card lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-5 md:p-7 shadow-[0_18px_44px_rgba(16,42,51,0.07)]">
+        <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke-width="1.8"></circle><path d="m16 16 4 4" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          <span>Поиск по заметкам и расшифровкам</span>
+          <kbd class="ml-auto rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] text-slate-500">⌘ K</kbd>
+        </div>
+
+        <article class="mt-5 rounded-xl border border-slate-200 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+            <span class="inline-flex items-center gap-2 font-medium text-[#245B6D]"><span class="h-2 w-2 rounded-full bg-[#D89A54]" aria-hidden="true"></span>Аудиозаметка</span>
+            <span>8 октября · 12:41</span>
+          </div>
+          <h3 class="mt-4 text-lg font-bold text-slate-900">Подготовка интервью с Мариной</h3>
+          <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">«Хочу спросить, как она решилась открыть первую мастерскую и что помогло пережить первый сезон…»</p>
+          <div class="mt-5 flex items-center gap-1.5" aria-label="Волна аудиозаписи">
+            <span class="h-3 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-6 w-1 rounded-full bg-[#5D9CAA]"></span><span class="h-4 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-8 w-1 rounded-full bg-[#245B6D]"></span><span class="h-5 w-1 rounded-full bg-[#5D9CAA]"></span><span class="h-3 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-7 w-1 rounded-full bg-[#245B6D]"></span><span class="h-4 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-6 w-1 rounded-full bg-[#5D9CAA]"></span><span class="h-3 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-8 w-1 rounded-full bg-[#245B6D]"></span><span class="h-4 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-6 w-1 rounded-full bg-[#5D9CAA]"></span><span class="h-3 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-7 w-1 rounded-full bg-[#245B6D]"></span><span class="h-4 w-1 rounded-full bg-[#8DBCC4]"></span><span class="h-5 w-1 rounded-full bg-[#5D9CAA]"></span><span class="h-3 w-1 rounded-full bg-[#8DBCC4]"></span>
+            <span class="ml-2 text-xs text-slate-400">Расшифровка доступна</span>
+          </div>
+        </article>
+
+        <div class="mt-3 flex items-start gap-3 rounded-xl bg-[#F2F8F9] p-4">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#245B6D]" aria-hidden="true">✓</span>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-800">Следующий шаг</p>
+            <p class="mt-1 text-sm text-slate-600">Отправить Марине план разговора · завтра, 12:00</p>
+          </div>
+          <span class="ml-auto rounded-md bg-white px-2 py-1 text-xs text-slate-500">Задача</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Storage and account details -->
+    <section id="privacy" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 rounded-3xl border border-[#D6E9E8] bg-[#EDF6F4] p-7 md:p-10 lg:p-14 mb-24 scroll-mt-24">
+      <div class="lg:col-span-5">
+        <p class="text-sm font-semibold text-[#245B6D]">Ваши записи и ваш выбор</p>
+        <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight tracking-tight text-slate-900">История остаётся с вами</h2>
+        <p class="mt-4 max-w-md text-base leading-relaxed text-slate-600">Заметки сохраняются в аккаунте и доступны после входа на других устройствах.</p>
+      </div>
+      <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="rounded-2xl bg-white p-5">
+          <h3 class="font-bold text-slate-900">Аудио хранится 14 дней</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">Исходные файлы удаляются по сроку хранения. Текст заметки остаётся в аккаунте.</p>
+        </div>
+        <div class="rounded-2xl bg-white p-5">
+          <h3 class="font-bold text-slate-900">Можно забрать копию</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">Экспортируйте записи и заметки в Markdown, ZIP или JSON в настройках.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="mb-24 scroll-mt-24">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+        <div class="lg:col-span-4">
+          <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">Частые вопросы</h2>
+          <p class="mt-4 max-w-sm text-base leading-relaxed text-slate-600">Коротко о голосовом вводе, заметках и ваших данных.</p>
+        </div>
+        <div class="lg:col-span-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white px-5 md:px-7">
+          <details class="faq-row py-5" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-5 font-semibold text-slate-900">Можно ли записывать текстом?<span class="faq-mark font-normal" aria-hidden="true"></span></summary>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">Да. Сохраняйте мысль голосом или текстом — обе формы остаются в общей ленте и доступны для поиска.</p>
+          </details>
+          <details class="faq-row py-5" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-5 font-semibold text-slate-900">Где хранятся мои заметки?<span class="faq-mark font-normal" aria-hidden="true"></span></summary>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">В вашем аккаунте. После входа заметки доступны на других устройствах.</p>
+          </details>
+          <details class="faq-row py-5" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-5 font-semibold text-slate-900">Что происходит с аудиофайлом?<span class="faq-mark font-normal" aria-hidden="true"></span></summary>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">Исходное аудио хранится 14 дней. Текст заметки и расшифровка остаются.</p>
+          </details>
+          <details class="faq-row py-5" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-5 font-semibold text-slate-900">Можно ли экспортировать свои записи?<span class="faq-mark font-normal" aria-hidden="true"></span></summary>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">Да. В настройках можно скачать заметки в Markdown, ZIP или JSON.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Closing action -->
+    <section id="start" class="flex flex-col items-start justify-between gap-8 rounded-3xl bg-[#D9EDF2] p-7 md:flex-row md:items-center md:p-12 mb-12">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">Сохраните следующую мысль</h2>
+        <p class="mt-3 text-base leading-relaxed text-slate-600">Начните с короткой записи — VoiceNotes поможет продолжить с понятного шага.</p>
+      </div>
+      <a href="#product-preview" class="inline-flex shrink-0 items-center gap-3 rounded-xl bg-[#245B6D] px-6 py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-[#1D4A59]">
+        Посмотреть пример
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+      </a>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-[1440px] flex-col gap-5 px-6 py-8 md:flex-row md:items-center md:justify-between lg:px-16">
+      <a href="#top" class="flex items-center gap-3 text-sm font-bold text-slate-900" aria-label="VoiceNotes, наверх">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D9EDF2] text-[#245B6D]" aria-hidden="true">♫</span>
+        VoiceNotes AI
+      </a>
+      <p class="text-sm text-slate-500">Мысли, заметки и планы дня — в одном месте.</p>
+      <nav class="flex flex-wrap gap-5 text-sm font-medium text-slate-600" aria-label="Ссылки в подвале">
+        <a href="#features" class="hover:text-slate-900">Возможности</a>
+        <a href="#privacy" class="hover:text-slate-900">Хранение данных</a>
+        <a href="#faq" class="hover:text-slate-900">Вопросы</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

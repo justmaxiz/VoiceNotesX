@@ -1,5 +1,7 @@
 import React from 'react'
 import { useNavigationStore } from '../../store/navigationStore'
+import { useAppStore } from '../../store/useAppStore'
+import { useProfile } from '../../hooks/useProfile'
 import { NavItem } from '../../types/navigation'
 
 const NAV_ITEMS: NavItem[] = [
@@ -12,14 +14,12 @@ const NAV_ITEMS: NavItem[] = [
     id: 'notes',
     label: 'Заметки',
     icon: 'description',
-    badge: 42,
     badgeType: 'default',
   },
   {
     id: 'tasks',
     label: 'Задачи',
     icon: 'check_circle',
-    badge: 12,
     badgeType: 'default',
   },
   {
@@ -31,16 +31,16 @@ const NAV_ITEMS: NavItem[] = [
     id: 'ai-summaries',
     label: 'Сводки',
     icon: 'summarize',
-    badgeType: 'pulse',
   },
   {
     id: 'settings',
-    label: 'Настройки',
+    label: 'Профиль',
     icon: 'settings',
   },
 ]
 
 export const Sidebar: React.FC = () => {
+  const profile = useProfile()
   const {
     activeTab,
     setActiveTab,
@@ -50,6 +50,8 @@ export const Sidebar: React.FC = () => {
     toggleSidebar,
   } = useNavigationStore()
   const isCompact = isSidebarCollapsed && !isMobileMenuOpen
+  const noteCount = useAppStore((state) => state.items.filter((item) => item.type === 'note' && item.status !== 'archived').length)
+  const taskCount = useAppStore((state) => state.items.filter((item) => item.type === 'task' && item.status !== 'archived').length)
 
   return (
     <>
@@ -104,6 +106,7 @@ export const Sidebar: React.FC = () => {
           <nav className={`flex flex-col gap-1 ${isCompact ? 'px-2' : 'px-space-sm'}`} aria-label="Основное меню">
             {NAV_ITEMS.map((item) => {
               const isActive = activeTab === item.id || (item.id === 'notes' && activeTab === 'notes-and-audio')
+              const badge = item.id === 'notes' ? noteCount : item.id === 'tasks' ? taskCount : item.badge
               return (
                 <button
                   key={item.id}
@@ -129,7 +132,7 @@ export const Sidebar: React.FC = () => {
                     {!isCompact && <span className="whitespace-nowrap">{item.label}</span>}
                   </div>
 
-                  {!isCompact && item.badge !== undefined && (
+                  {!isCompact && badge !== undefined && (
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                         item.badgeType === 'success'
@@ -137,13 +140,10 @@ export const Sidebar: React.FC = () => {
                           : 'bg-surface-container-highest text-on-surface-variant'
                       }`}
                     >
-                      {item.badge}
+                      {badge}
                     </span>
                   )}
 
-                  {!isCompact && item.badgeType === 'pulse' && (
-                    <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                  )}
                 </button>
               )
             })}
@@ -168,20 +168,21 @@ export const Sidebar: React.FC = () => {
           <div className={`pt-space-xs border-t border-surface-container-high/30 flex items-center ${isCompact ? 'w-full justify-start' : 'justify-between'}`}>
             <div className="flex items-center gap-space-sm min-w-0">
               <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md font-semibold shrink-0">
-                АО
+                {profile.avatar ? <img src={profile.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : profile.initials}
               </div>
               {!isCompact && <div className="flex flex-col min-w-0">
                 <span className="font-label-lg text-label-lg font-semibold text-on-surface truncate">
-                  Алексей Орлов
+                  {profile.name}
                 </span>
                 <span className="font-body-sm text-body-sm text-outline truncate">
-                  Pro Лицензия
+                  {profile.email}
                 </span>
               </div>}
             </div>
             {!isCompact && <button
               type="button"
-              aria-label="Меню пользователя"
+              aria-label="Настроить профиль"
+              onClick={() => setActiveTab('settings')}
               className="p-space-xs text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-body-lg">more_vert</span>

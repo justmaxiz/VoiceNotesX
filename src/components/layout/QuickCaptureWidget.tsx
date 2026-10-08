@@ -2,10 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useQuickCaptureStore } from '../../store/useQuickCaptureStore'
 import { useAppStore } from '../../store/useAppStore'
 import { useDrawerStore } from '../../store/useDrawerStore'
-import { useAudioRecorder } from '../../hooks/useAudioRecorder'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
-import { LiveWaveform } from '../audio/LiveWaveform'
-import { structureVoiceNote } from '../../lib/geminiStructuring'
+import { useCaptureAIStore } from '../../store/useCaptureAIStore'
 import { Item } from '../../types/item'
 
 import { useSettingsStore } from '../../store/useSettingsStore'
@@ -20,12 +18,12 @@ const AVAILABLE_TAGS = ['#Работа', '#Личное', '#Разработка
 export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }) => {
   const {
     isOpen,
-    entityType,
+
     targetColumn,
     dueDate,
     dueTime,
     text: storeText,
-    setEntityType,
+
     setText: setStoreText,
     closeQuickCapture,
   } = useQuickCaptureStore()
@@ -35,11 +33,14 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savedNotification, setSavedNotification] = useState<{ id: string; title: string } | null>(null)
   const [isProcessingAI, setIsProcessingAI] = useState(false)
+  const capturePending = useCaptureAIStore(state => state.status === 'pending')
   const [captureError, setCaptureError] = useState<string | null>(null)
-  const [draftAudio, setDraftAudio] = useState<{ blob: Blob; duration: number } | undefined>()
+  const [isFinishingDictation, setIsFinishingDictation] = useState(false)
+  const dictationDraftRef = useRef('')
+  const dictationActiveRef = useRef(false)
   const savingRef = useRef(false)
   const recordingRef = useRef(false)
-  const { aiMode, structuringStyle } = useSettingsStore()
+  const { aiMode, structuringStyle, language } = useSettingsStore()
   const [isExpanded, setIsExpanded] = useState(false)
 
   const widgetRef = useRef<HTMLElement>(null)
@@ -49,16 +50,17 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
 
   const { addItem } = useAppStore()
   const { openDrawer } = useDrawerStore()
-  const { isRecording, recordingTime, stream, startRecording, stopRecording } = useAudioRecorder()
   const {
+    isListening: isRecording,
     isSupported,
     error: speechError,
     transcript,
     interimTranscript,
     startListening,
     stopListening,
+    abortListening,
     resetTranscript,
-  } = useSpeechRecognition()
+  } = useSpeechRecognition(language)
 
   // Sync storeText to localText if changed externally
   useEffect(() => {
@@ -100,17 +102,27 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
 
   // Sync live STT transcript into local input during recording
   useEffect(() => {
-    if (isRecording) {
-      const combined = `${transcript} ${interimTranscript}`.trim()
-      if (combined) {
-        setLocalText(combined)
-        setStoreText(combined)
-      }
+    if (dictationActiveRef.current) {
+      const combined = [dictationDraftRef.current, transcript, interimTranscript].filter(Boolean).join(' ').trim()
+      setLocalText(combined)
+      setStoreText(combined)
     }
   }, [isRecording, transcript, interimTranscript, setStoreText])
 
   useEffect(() => {
+    if (speechError) setCaptureError(speechError)
+  }, [speechError])
+
+  useEffect(() => {
+    if (!isOpen) {
+      dictationActiveRef.current = false
+      abortListening()
+    }
+  }, [isOpen, abortListening])
+
+  useEffect(() => {
     return () => {
+      dictationActiveRef.current = false
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
@@ -119,27 +131,27 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
 
   useSpaceRecordShortcut({
     onToggle: () => handleToggleRecord(),
+    enabled: isOpen && !isFinishingDictation && !isProcessingAI && !capturePending,
   })
 
   const handleToggleRecord = async () => {
-    if (recordingRef.current || savingRef.current) return
+    if (recordingRef.current || savingRef.current || capturePending || isFinishingDictation) return
     recordingRef.current = true
     setCaptureError(null)
     try {
       if (isRecording) {
-        stopListening()
-        const blob = await stopRecording()
-        if (blob) {
-          const audio = { blob, duration: recordingTime }
-          setDraftAudio(audio)
-          await saveItem(localText.trim() || 'Аудиозаметка', false, audio)
-        }
+        dictationActiveRef.current = false
+        abortListening()
+        setLocalText(dictationDraftRef.current)
+        setStoreText(dictationDraftRef.current)
         resetTranscript()
       } else {
-        if (draftAudio) throw new Error('Сначала сохраните текущую аудиозаметку')
+        if (!isSupported) throw new Error('Распознавание речи не поддерживается этим браузером. Откройте сайт в Chrome или Edge.')
+        dictationDraftRef.current = localText.trim()
+        dictationActiveRef.current = true
         resetTranscript()
-        await startRecording()
         startListening()
+        setIsExpanded(true)
         inputRef.current?.focus()
       }
     } catch (error) {
@@ -147,39 +159,26 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
     } finally { recordingRef.current = false }
   }
 
-  const saveItem = async (textToSave: string, useAI = false, audio = draftAudio) => {
-    const trimmed = textToSave.trim() || (audio ? 'Аудиозаметка' : '')
-    if (!trimmed || savingRef.current || isRecording && !audio) return
+  const saveItem = async (textToSave: string, useAI = true) => {
+    const trimmed = textToSave.trim()
+    if (!trimmed || savingRef.current || capturePending) return
     savingRef.current = true
     setIsProcessingAI(true)
     setCaptureError(null)
     try {
-      const structured = useAI ? await structureVoiceNote(trimmed, undefined, { mode: aiMode, style: structuringStyle }) : undefined
+      const previousDraft = useCaptureAIStore.getState().draft
       const now = new Date().toISOString()
-      const createdId = crypto.randomUUID()
+      const createdId = previousDraft?.transcriptText === trimmed ? previousDraft.id : crypto.randomUUID()
       const newItem: Item = {
-        id: createdId,
-        type: structured?.entity_type || entityType,
-        title: structured?.title || trimmed,
-        description: structured?.description || '',
-        transcriptText: audio || structured ? trimmed : undefined,
-        status: targetColumn === 'completed' ? 'completed' : targetColumn === 'in_progress' ? 'in_progress' : 'todo',
-        completedAt: targetColumn === 'completed' ? now : undefined,
-        isFocus: false,
-        isFocused: false,
-        priority: structured?.priority || 'medium',
-        ...(dueDate ? { dueDate, dueTime, isAllDay: !dueTime } : structured?.due_date ? { dueDate: structured.due_date } : {}),
-        ...(structured?.start_date ? { startDate: structured.start_date } : {}),
-        ...(structured?.deadline && !dueDate ? { deadline: structured.deadline } : {}),
-        categoryTag: structured?.category_tag || selectedTag,
-        tags: [structured?.category_tag || selectedTag],
-        audioDuration: audio?.duration,
-        checklist: structured?.checklist?.map((text, index) => ({ id: `${createdId}-${index}`, text, isCompleted: false, sortOrder: index + 1 })),
-        createdAt: now,
-        updatedAt: now,
+        id: createdId, type: 'note', title: trimmed.slice(0, 500), description: trimmed,
+        transcriptText: trimmed, status: targetColumn === 'completed' ? 'completed' : targetColumn === 'in_progress' ? 'in_progress' : 'todo', priority: 'medium',
+        isFocus: false, isFocused: false, categoryTag: selectedTag, tags: [selectedTag],
+        ...(dueDate ? { dueDate, dueTime, isAllDay: !dueTime } : {}),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        createdAt: now, updatedAt: now,
       }
-      await addItem(newItem, audio)
-      setDraftAudio(undefined)
+      if (useAI) await useCaptureAIStore.getState().start(newItem, { mode: aiMode, style: structuringStyle })
+      else await addItem(newItem)
       setLocalText('')
       setStoreText('')
       useQuickCaptureStore.setState({ dueDate: null, dueTime: null, targetColumn: null })
@@ -189,7 +188,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
       if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => { setSavedNotification(null); timerRef.current = null }, 2000)
     } catch (error) {
-      // The draft and its Blob remain available for retry.
+      // Keep the text draft available for retry.
       setCaptureError(`Не удалось сохранить: ${(error as Error).message}`)
     } finally {
       savingRef.current = false
@@ -197,15 +196,36 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
     }
   }
 
+  const submitCapture = async () => {
+    if (isFinishingDictation || recordingRef.current || savingRef.current || capturePending) return
+    if (!isRecording) return saveItem(localText, true)
+    recordingRef.current = true
+    setIsFinishingDictation(true)
+    try {
+      const spoken = await stopListening()
+      if (!dictationActiveRef.current) return
+      dictationActiveRef.current = false
+      const text = [dictationDraftRef.current, spoken].filter(Boolean).join(' ').trim()
+      setLocalText(text)
+      setStoreText(text)
+      resetTranscript()
+      if (!text) { setCaptureError('Речь не распознана. Повторите диктовку.'); return }
+      await saveItem(text, true)
+    } catch (error) {
+      dictationActiveRef.current = false
+      setCaptureError(error instanceof Error ? error.message : 'Не удалось завершить диктовку.')
+    } finally { recordingRef.current = false; setIsFinishingDictation(false) }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    void saveItem(localText, false)
+    void submitCapture()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
-      void saveItem(localText, true)
+      void submitCapture()
     } else if (e.key === 'Escape') {
       if (isRecording) {
         handleToggleRecord()
@@ -231,8 +251,6 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
       }`}
     >
       {captureError && <p role="alert" className="mb-2 rounded-xl bg-error-container text-on-error-container p-3 text-xs">{captureError}</p>}
-      {isRecording && (!isSupported || speechError) && <p role="status" className="mb-2 rounded bg-surface-container p-2 text-xs text-on-surface">{speechError || 'Распознавание речи недоступно; аудио будет сохранено.'}</p>}
-      {draftAudio && <p role="status" className="text-xs text-on-surface">Аудиозаметка ожидает сохранения</p>}
       {/* Toast Notification with Open in Drawer action */}
       {savedNotification && (
         <div
@@ -242,7 +260,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
           <div className="flex items-center gap-2 truncate">
             <span className="material-symbols-outlined text-secondary text-sm">check_circle</span>
             <span className="truncate">
-              {entityType === 'task' ? 'Задача' : 'Заметка'} сохранена: «{savedNotification.title}»
+              Заметка сохранена: «{savedNotification.title}»
             </span>
           </div>
           <button
@@ -274,34 +292,6 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
 
         {isExpanded && (
           <div className="flex items-center gap-2 shrink-0 animate-in fade-in zoom-in-95 duration-200 hidden sm:flex">
-            {/* Entity Switcher (Задача / Заметка) */}
-            <div className="flex items-center p-0.5 rounded-lg bg-surface-container text-xs select-none border border-outline-variant/20" role="group" aria-label="Тип записи">
-              <button
-                type="button"
-                aria-pressed={entityType === 'task'}
-                onClick={() => setEntityType('task')}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  entityType === 'task'
-                    ? 'bg-primary text-on-primary font-medium shadow-xs'
-                    : 'text-outline hover:text-on-surface'
-                }`}
-              >
-                Задача
-              </button>
-              <button
-                type="button"
-                aria-pressed={entityType === 'note'}
-                onClick={() => setEntityType('note')}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  entityType === 'note'
-                    ? 'bg-primary text-on-primary font-medium shadow-xs'
-                    : 'text-outline hover:text-on-surface'
-                }`}
-              >
-                Заметка
-              </button>
-            </div>
-
             {/* Tag Selector Dropdown */}
             <div className="relative shrink-0" ref={tagMenuRef}>
               <button
@@ -345,7 +335,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
         {/* Live Waveform when recording */}
         {isRecording && (
           <div className="shrink-0 flex items-center">
-            <LiveWaveform isRecording={isRecording} stream={stream} width={100} height={28} />
+            <span className="material-symbols-outlined text-secondary animate-pulse" aria-hidden="true">graphic_eq</span>
           </div>
         )}
 
@@ -354,8 +344,10 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
           ref={inputRef}
           type="text"
           value={localText}
+          readOnly={isRecording || isFinishingDictation || isProcessingAI || capturePending}
           onFocus={() => setIsExpanded(true)}
           onChange={(e) => {
+            if (isRecording || isFinishingDictation || isProcessingAI || capturePending) return
             setLocalText(e.target.value)
             setStoreText(e.target.value)
           }}
@@ -367,7 +359,7 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
               ? 'Слушаю... Говорите...'
               : isProcessingAI
               ? 'AI структурирует задачу...'
-              : 'Быстрая мысль или задача... (Enter — сохранить, ⌘Enter — с AI, / или C)'
+              : 'Мысль или задача… (Enter — обработать с AI)'
           }
           aria-label="Поле быстрого ввода мысли или задачи"
           className="flex-1 bg-transparent py-1 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none min-w-0"
@@ -382,8 +374,9 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
               e.stopPropagation()
               handleToggleRecord()
             }}
-            aria-label="Начать голосовую запись"
-            title={isRecording ? 'Остановить запись' : 'Голосовая запись (Space)'}
+            disabled={isFinishingDictation || isProcessingAI || capturePending}
+            aria-label={isRecording ? 'Отменить диктовку' : 'Начать голосовую запись'}
+            title={isRecording ? 'Отменить диктовку (Escape)' : 'Голосовая запись (Space)'}
             className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${
               isRecording
                 ? 'bg-error text-on-error shadow-md scale-105 animate-pulse'
@@ -391,23 +384,23 @@ export const QuickCaptureWidget: React.FC<QuickCaptureWidgetProps> = ({ onSave }
             }`}
           >
             <span className="material-symbols-outlined text-body-lg">
-              {isRecording ? 'stop' : 'mic'}
+              {isRecording ? 'close' : 'mic'}
             </span>
           </button>
 
           {/* Save / Add Button */}
           <button
             type="submit"
-            disabled={(!localText.trim() && !draftAudio) || isProcessingAI || isRecording}
+            disabled={(!localText.trim() && !isRecording) || isProcessingAI || capturePending || isFinishingDictation}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Сохранить мысль"
+            aria-label={isRecording ? 'Отправить диктовку' : 'Сохранить мысль'}
             className={`p-2 rounded-full font-label-md text-label-md transition-all flex items-center justify-center cursor-pointer ${
-              localText.trim() && !isProcessingAI
+              (localText.trim() || isRecording) && !isProcessingAI && !isFinishingDictation
                 ? 'bg-primary text-on-primary hover:bg-primary/90 shadow-sm hover:scale-105 active:scale-95'
                 : 'bg-surface-container text-outline opacity-60 cursor-not-allowed'
             }`}
           >
-            {isProcessingAI ? (
+            {isProcessingAI || isFinishingDictation ? (
               <span className="material-symbols-outlined text-body-md animate-spin">sync</span>
             ) : (
               <span className="material-symbols-outlined text-body-md">send</span>

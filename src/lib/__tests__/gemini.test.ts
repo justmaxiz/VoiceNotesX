@@ -1,143 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import {
-  getAIProxyUrl,
-  mockLocalStructuring,
-  generateGeminiContent,
-} from '../gemini'
-import { structureVoiceNote } from '../geminiStructuring'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { structureVoiceNote, validateStructuredResult } from '../geminiStructuring'
 import { refineStructuredNote } from '../geminiRefinement'
-
-describe('Gemini AI Integration', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  describe('gemini client & mock fallback', () => {
-    it('returns empty string if no proxy in env', () => {
-      expect(typeof getAIProxyUrl()).toBe('string')
-    })
-
-    it('mockLocalStructuring correctly parses action tasks', () => {
-      const res = mockLocalStructuring(
-        'Напомни срочно подготовить отчет по продуктовым метрикам Q3 завтра в 15:00',
-        '2026-10-05T12:00:00.000Z',
-        'fast'
-      )
-      expect(res.entity_type).toBe('task')
-      expect(res.priority).toBe('high')
-      expect(res.category_tag).toBe('#Аналитика')
-      expect(res.due_date).toBeDefined()
-      expect(res.title).toBeTruthy()
-    })
-
-    it('marks tasks described as ASAP as high priority', () => {
-      const res = mockLocalStructuring('Please fix the login bug ASAP')
-      expect(res.entity_type).toBe('task')
-      expect(res.priority).toBe('high')
-    })
-
-    it('mockLocalStructuring correctly parses reflective notes', () => {
-      const res = mockLocalStructuring(
-        'Думаю над концепцией нового интерфейса и подбором шрифтовых пар',
-        '2026-10-05T12:00:00.000Z',
-        'fast'
-      )
-      expect(res.entity_type).toBe('note')
-      expect(res.category_tag).toBe('#Дизайн')
-      expect(res.priority).toBe('medium')
-    })
-
-    it('throws AI_PROXY_NOT_CONFIGURED when calling generateGeminiContent without proxy', async () => {
-      await expect(generateGeminiContent('system', 'user')).rejects.toThrow('AI_PROXY_NOT_CONFIGURED')
-    })
-  })
-
-  describe('structureVoiceNote', () => {
-    it('handles empty transcript gracefully', async () => {
-      const res = await structureVoiceNote('')
-      expect(res.title).toBe('Пустая заметка')
-      expect(res.entity_type).toBe('note')
-    })
-
-    it('falls back to mockLocalStructuring when API key is not set', async () => {
-      const res = await structureVoiceNote('Сделать ревью архитектуры микросервисов')
-      expect(res.entity_type).toBe('task')
-      expect(res.category_tag).toBe('#Разработка')
-      expect(res.title).toContain('Сделать ревью')
-    })
-
-    it('parses structured outputs from successful Gemini API response', async () => {
-      // Mock fetch
-      const mockResult = {
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  text: JSON.stringify({
-                    entity_type: 'task',
-                    title: 'Согласовать бюджет',
-                    description: 'Согласовать бюджет на AI API',
-                    due_date: '2026-10-06T14:00:00.000Z',
-                    priority: 'high',
-                    category_tag: '#Финансы',
-                    transcript_summary: 'Срочное согласование бюджета',
-                    checklist: ['Собрать смету', 'Отправить финдиректору'],
-                  }),
-                },
-              ],
-            },
-          },
-        ],
-      }
-
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ text: mockResult.candidates[0].content.parts[0].text }),
-      })
-
-      vi.stubEnv('VITE_AI_PROXY_URL', 'https://example.com/ai')
-
-      try {
-        const res = await structureVoiceNote('Согласовать бюджет на AI API')
-        expect(res.title).toBe('Согласовать бюджет')
-        expect(res.priority).toBe('high')
-        expect(res.category_tag).toBe('#Финансы')
-        expect(res.checklist).toHaveLength(2)
-      } finally {
-        vi.unstubAllEnvs()
-      }
-    })
-  })
-
-  describe('refineStructuredNote', () => {
-    const baseItem = {
-      entity_type: 'task' as const,
-      title: 'Подготовить релиз',
-      description: 'Подготовить релиз приложения',
-      due_date: null,
-      priority: 'medium' as const,
-      category_tag: '#Разработка',
-      transcript_summary: 'Релиз',
-    }
-
-    it('updates priority on feedback via local fallback', async () => {
-      const updated = await refineStructuredNote(baseItem, 'Сделай высокий приоритет')
-      expect(updated.priority).toBe('high')
-    })
-
-    it('adds checklist item on feedback via local fallback', async () => {
-      const updated = await refineStructuredNote(baseItem, 'Добавь пункт: Проверить тесты')
-      expect(updated.checklist).toContain('Проверить тесты')
-    })
-
-    it('renames title on feedback via local fallback', async () => {
-      const updated = await refineStructuredNote(baseItem, 'Переименуй заголовок в "Финальный релиз v2.5"')
-      expect(updated.title).toBe('Финальный релиз v2.5')
-    })
-  })
+import { RESPONSE_SCHEMA } from '../gemini'
+const result = { title: 'Тестовая заметка', description: 'Текст', priority: 'high', category_tag: '#Работа', transcript_summary: 'Текст', due_date: '2026-10-10' }
+afterEach(() => vi.restoreAllMocks())
+describe('Server AI client', () => {
+  it.each([0, -1, 525601, Infinity, '120', null])('rejects invalid duration %s', estimated_minutes => expect(() => validateStructuredResult({ ...result, estimated_minutes })).toThrow())
+  it('rejects empty input before requesting the provider', async () => { const request = vi.spyOn(globalThis, 'fetch'); await expect(structureVoiceNote(' ')).rejects.toThrow('Введите текст'); expect(request).not.toHaveBeenCalled() })
+  it('sends preferences and date context to our authenticated API', async () => { const request = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ result }))); expect(await structureVoiceNote('Исходный текст', '2026-10-07T12:00:00Z', { mode: 'deep', style: 'action_plan' })).toEqual(result); expect(request.mock.calls[0][0]).toBe('/api/v1/ai/structure'); expect(JSON.parse(request.mock.calls[0][1]!.body as string)).toMatchObject({ text: 'Исходный текст', mode: 'deep', style: 'action_plan' }); expect(request.mock.calls[0][1]?.headers).toHaveProperty('Authorization') })
+  it('keeps provider errors visible without local heuristics', async () => { vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: { code: 'AI_TIMEOUT', message: 'Таймаут' } }), { status: 504 })); await expect(structureVoiceNote('Текст')).rejects.toThrow('Таймаут') })
+  it.each([{}, { ...result, title: '' }, { ...result, deadline: 'invalid' }, { ...result, checklist: [12] }])('rejects invalid output %#', value => expect(() => validateStructuredResult(value)).toThrow())
+  it('does not expose entity_type in the JSON schema', () => { expect(RESPONSE_SCHEMA.properties).not.toHaveProperty('entity_type'); expect(RESPONSE_SCHEMA.properties).toHaveProperty('start_date'); expect(RESPONSE_SCHEMA.properties).toHaveProperty('deadline') })
+  it('refines through the same server API', async () => { vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ result: { ...result, title: 'Новый заголовок' } }))); expect((await refineStructuredNote(result as never, 'Переименуй')).title).toBe('Новый заголовок') })
 })

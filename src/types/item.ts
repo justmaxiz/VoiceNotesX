@@ -1,29 +1,7 @@
-export interface Item {
-  id: string;
-  type: 'task' | 'note';
-  title: string;
-  description?: string;
-  transcriptText?: string;
-  audioDuration?: number;
-  audioUrl?: string;
-  status: 'todo' | 'in_progress' | 'completed' | 'archived';
-  priority: 'low' | 'medium' | 'high';
-  startDate?: string | null;
-  deadline?: string | null;
-  dueDate?: string | null;
-  dueTime?: string | null;
-  isAllDay?: boolean;
-  estimatedMinutes?: number;
-  reminderMinutesBefore?: number | null;
-  tags?: string[];
-  completedAt?: string;
-  categoryTag: string;
-  isFocus: boolean;
-  isFocused?: boolean;
-  checklist?: ChecklistItem[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Note } from '../../server/src/contracts'
+export type { Note } from '../../server/src/contracts'
+/** A view of the shared note; type is derived from its schedule by the repository. */
+export interface Item extends Note { type: 'task' | 'note' }
 
 export interface AudioSession {
   id: string;

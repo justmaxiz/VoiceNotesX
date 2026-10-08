@@ -1,4 +1,6 @@
 import React from 'react'
+import { useSummary, useTodayPeriod } from '../../../hooks/useSummary'
+import { SummaryReportView } from '../../summaries/SummaryReportView'
 
 export interface DailySummaryCardProps {
   onGenerateReport?: () => void
@@ -7,19 +9,23 @@ export interface DailySummaryCardProps {
   summaryText?: string
 }
 
-
 export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
   onGenerateReport,
   tags = [],
-  notesAnalyzedCount = 0,
-  summaryText = 'Пока нет данных для отчета',
+  notesAnalyzedCount,
+  summaryText,
 }) => {
-  const uniqueTags = Array.from(new Map(
-    tags
-      .map((tag) => tag.replace(/^#/, '').trim())
-      .filter(Boolean)
-      .map((tag) => [tag.toLocaleLowerCase('ru-RU'), tag])
-  ).values())
+  const period = useTodayPeriod()
+  const state = useSummary(period)
+  const report = state.report || state.fallback
+  const uniqueTags = Array.from(
+    new Map(
+      (report ? report.themes.map((t) => t.text) : tags)
+        .map((tag) => tag.replace(/^#/, '').trim())
+        .filter(Boolean)
+        .map((tag) => [tag.toLocaleLowerCase('ru-RU'), tag]),
+    ).values(),
+  )
 
   return (
     <section className="rounded-2xl bg-surface-container-low p-space-md shadow-xs flex flex-col gap-3.5 border border-surface-container-high/40">
@@ -29,14 +35,37 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
           Сводка дня
         </h3>
         <span className="text-xs text-outline font-medium">
-          {notesAnalyzedCount} заметок
+          {report
+            ? `${report.coverage.selected} из ${report.coverage.total} записей`
+            : notesAnalyzedCount !== undefined
+              ? `${notesAnalyzedCount} заметок`
+              : 'Дневной срез'}
         </span>
       </div>
 
       {/* Summary Text */}
-      <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-        {summaryText}
-      </p>
+      {state.offline && (
+        <p role="status" className="text-xs text-outline">
+          Нет связи. Сохранённый снимок.
+        </p>
+      )}
+      {state.error && (
+        <p role="alert" className="text-xs text-error">
+          {state.error}
+        </p>
+      )}
+      {report ? (
+        <SummaryReportView report={report} compact />
+      ) : (
+        <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+          {summaryText ||
+            (state.data
+              ? `Завершено записей: ${state.data.metrics.completed}. Открытых сроков: ${state.data.metrics.openScheduled}. Сформируйте сводку в разделе «Сводки».`
+              : state.loading
+                ? 'Загрузка дневных фактов…'
+                : 'Сводка ещё не создана. Откройте раздел «Сводки».')}
+        </p>
+      )}
 
       {/* Key Topics / Tags without hashtag spam */}
       {uniqueTags.length > 0 && (

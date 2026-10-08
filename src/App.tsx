@@ -2,14 +2,8 @@ import React, { useEffect } from 'react'
 import { AppLayout } from './components/layout/AppLayout'
 import { useNavigationStore } from './store/navigationStore'
 import { useAppStore } from './store/useAppStore'
-import { db } from './lib/db'
 import { DashboardOverview } from './components/dashboard/DashboardOverview'
 
-// Expose store and database to window for convenient debugging and verification in DevTools
-if (typeof window !== 'undefined') {
-  ;(window as any).db = db
-  ;(window as any).useAppStore = useAppStore
-}
 import { NotesPage } from './components/notes/NotesPage'
 import { TasksPage } from './components/tasks/TasksPage'
 import { CalendarPage } from './components/calendar/CalendarPage'

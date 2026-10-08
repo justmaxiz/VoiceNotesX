@@ -1,15 +1,16 @@
 import { create } from 'zustand'
 import { Item, TaskFilter, TaskSortCriteria, TaskSortDirection } from '../types'
-import { db } from '../lib/db'
+import { notesRepository as db } from '../lib/repository'
+import { hasSchedule } from '../../server/src/contracts'
+import { getSession } from '../lib/api'
 import { normalizeTaskDates } from '../lib/taskDates'
-import { audioPlaybackUrl, releaseAudioUrl } from '../lib/audioPersistence'
+import { releaseAudioUrl } from '../lib/audioPersistence'
 import {
   upsertSearchItem,
   removeSearchItem,
   rebuildSearchIndex,
   performSearch,
 } from '../lib/search'
-import { SEED_ITEMS, seedDatabase } from '../lib/seedData'
 import { useNavigationStore } from './navigationStore'
 
 export type SortOrder = 'priority' | 'date' | 'alphabetical'
@@ -78,13 +79,23 @@ const getInitialSort = (): { sortBy: TaskSortCriteria; sortDirection: TaskSortDi
   return { sortBy: 'priority', sortDirection: 'asc' }
 }
 
-// Populate search index with initial seed items synchronously
-rebuildSearchIndex(SEED_ITEMS)
+// Start with an empty account index; legacy data is migrated explicitly.
+rebuildSearchIndex([])
 
+let mutationTail: Promise<unknown> = Promise.resolve()
+function serializeMutation<T>(operation: () => Promise<T>): Promise<T> {
+  const owner = getSession()?.user.id
+  const result = mutationTail.then(() => {
+    if (owner !== getSession()?.user.id) throw new Error('Сессия изменилась')
+    return operation()
+  })
+  mutationTail = result.catch(() => {})
+  return result
+}
 const initialSort = getInitialSort()
 
 export const useAppStore = create<AppState>((set, get) => ({
-  items: SEED_ITEMS,
+  items: [],
   isRecording: false,
   activeFilter: 'all',
   sortOrder: 'priority',
@@ -122,21 +133,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ items })
   },
 
-  addItem: async (item: Item, audio) => {
+  addItem: (item: Item, audio) => serializeMutation(async () => {
     const isFocus = Boolean(item.isFocus || item.isFocused)
     let synced: Item
     try { synced = normalizeTaskDates(item) } catch (error) { set({ error: (error as Error).message }); throw error }
     const finalItem: Item = {
       ...synced,
+      type: hasSchedule(synced) ? 'task' : 'note',
       id: synced.id || generateId(),
       isFocus,
       isFocused: isFocus,
       createdAt: synced.createdAt || new Date().toISOString(),
       updatedAt: synced.updatedAt || new Date().toISOString(),
     }
+    const owner = getSession()?.user.id
     const previousItems = get().items
 
-    let nextItems = [finalItem, ...previousItems]
+    let nextItems = [finalItem, ...previousItems.filter((item) => item.id !== finalItem.id)]
     if (finalItem.isFocus) {
       nextItems = nextItems.map((i) =>
         i.id === finalItem.id ? i : (i.isFocus || i.isFocused) ? { ...i, isFocus: false, isFocused: false } : i
@@ -153,12 +166,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     try {
-      await db.createItem(finalItem, audio)
-      if (audio) {
-        const audioUrl = await audioPlaybackUrl(finalItem.id)
-        set({ items: get().items.map((i) => i.id === finalItem.id ? { ...i, audioUrl } : i) })
-      }
+      const saved = await db.createItem(finalItem, audio)
+      set({ items: get().items.map((i) => i.id === finalItem.id ? saved : i) })
+      upsertSearchItem(saved)
     } catch (err) {
+      if (owner !== getSession()?.user.id) throw err
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       removeSearchItem(finalItem.id)
@@ -167,9 +179,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       throw err
     }
-  },
+  }),
 
-  updateItem: async (id: string, patch: Partial<Item>) => {
+  updateItem: (id: string, patch: Partial<Item>) => serializeMutation(async () => {
+    const owner = getSession()?.user.id
     const previousItems = get().items
     const current = previousItems.find((i) => i.id === id)
     if (!current) {
@@ -192,6 +205,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updatedItem: Item = {
       ...current,
       ...syncedPatch,
+      type: hasSchedule({ ...current, ...syncedPatch }) ? 'task' : 'note',
       ...(hasFocusChange ? { isFocus: isFocusVal, isFocused: isFocusVal } : {}),
       updatedAt: new Date().toISOString(),
     }
@@ -213,11 +227,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     try {
-      await db.updateItem(id, {
+      const saved = await db.updateItem(id, {
         ...syncedPatch,
         ...(hasFocusChange ? { isFocus: isFocusVal, isFocused: isFocusVal } : {}),
       })
+      set({ items: get().items.map(i => i.id === id ? saved : i) })
+      upsertSearchItem(saved)
     } catch (err) {
+      if (owner !== getSession()?.user.id) throw err
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       upsertSearchItem(current)
@@ -226,9 +243,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       throw err
     }
-  },
+  }),
 
-  deleteItem: async (id: string) => {
+  deleteItem: (id: string) => serializeMutation(async () => {
+    const owner = getSession()?.user.id
     const previousItems = get().items
     const itemToDelete = previousItems.find((i) => i.id === id)
     if (!itemToDelete) {
@@ -244,12 +262,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       await db.deleteItem(id)
       releaseAudioUrl(id)
     } catch (err) {
+      if (owner !== getSession()?.user.id) throw err
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       upsertSearchItem(itemToDelete)
       throw err
     }
-  },
+  }),
 
   toggleTask: async (id: string) => {
     const current = get().items.find((item) => item.id === id)
@@ -257,7 +276,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().updateItem(id, { status: current.status === 'completed' ? 'todo' : 'completed' })
   },
 
-  setFocusTask: async (id: string) => {
+  setFocusTask: (id: string) => serializeMutation(async () => {
+    const owner = getSession()?.user.id
     const previousItems = get().items
     const target = previousItems.find((i) => i.id === id)
     if (!target) {
@@ -290,13 +310,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await db.setFocusTask(id)
     } catch (err) {
+      if (owner !== getSession()?.user.id) throw err
       // Rollback on failure
       set({ items: previousItems, error: (err as Error).message })
       upsertSearchItem(target)
       prevFocused.forEach((item) => upsertSearchItem(item))
       throw err
     }
-  },
+  }),
 
   setFocusedTask: async (id: string) => {
     return get().setFocusTask(id)
@@ -362,15 +383,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadItems: async () => {
     if (get().isLoading) return
     set({ isLoading: true, error: null })
+    const owner = getSession()?.user.id
     try {
-      await seedDatabase()
-      const loaded = await db.getAllItems()
-      await Promise.all(loaded.map(async (item) => {
-        item.audioUrl = await audioPlaybackUrl(item.id) || (item.audioUrl?.startsWith('blob:') ? undefined : item.audioUrl)
-      }))
-      rebuildSearchIndex(loaded)
-      set({ items: loaded, isLoading: false })
+      await serializeMutation(async () => {
+        const loaded = await db.getAllItems()
+        if (owner !== getSession()?.user.id) return
+        rebuildSearchIndex(loaded)
+        set({ items: loaded, isLoading: false })
+      })
     } catch (err) {
+      if (owner !== getSession()?.user.id) throw err
       set({ isLoading: false, error: (err as Error).message })
       throw err
     }
@@ -430,5 +452,3 @@ export const useAppStore = create<AppState>((set, get) => ({
     return performSearch(query, get().items)
   },
 }))
-
-

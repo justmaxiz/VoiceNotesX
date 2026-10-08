@@ -1,0 +1,26 @@
+name: voicenotes-dev
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: voicenotes_admin
+      POSTGRES_DB: voicenotes_dev
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Run configure-local-data.ps1 first}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Run configure-local-data.ps1 first}
+      MIGRATION_DB_PASSWORD: ${MIGRATION_DB_PASSWORD:?Run configure-local-data.ps1 first}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voicenotes_admin -d voicenotes_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  postgres_data:

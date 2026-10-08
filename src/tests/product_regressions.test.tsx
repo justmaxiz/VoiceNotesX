@@ -32,7 +32,7 @@ describe('Calendar, focus and details user interactions', () => {
     fireEvent.change(input, { target: { value: 'Selected date' } })
     fireEvent.submit(input.closest('form')!)
     await waitFor(() => expect(input).toHaveValue(''))
-    const stored = (await db.getAllItems())[0]
+    const stored = useAppStore.getState().items[0]
     expect(stored.dueDate).toBe('2026-10-18')
     expect(stored.isAllDay).toBe(true)
   })
@@ -44,7 +44,7 @@ describe('Calendar, focus and details user interactions', () => {
     fireEvent.change(input, { target: { value: 'Hour task' } })
     fireEvent.submit(input.closest('form')!)
     await waitFor(() => expect(input).toHaveValue(''))
-    expect((await db.getAllItems())[0]).toMatchObject({ dueDate: '2026-10-10', dueTime: '14:00' })
+    expect(useAppStore.getState().items[0]).toMatchObject({ dueDate: '2026-10-10', dueTime: '14:00' })
     fireEvent.click(screen.getByLabelText('Следующий период'))
     expect(screen.getByLabelText('Создать задачу 2026-10-11 14:00')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Сегодня' }))
@@ -80,12 +80,12 @@ describe('Calendar, focus and details user interactions', () => {
     render(<CalendarPage />)
     fireEvent.click(screen.getByRole('button', { name: view }))
     const marker = screen.getByTestId('calendar-event-instant')
-    expect(marker).toHaveStyle({ height: '8px', top: '224px' })
+    expect(marker).toHaveStyle({ height: '8px', top: '672px' })
     fireEvent.click(marker)
     expect(useDrawerStore.getState().selectedItemId).toBe('instant')
   })
   it('hero reflects same-task checklist edits and does not erase newly added entries', async () => {
-    const focused = task('focused', { isFocus: true, checklist: [{ id: 'one', text: 'Original', isCompleted: false, sortOrder: 1 }] })
+    const focused = task('focused', { dueDate: '2026-10-10', isFocus: true, checklist: [{ id: 'one', text: 'Original', isCompleted: false, sortOrder: 1 }] })
     await db.createItem(focused)
     useAppStore.getState().setItems([focused])
     render(<FocusHeroCard />)
@@ -93,7 +93,7 @@ describe('Calendar, focus and details user interactions', () => {
     expect(screen.getByText('Added in drawer')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Отметить подзадачу: Original'))
     await waitFor(() => expect(useAppStore.getState().items[0].checklist?.[0].isCompleted).toBe(true))
-    expect((await db.getItem('focused'))?.checklist).toHaveLength(2)
+    expect(useAppStore.getState().items.find(item => item.id === 'focused')?.checklist).toHaveLength(2)
   })
   it('hero status updates on timer even while the manual task reference remains unchanged', () => {
     vi.useRealTimers()
@@ -114,14 +114,14 @@ describe('Calendar, focus and details user interactions', () => {
     fireEvent.change(screen.getByLabelText('Дополнить / Изменить'), { target: { value: 'Переименуй в New title' } })
     fireEvent.click(screen.getByRole('button', { name: 'Применить указание' }))
     await waitFor(() => expect(useAppStore.getState().items[0].title).toBe('New title'))
-    expect((await db.getItem('refine'))?.startDate).toBe(item.startDate)
+    expect(useAppStore.getState().items.find(item => item.id === 'refine')?.startDate).toBe(item.startDate)
   })
   it('completion through a status patch records completedAt and clears manual focus', async () => {
     const item = task('complete', { isFocus: true })
     await db.createItem(item)
     useAppStore.getState().setItems([item])
     await useAppStore.getState().updateItem(item.id, { status: 'completed' })
-    expect(await db.getItem(item.id)).toMatchObject({ status: 'completed', isFocus: false, completedAt: new Date().toISOString() })
+    expect(useAppStore.getState().items.find(row => row.id === item.id)).toMatchObject({ status: 'completed', isFocus: false, completedAt: new Date().toISOString() })
   })
   it('notes can filter by secondary edited tags and omit archives', () => {
     useAppStore.getState().setItems([task('visible', { type: 'note', tags: ['#Work', '#Second'] }), task('other', { type: 'note' }), task('archived', { type: 'note', status: 'archived' })])

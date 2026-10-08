@@ -4,6 +4,8 @@ import { MiniAudioPlayer } from '../../audio/MiniAudioPlayer'
 import { ChecklistItem } from '../../../types/item'
 import { useAppStore } from '../../../store/useAppStore'
 import { useDrawerStore } from '../../../store/useDrawerStore'
+import { useNavigationStore } from '../../../store/navigationStore'
+import { useQuickCaptureStore } from '../../../store/useQuickCaptureStore'
 import { Checkbox } from '../../ui/Checkbox'
 import { calculateFocusedTask, getTaskTemporalStatus } from '../../../lib/focusLogic'
 import { localDateKey, localTime, parseInstant, tasksForToday } from '../../../lib/taskDates'
@@ -35,6 +37,8 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
 }) => {
   const { items, setFocusedTask, toggleTask, updateItem } = useAppStore()
   const { openDrawer } = useDrawerStore()
+  const setActiveTab = useNavigationStore((state) => state.setActiveTab)
+  const openQuickCapture = useQuickCaptureStore((state) => state.openQuickCapture)
   const [isSwitchFocusOpen, setIsSwitchFocusOpen] = useState(false)
   const switchMenuRef = useRef<HTMLDivElement>(null)
 
@@ -151,23 +155,33 @@ export const FocusHeroCard: React.FC<FocusHeroCardProps> = ({
     }
   }
 
-  if (focusWorkCompleted && !focusedTask) {
+  if (!focusedTask) {
     return (
       <section
         data-testid="focus-hero-card"
-        className="relative rounded-2xl bg-surface-container-low p-space-lg shadow-xl overflow-hidden border border-secondary/30 transition-all text-on-surface"
+        className="rounded-2xl bg-surface-container-low p-space-lg border border-outline-variant/30 text-on-surface"
       >
-        <div className="flex items-center gap-3 py-4">
-          <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-2xl">check_circle</span>
+        <div className="flex items-start gap-3">
+          <div aria-hidden="true" className="w-10 h-10 rounded-xl bg-surface-container-high text-outline flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-2xl">{focusWorkCompleted ? 'check_circle' : 'center_focus_weak'}</span>
           </div>
           <div>
             <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
-              Все задачи в фокусе выполнены!
+              {focusWorkCompleted ? 'Все задачи в фокусе выполнены!' : 'Нет задач в фокусе'}
             </h3>
             <p className="text-body-sm text-on-surface-variant mt-0.5">
-              Отличная работа. Выберите следующую задачу из списка или добавьте новую.
+              {pendingTasks.length > 0
+                ? 'Выберите задачу из списка, чтобы сосредоточиться на ней.'
+                : focusWorkCompleted
+                  ? 'Отличная работа. Можно отдохнуть или добавить новую задачу.'
+                  : 'Добавьте первую задачу, когда будете готовы приступить к работе.'}
             </p>
+            <button type="button"
+              onClick={() => pendingTasks.length > 0 ? setActiveTab('tasks') : openQuickCapture({ entityType: 'task' })}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-surface-container-high text-on-surface text-label-md font-medium hover:bg-surface-container-highest transition-colors cursor-pointer">
+              <span aria-hidden="true" className="material-symbols-outlined text-body-lg">{pendingTasks.length > 0 ? 'arrow_forward' : 'add'}</span>
+              {pendingTasks.length > 0 ? 'Выбрать задачу' : 'Добавить задачу'}
+            </button>
           </div>
         </div>
       </section>

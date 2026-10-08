@@ -1,6 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { useAppStore } from '../../store/useAppStore'
+import { getSession, logout } from '../../lib/api'
+import { saveProfile, useProfile } from '../../hooks/useProfile'
+import { SummaryScheduleSettings } from '../summaries/SummaryScheduleSettings'
 import {
   exportAllNotesAsMarkdown,
   exportDatabaseAsJson,
@@ -9,7 +12,6 @@ import {
 
 export const SettingsPage: React.FC = () => {
   const {
-    userName,
     subscriptionStatus,
     aiMode,
     structuringStyle,
@@ -21,8 +23,41 @@ export const SettingsPage: React.FC = () => {
   } = useSettingsStore()
 
   const { items } = useAppStore()
+  const profile = useProfile()
+  const [profileName, setProfileName] = useState(profile.name)
+  const [profileAvatar, setProfileAvatar] = useState(profile.avatar)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  useEffect(() => {
+    setProfileName(profile.name)
+    setProfileAvatar(profile.avatar)
+    setProfileError(null)
+  }, [profile.name, profile.avatar, profile.email])
+
+  const selectAvatar = (file?: File) => {
+    if (!file) return
+    setProfileError(null)
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setProfileError('Выберите PNG, JPEG или WebP размером до 2 МБ.')
+      return
+    }
+    const owner = getSession()?.user.id
+    const reader = new FileReader()
+    setAvatarLoading(true)
+    reader.onload = () => {
+      setAvatarLoading(false)
+      if (getSession()?.user.id === owner && typeof reader.result === 'string') setProfileAvatar(reader.result)
+    }
+    reader.onerror = () => {
+      setAvatarLoading(false)
+      setProfileError('Не удалось прочитать фотографию. Выберите другой файл.')
+    }
+    reader.readAsDataURL(file)
+  }
 
   const [exportError, setExportError] = useState<string | null>(null)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isSavedFeedback, setIsSavedFeedback] = useState(false)
 
@@ -50,7 +85,7 @@ export const SettingsPage: React.FC = () => {
             <span className="text-secondary font-medium">Версия 2.5.0</span>
           </div>
           <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
-            Настройки
+            Профиль
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
             Управление профилем, внешним видом, устройствами, параметрами AI и данными
@@ -66,13 +101,14 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-space-lg">
+        <SummaryScheduleSettings />
         {/* 1. Profile Section */}
         <section className="p-space-lg rounded-2xl bg-surface-container-low border border-surface-container-high/30 flex flex-col gap-space-md shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-primary text-body-lg">person</span>
               <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                Профиль пользователя
+                Настройки аккаунта
               </h2>
             </div>
             <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary font-label-sm text-label-sm font-semibold glow-emerald">
@@ -82,13 +118,49 @@ export const SettingsPage: React.FC = () => {
 
           <div className="flex items-center gap-4 py-2">
             <div className="w-14 h-14 rounded-full bg-surface-container-highest border border-primary/40 text-primary flex items-center justify-center font-bold text-xl shadow-xs">
-              {userName.charAt(0)}
+              {profileAvatar ? <img src={profileAvatar} alt="Фото профиля" className="w-full h-full rounded-full object-cover" /> : profile.initials}
             </div>
             <div className="flex flex-col">
-              <span className="text-title-md font-semibold text-on-surface">{userName}</span>
-              <span className="text-body-sm text-outline">alexander.developer@voicenotes.ai</span>
+              <span className="text-title-md font-semibold text-on-surface">{profile.name}</span>
+              <span className="text-body-sm text-outline">{profile.email}</span>
             </div>
           </div>
+          <form className="flex flex-col gap-3" onSubmit={(event) => {
+            event.preventDefault()
+            setProfileError(null)
+            try {
+              saveProfile(profileName, profileAvatar)
+              showSavedIndicator()
+            } catch (error) { setProfileError((error as Error).message) }
+          }}>
+            <label className="flex flex-col gap-1.5 text-body-sm text-on-surface-variant">
+              Отображаемое имя
+              <input required maxLength={80} autoComplete="nickname" value={profileName}
+                onChange={(event) => setProfileName(event.target.value)}
+                className="w-full rounded-xl bg-surface-container border border-outline-variant/30 px-3 py-2.5 text-on-surface focus:outline-primary" />
+            </label>
+            <label className="flex flex-col gap-1.5 text-body-sm text-on-surface-variant">
+              Фотография профиля
+              <input type="file" accept="image/png,image/jpeg,image/webp" disabled={avatarLoading}
+                onChange={(event) => { selectAvatar(event.target.files?.[0]); event.target.value = '' }}
+                className="text-body-sm file:mr-3 file:rounded-lg file:border-0 file:bg-surface-container-high file:px-3 file:py-2 file:text-on-surface" />
+            </label>
+            <p className="text-body-sm text-outline">PNG, JPEG или WebP до 2 МБ. Имя и фото сохраняются для этого аккаунта в этом браузере.</p>
+            {profileError && <p role="alert" className="text-error text-body-sm">{profileError}</p>}
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" disabled={avatarLoading || !profileName.trim() || (profileName.trim() === profile.name && profileAvatar === profile.avatar)}
+                className="rounded-xl bg-primary text-on-primary px-4 py-2 text-label-lg font-medium disabled:opacity-50">
+                Сохранить профиль
+              </button>
+              {profileAvatar && <button type="button" disabled={avatarLoading} onClick={() => setProfileAvatar('')}
+                className="rounded-xl px-4 py-2 text-label-lg text-on-surface-variant hover:bg-surface-container-high">Удалить фото</button>}
+              <button type="button" disabled={avatarLoading} onClick={() => {
+                setProfileName(profile.name)
+                setProfileAvatar(profile.avatar)
+                setProfileError(null)
+              }} className="rounded-xl px-4 py-2 text-label-lg text-on-surface-variant hover:bg-surface-container-high">Отменить</button>
+            </div>
+          </form>
         </section>
 
         {/* 2. Appearance Section */}
@@ -230,8 +302,8 @@ export const SettingsPage: React.FC = () => {
         </section>
 
         <section className="p-space-lg rounded-2xl bg-surface-container-low border border-surface-container-high/30 text-on-surface">
-          <h2 className="font-semibold">Локальное хранение</h2>
-          <p className="text-sm text-on-surface-variant mt-2">Данные находятся в этом браузере. Синхронизация между устройствами не подключена. Для переноса используйте экспорт.</p>
+          <h2 className="font-semibold">Хранение в аккаунте</h2>
+          <p className="text-sm text-on-surface-variant mt-2">Заметки сохраняются в вашем аккаунте и доступны после входа на других устройствах. Исходники загруженного аудио хранятся 14 дней; текст остаётся.</p>
         </section>
 
         {/* 5. AI Engine & Structuring Style Section */}
@@ -239,7 +311,7 @@ export const SettingsPage: React.FC = () => {
           <div className="flex items-center gap-space-xs">
             <span className="material-symbols-outlined text-primary text-body-lg">auto_awesome</span>
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              ИИ Движок и Структурирование (Gemini Flash)
+              Параметры обработки
             </h2>
           </div>
 
@@ -262,11 +334,11 @@ export const SettingsPage: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-body-md text-on-surface">«Быстрый» (Fast Mode)</span>
+                  <span className="font-semibold text-body-md text-on-surface">Быстрый</span>
                   <span className="text-xs px-2 py-0.5 rounded bg-surface-container-highest">По умолчанию</span>
                 </div>
                 <span className="text-xs text-outline">
-                  Мгновенная очистка текста, выделение сути и задач (&lt; 0.6 сек).
+                  Очистка текста, выделение основной мысли и явно заданных действий.
                 </span>
               </button>
 
@@ -283,13 +355,13 @@ export const SettingsPage: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-body-md text-on-surface">«Глубокий анализ (Pro)»</span>
+                  <span className="font-semibold text-body-md text-on-surface">Глубокий анализ</span>
                   <span className="text-xs px-2 py-0.5 rounded bg-secondary-container text-on-secondary font-semibold">
                     Pro
                   </span>
                 </div>
                 <span className="text-xs text-outline">
-                  Углубленный разбор связей, декомпозиция подзадач, категоризация и дайджесты.
+                  Разбор контекста, связей и последовательности действий с сохранением важных условий.
                 </span>
               </button>
             </div>
@@ -302,9 +374,9 @@ export const SettingsPage: React.FC = () => {
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
-                { key: 'concise' as const, label: '«Кратко»', desc: '1–2 тезиса' },
-                { key: 'detailed' as const, label: '«Подробно»', desc: 'Полный контекст' },
-                { key: 'action_plan' as const, label: '«План действий»', desc: 'Чек-лист шагов' },
+                { key: 'concise' as const, label: 'Кратко', desc: '1–2 тезиса' },
+                { key: 'detailed' as const, label: 'Подробно', desc: 'Полный контекст' },
+                { key: 'action_plan' as const, label: 'План действий', desc: 'Чек-лист шагов' },
               ].map((style) => (
                 <button
                   key={style.key}
@@ -337,7 +409,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <p className="text-body-sm text-on-surface-variant">
-            Локальное хранилище данных содержит {items.length} элементов. Вы можете в любой момент выгрузить полный архив или снимок базы.
+            В аккаунте {items.length} записей. Вы можете выгрузить архив или снимок заметок.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -372,7 +444,7 @@ export const SettingsPage: React.FC = () => {
           <div className="pt-2 border-t border-outline-variant/20 flex justify-between items-center">
             <div className="flex flex-col">
               <span className="text-sm font-medium text-error">Очистить локальный кэш</span>
-              <span className="text-xs text-outline">Сбросить локальные данные и вернуть демо-состояние</span>
+              <span className="text-xs text-outline">Сбросить оформление и настройки этого устройства</span>
             </div>
 
             <button
@@ -384,6 +456,30 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
         </section>
+      </div>
+
+      <div className="border-t border-outline-variant/20 pt-space-lg pb-space-lg">
+        {logoutError && <p role="alert" className="text-error text-body-sm mb-3">{logoutError}</p>}
+        <button
+          type="button"
+          disabled={loggingOut}
+          onClick={async () => {
+            if (loggingOut) return
+            setLoggingOut(true)
+            setLogoutError(null)
+            try {
+              await logout()
+            } catch (error) {
+              setLogoutError((error as Error).message)
+            } finally {
+              setLoggingOut(false)
+            }
+          }}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-outline-variant/30 px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+        >
+          <span className="material-symbols-outlined text-base" aria-hidden="true">logout</span>
+          {loggingOut ? 'Выходим…' : 'Выйти'}
+        </button>
       </div>
 
       {/* Confirmation Modal for Clearing Cache */}

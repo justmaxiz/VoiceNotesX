@@ -53,7 +53,7 @@ export function normalizeTaskDates<T extends Partial<Item>>(fields: T, existing?
   if ('estimatedMinutes' in fields && fields.estimatedMinutes !== undefined && duration !== fields.estimatedMinutes) {
     throw new Error('Длительность должна быть положительным числом минут (не более года)')
   }
-  if ((!('deadline' in fields) && 'dueDate' in fields && !fields.dueDate) || ('deadline' in fields && !fields.deadline)) {
+  if ((!('deadline' in fields) && 'dueDate' in fields && !fields.dueDate && !fields.startDate) || ('deadline' in fields && !fields.deadline)) {
     return { ...result, startDate: null, deadline: null, dueDate: null, dueTime: null }
   }
   let end = taskDeadline(existing || {})
@@ -61,7 +61,11 @@ export function normalizeTaskDates<T extends Partial<Item>>(fields: T, existing?
   const previousStart = parseInstant(existing?.startDate)
   let start = parseInstant(merged.startDate)
   let deriveStart = false
-  const legacyChange = !('deadline' in fields) && ('dueDate' in fields || 'dueTime' in fields)
+  // An explicit start with no end is a timed slot, even when AI also returns
+  // the calendar date. A date-only field must not stretch it to midnight.
+  const startOnlySchedule = Boolean(fields.startDate && !fields.deadline && !merged.isAllDay && !merged.dueTime && (!merged.dueDate || !merged.dueDate.includes('T')))
+  const legacyChange = !('deadline' in fields) && !startOnlySchedule && ('dueDate' in fields || 'dueTime' in fields)
+  if (startOnlySchedule && start) end = new Date(start.getTime() + duration * 60000)
   if ('deadline' in fields && fields.deadline) {
     end = parseInstant(fields.deadline)
     if (!end) throw new Error('Некорректный дедлайн')

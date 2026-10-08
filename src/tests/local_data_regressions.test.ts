@@ -5,9 +5,11 @@ import { spawnSync } from 'node:child_process'
 import ts from 'typescript'
 import { unzipSync, strFromU8 } from 'fflate'
 import { db } from '../lib/db'
+import { notesRepository } from '../lib/repository'
 import { audioPlaybackUrl, releaseAudioUrl } from '../lib/audioPersistence'
 import { createNotesZip, exportAllNotesAsMarkdown } from '../lib/export'
-import { generateDigestData } from '../lib/dailyDigestScheduler'
+import { buildSummaryContext } from '../../server/src/summaryFacts'
+import { presetPeriod } from '../../server/src/summaryContracts'
 import { useSettingsStore } from '../store/useSettingsStore'
 import { useAppStore } from '../store/useAppStore'
 import { tasksForToday } from '../lib/taskDates'
@@ -28,7 +30,7 @@ afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 describe('Persistent audio and real local data', () => {
   it('date-only schedules retain absent clock through store, database, updates and reload', async () => {
     await useAppStore.getState().addItem(item('date-only', { dueDate: '2026-10-10' }))
-    const original = (await db.getItem('date-only'))!
+    const original = (await notesRepository.getAllItems()).find(item => item.id === 'date-only')!
     expect(original.dueTime).toBeNull()
     expect(new Date(original.deadline!).getHours()).toBe(23)
     expect(new Date(original.deadline!).getSeconds()).toBe(59)
@@ -37,35 +39,27 @@ describe('Persistent audio and real local data', () => {
     localStorage.setItem('voicenotes_seeded', 'true')
     await useAppStore.getState().loadItems()
     expect(useAppStore.getState().items[0]).toMatchObject({ dueDate: '2026-10-10', dueTime: null, deadline: original.deadline })
-    expect((await db.getItem('date-only'))?.dueTime).toBeNull()
+    expect((await notesRepository.getAllItems()).find(item => item.id === 'date-only')?.dueTime).toBeNull()
   })
-  it('stores Blob atomically, recreates playback after reload and revokes old URL', async () => {
-    const blob = new NodeBlob(['recorded-audio'], { type: 'audio/webm' }) as unknown as Blob
-    await useAppStore.getState().addItem(item('audio'), { blob, duration: 42 })
-    const stored = (await db.getItem('audio'))!
-    expect(stored.audioUrl).toBeUndefined()
-    expect(stored.audioDuration).toBe(42)
-    expect(await (await db.getAudioSession('audio'))?.audioBlob?.text()).toBe('recorded-audio')
-    const first = useAppStore.getState().items[0].audioUrl
-    useAppStore.getState().setItems([])
-    localStorage.setItem('voicenotes_seeded', 'true')
-    await useAppStore.getState().loadItems()
-    expect(useAppStore.getState().items[0].audioUrl).toMatch(/^blob:/)
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith(first)
+  it('uses the protected server URL for playback without local blobs', async () => {
+    const row = item('audio', { audioUrl: '/api/v1/audio/audio-id/file' })
+    useAppStore.getState().setItems([row])
+    expect(await audioPlaybackUrl('audio')).toBe('/api/v1/audio/audio-id/file')
     releaseAudioUrl('audio')
-    expect(await audioPlaybackUrl('audio')).toMatch(/^blob:/)
+    expect(await db.audioSessions.count()).toBe(0)
   })
   it('audio-write failure leaves neither item nor audio persisted', async () => {
     vi.spyOn(db.audioSessions, 'put').mockRejectedValueOnce(new Error('Quota'))
     const blob = new NodeBlob(['audio']) as unknown as Blob
-    await expect(useAppStore.getState().addItem(item('fail'), { blob, duration: 5 })).rejects.toThrow('Quota')
+    await expect(db.createItem(item('fail'), { blob, duration: 5 })).rejects.toThrow('Quota')
     expect(await db.items.count()).toBe(0)
     expect(await db.audioSessions.count()).toBe(0)
     expect(useAppStore.getState().items).toEqual([])
   })
   it('ZIP contains real Markdown and original audio with collision-free filenames', async () => {
     const rows = [item('one', { title: 'Task' }), item('two', { title: 'Task' }), item('three', { title: 'Task-2' })]
-    await db.createItem(rows[0], { blob: new NodeBlob(['audio-bytes'], { type: 'audio/ogg' }) as unknown as Blob, duration: 3 })
+    rows[0].audioUrl = '/api/v1/audio/audio-id/file'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('audio-bytes', { headers: { 'Content-Type': 'audio/ogg' } }))
     const bytes = await createNotesZip(rows)
     expect(Array.from(bytes.slice(0, 4))).toEqual([80, 75, 3, 4])
     const files = unzipSync(bytes)
@@ -86,10 +80,11 @@ describe('Persistent audio and real local data', () => {
     const yesterday = new Date(2026, 9, 9, 10).toISOString()
     const old = new Date(2026, 8, 1, 10).toISOString()
     const rows = [item('today', { status: 'completed', completedAt: today }), item('yesterday', { status: 'completed', completedAt: yesterday }), item('old', { status: 'completed', completedAt: old }), item('archived', { status: 'archived', deadline: today }), item('note', { type: 'note' }), item('future', { deadline: new Date(2026, 9, 11, 10).toISOString() })]
-    expect(generateDigestData('today', rows).achievements[0]).toBe('Завершено задач: 1')
-    expect(generateDigestData('weekly', rows).achievements[0]).toBe('Завершено задач: 2')
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    expect(buildSummaryContext(rows, presetPeriod('day', zone), new Date()).metrics.completed).toBe(1)
+    expect(buildSummaryContext(rows, presetPeriod('rolling7', zone), new Date()).metrics.completed).toBe(2)
     expect(tasksForToday(rows).map((row) => row.id)).toEqual(['today'])
-    expect(generateDigestData('today', []).rawText).toContain('завершено 0 задач')
+    expect(buildSummaryContext([], presetPeriod('day', zone), new Date()).metrics.completed).toBe(0)
   })
   it('preference cleanup preserves other apps, reports and deletion/seed state', async () => {
     localStorage.setItem('unrelated-app', 'keep')

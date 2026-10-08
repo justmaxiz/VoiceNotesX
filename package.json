@@ -7,7 +7,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "backend:dev": "npm --prefix server run dev",
+    "backend:build": "npm --prefix server run build",
+    "backend:start": "npm --prefix server run start",
+    "backend:migrate": "npm --prefix server run migrate",
+    "backend:test": "npm --prefix server test",
+    "backend:db:up": "docker compose --env-file server/.env -f server/compose.yaml up -d --wait",
+    "backend:db:down": "docker compose --env-file server/.env -f server/compose.yaml down",
+    "backend:db:status": "docker compose --env-file server/.env -f server/compose.yaml ps"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

@@ -1,342 +1,549 @@
-import { localDateKey } from '../../lib/taskDates'
-import React, { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
-import { triggerDownload } from '../../lib/export'
+import { useSummary, useSummaryTimeZone } from '../../hooks/useSummary'
 import {
-  GeneratedDigest,
-  getStoredSummaries,
-  saveStoredSummaries,
-  generateDigestData,
-} from '../../lib/dailyDigestScheduler'
+  addDays,
+  presetPeriod,
+  normalizeTag,
+  type SummaryPeriod,
+  type SummaryPreset,
+  type SummaryReport,
+} from '../../../server/src/summaryContracts'
+import {
+  SummaryMetricsRow,
+  SummaryReportView,
+  summaryPeriodLabel,
+} from './SummaryReportView'
+import { summaryRepository } from '../../lib/summaryRepository'
+import { getSession, onSessionChange } from '../../lib/api'
+import {
+  getLegacySummaries,
+  formatLegacySummary,
+} from '../../lib/legacySummaries'
+import { triggerDownload } from '../../lib/export'
+import { useSummaryStore } from '../../store/useSummaryStore'
 
-export const AiSummariesPage: React.FC = () => {
-  const { items } = useAppStore()
-  const [reports, setReports] = useState<GeneratedDigest[]>(() => {
-    const stored = getStoredSummaries()
-    return stored
-  })
-
-  const [generationError, setGenerationError] = useState<string | null>(null)
+const control =
+  'bg-surface-container-high rounded-lg px-3 py-2 text-sm text-on-surface border border-outline-variant/30 min-w-0'
+export const AiSummariesPage = () => {
+  const zone = useSummaryTimeZone(),
+    items = useAppStore((s) => s.items)
+  const [preset, setPreset] = useState<SummaryPreset | 'custom'>('day'),
+    [quickTag, setQuickTag] = useState(''),
+    [tag, setTag] = useState(''),
+    [category, setCategory] = useState(''),
+    [comparison, setComparison] = useState(false)
+  const [start, setStart] = useState(presetPeriod('day', zone).startDate),
+    [end, setEnd] = useState(presetPeriod('day', zone).startDate)
+  const [minute, setMinute] = useState(0)
   useEffect(() => {
-    const refresh = () => setReports(getStoredSummaries())
-    window.addEventListener('voicenotes:summaries-updated', refresh)
-    window.addEventListener('storage', refresh)
-    return () => { window.removeEventListener('voicenotes:summaries-updated', refresh); window.removeEventListener('storage', refresh) }
-  }, [])
-  const [cooldownSeconds, setCooldownSeconds] = useState(0)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [selectedTag, setSelectedTag] = useState('#Разработка')
-
-  const todayKey = localDateKey()
-  const todayReport = reports.find((r) => r.dateKey === todayKey && r.period === 'За сегодня')
-
-  const tasksCount = items.filter((i) => i.type === 'task').length
-  const notesCount = items.filter((i) => i.type === 'note').length
-
-  // Cooldown countdown
-  useEffect(() => {
-    if (cooldownSeconds <= 0) return
-    const timer = setInterval(() => {
-      setCooldownSeconds((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
+    const timer = setInterval(() => setMinute((m) => m + 1), 60000)
     return () => clearInterval(timer)
-  }, [cooldownSeconds])
-
-  const handleGenerate = (type: 'today' | 'weekly' | 'tag') => {
-    if (cooldownSeconds > 0) return
-
-    setGenerationError(null)
+  }, [])
+  const period: SummaryPeriod = useMemo(
+    () => ({
+      ...presetPeriod(preset === 'custom' ? 'day' : preset, zone),
+      ...(preset === 'custom'
+        ? { startDate: start, endDateExclusive: addDays(end, 1) }
+        : {}),
+      tags: tag ? [tag] : [],
+      ...(category ? { category } : {}),
+      ...(comparison ? { comparison: true } : {}),
+    }),
+    [preset, zone, tag, category, comparison, start, end, minute],
+  )
+  const valid =
+    period.startDate < period.endDateExclusive &&
+    Date.parse(period.endDateExclusive) - Date.parse(period.startDate) <=
+      366 * 86400000
+  // Keep a valid key while editing an incomplete date range; no request until valid.
+  const state = useSummary(valid ? period : presetPeriod('day', zone), valid)
+  const [archive, setArchive] = useState<SummaryReport[]>([]),
+    [next, setNext] = useState<number | null>(0),
+    [archiveError, setArchiveError] = useState(''),
+    [archiveLoading, setArchiveLoading] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<SummaryReport | null>(
+      null,
+    ),
+    [legacy, setLegacy] = useState(getLegacySummaries)
+  const [owner, setOwner] = useState(getSession()?.user.id)
+  const [archiveOwner, setArchiveOwner] = useState(owner)
+  useEffect(() => onSessionChange((s) => setOwner(s?.user.id)), [])
+  const entries = useSummaryStore((s) => s.entries)
+  const reportVersions = Object.values(entries)
+    .map((e) => e.report?.id || '')
+    .join('|')
+  useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    if (archiveOwner !== owner) setArchive([])
+    setNext(0)
+    setSelectedReport(null)
+    setLegacy(getLegacySummaries())
+    setArchiveError('')
+    setArchiveOwner(owner)
+    if (owner) {
+      setArchiveLoading(true)
+      summaryRepository
+        .archive(0, controller.signal)
+        .then((r) => {
+          if (active) {
+            setArchive(r.reports)
+            setNext(r.nextOffset)
+          }
+        })
+        .catch((e) => {
+          if (active) setArchiveError(e.message)
+        })
+        .finally(() => {
+          if (active) setArchiveLoading(false)
+        })
+    }
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [owner, reportVersions])
+  const selected = archiveOwner === owner ? selectedReport : null
+  const report = selected || state.report || state.fallback
+  const displayedMetrics = report?.metrics || state.data?.metrics
+  const tags = [
+    ...new Set(
+      items
+        .flatMap((n) => [n.categoryTag, ...(n.tags || [])])
+        .map(normalizeTag)
+        .filter(Boolean),
+    ),
+  ].sort()
+  const categories = [
+    ...new Set(items.map((n) => normalizeTag(n.categoryTag)).filter(Boolean)),
+  ].sort()
+  const loadMore = async () => {
+    if (next === null || archiveLoading) return
+    const currentOwner = owner
+    setArchiveLoading(true)
     try {
-      const generated = generateDigestData(type, items, selectedTag)
-      const current = getStoredSummaries()
-      const updated = [generated, ...current.filter((report) => report.id !== generated.id)]
-      saveStoredSummaries(updated)
-      setReports(updated)
-      setCooldownSeconds(30)
-    } catch (error) { setGenerationError((error as Error).message) }
-  }
-
-  const handleCopyReport = (report: GeneratedDigest) => {
-    const textToCopy = `# ${report.title} (${report.date})\n\n${report.rawText}\n\n### Достижения:\n${report.achievements
-      .map((a) => `- ${a}`)
-      .join('\n')}\n\n### Рекомендации:\n${report.recommendations.map((r) => `- ${r}`).join('\n')}`
-
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy)
-      setCopiedId(report.id)
-      setTimeout(() => setCopiedId(null), 2000)
+      const page = await summaryRepository.archive(next)
+      if (getSession()?.user.id === currentOwner) {
+        setArchive((a) => [
+          ...a,
+          ...page.reports.filter(
+            (r) => !a.some((x) => x.slotKey === r.slotKey),
+          ),
+        ])
+        setNext(page.nextOffset)
+      }
+    } catch (e) {
+      if (getSession()?.user.id === currentOwner)
+        setArchiveError((e as Error).message)
+    } finally {
+      if (getSession()?.user.id === currentOwner) setArchiveLoading(false)
     }
   }
-
-  const handleExportReport = (report: GeneratedDigest) => {
-    const md = `# ${report.title}\n*Период: ${report.period} | ${report.date}*\n\n${report.rawText}\n\n## Достижения\n${report.achievements.map((a) => `- ${a}`).join('\n')}\n\n## Узкие места\n${report.bottlenecks.map((b) => `- ${b}`).join('\n')}\n\n## Рекомендации\n${report.recommendations.map((r) => `- ${r}`).join('\n')}`
-    triggerDownload(md, `ai-summary-${report.id}.md`)
+  const generating = Object.values(entries).some((entry) => entry.generating)
+  const generateQuick = (kind: 'day' | 'rolling7' | 'tag') => {
+    const selectedTag = quickTag || tags[0] || ''
+    const nextPreset = kind === 'day' ? 'day' : 'rolling7'
+    const nextPeriod = {
+      ...presetPeriod(nextPreset, zone),
+      tags: kind === 'tag' ? [selectedTag] : [],
+    }
+    setPreset(nextPreset)
+    setTag(kind === 'tag' ? selectedTag : '')
+    setCategory('')
+    setComparison(false)
+    setSelectedReport(null)
+    void useSummaryStore.getState().generate(nextPeriod)
   }
-
+  const select = async (id: string) => {
+    const current = owner
+    try {
+      const r = await summaryRepository.report(id)
+      if (current === getSession()?.user.id) setSelectedReport(r)
+    } catch (e) {
+      if (current === getSession()?.user.id)
+        setArchiveError((e as Error).message)
+    }
+  }
   return (
-    <div className="flex flex-col w-full gap-space-lg pt-space-md">
-      {generationError && <p role="alert" className="text-error">{generationError}</p>}
-      <p className="text-xs text-outline">Локальные отчеты по вашим записям. Семантический AI-анализ не подключен.</p>
-      {/* Header - Duplicate button removed per TASK-39 DoD */}
-      <div>
-        <div className="flex items-center gap-space-xs text-outline font-label-sm text-label-sm mb-1">
-          <span className="material-symbols-outlined text-secondary text-sm">auto_awesome</span>
-          <span className="uppercase tracking-wider">ИИ Дайджесты</span>
-          <span>•</span>
-          <span>Локальные итоги</span>
-        </div>
-        <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
+    <div className="flex flex-col gap-6 pt-4 max-w-4xl pb-12">
+      <header>
+        <h1 className="text-headline-xl font-semibold text-on-surface">
           AI Сводки
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Аналитические дайджесты, ретроспективы недели и структурированные выжимки продуктивности
+        <p className="mt-2 text-sm text-on-surface-variant">
+          Ближайшие сроки, конфликты расписания и итоги выбранного периода.
         </p>
-      </div>
-
-      {/* SECTION 1: Generator Action Cards */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-title-md font-semibold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">psychology</span>
-            <span>Генератор аналитических отчетов</span>
-          </h2>
-
-          {cooldownSeconds > 0 && (
-            <span className="text-xs text-outline font-mono flex items-center gap-1 bg-surface-container px-2.5 py-1 rounded-full border border-outline-variant/30">
-              <span className="material-symbols-outlined text-xs text-primary animate-spin">
-                timer
-              </span>
-              <span>Кулдаун: {cooldownSeconds}с</span>
+      </header>
+      <section
+        aria-label="Создать сводку"
+        className="grid grid-cols-1 md:grid-cols-3 gap-3"
+      >
+        {(
+          [
+            [
+              'day',
+              'today',
+              'Сводка за день',
+              'Результаты и открытые дела за сегодня.',
+              'Сформировать за день',
+            ],
+            [
+              'rolling7',
+              'date_range',
+              'Сводка за неделю',
+              'Итоги и записи за последние 7 дней.',
+              'Сформировать за неделю',
+            ],
+            [
+              'tag',
+              'tag',
+              'Сводка по тегу',
+              'Выбранное направление за последние 7 дней.',
+              'Сформировать по тегу',
+            ],
+          ] as const
+        ).map(([kind, icon, title, description, action]) => (
+          <div
+            key={kind}
+            className="rounded-2xl bg-surface-container-low border border-outline-variant/20 p-4 flex flex-col gap-3"
+          >
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-primary text-2xl"
+            >
+              {icon}
             </span>
+            <div>
+              <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                {description}
+              </p>
+            </div>
+            {kind === 'tag' && (
+              <label className="grid gap-1 text-xs text-outline">
+                Тег для отчёта
+                <select
+                  className={control}
+                  value={quickTag || tags[0] || ''}
+                  onChange={(e) => setQuickTag(e.target.value)}
+                >
+                  {!tags.length && (
+                    <option value="">Нет тегов в записях</option>
+                  )}
+                  {tags.map((value) => (
+                    <option key={value} value={value}>
+                      #{value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button
+              type="button"
+              disabled={generating || (kind === 'tag' && !tags.length)}
+              onClick={() => generateQuick(kind)}
+              className="mt-auto w-full rounded-lg bg-primary px-3 py-2 text-sm font-medium text-on-primary disabled:opacity-50"
+            >
+              {action}
+            </button>
+          </div>
+        ))}
+      </section>
+      <section
+        aria-label="Параметры сводки"
+        className="flex flex-wrap items-end gap-3"
+      >
+        <label className="grid gap-1 text-xs text-outline">
+          Период
+          <select
+            className={control}
+            value={preset}
+            onChange={(e) => {
+              setPreset(e.target.value as typeof preset)
+              setSelectedReport(null)
+            }}
+          >
+            {[
+              ['day', 'День'],
+              ['rolling7', 'Последние 7 дней'],
+              ['week', 'Календарная неделя'],
+              ['month', 'Месяц'],
+              ['custom', 'Диапазон'],
+            ].map(([v, t]) => (
+              <option key={v} value={v}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+        {preset === 'custom' && (
+          <>
+            <label className="grid gap-1 text-xs text-outline">
+              Начало
+              <input
+                type="date"
+                className={control}
+                value={start}
+                onChange={(e) => {
+                  if (e.target.value) setStart(e.target.value)
+                  setSelectedReport(null)
+                }}
+              />
+            </label>
+            <label className="grid gap-1 text-xs text-outline">
+              Последний день
+              <input
+                type="date"
+                className={control}
+                value={end}
+                onChange={(e) => {
+                  if (e.target.value) setEnd(e.target.value)
+                  setSelectedReport(null)
+                }}
+              />
+            </label>
+          </>
+        )}
+        <label className="grid gap-1 text-xs text-outline">
+          Тег
+          <select
+            className={control}
+            value={tag}
+            onChange={(e) => {
+              setTag(e.target.value)
+              setSelectedReport(null)
+            }}
+          >
+            <option value="">Все теги</option>
+            {tags.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs text-outline">
+          Категория
+          <select
+            className={control}
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value)
+              setSelectedReport(null)
+            }}
+          >
+            <option value="">Все категории</option>
+            {categories.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-on-surface-variant flex items-center gap-2 py-2">
+          <input
+            type="checkbox"
+            checked={comparison}
+            onChange={(e) => {
+              setComparison(e.target.checked)
+              setSelectedReport(null)
+            }}
+          />
+          Сравнить закрытия
+        </label>
+      </section>
+      {!valid && (
+        <p role="alert" className="text-error">
+          Выберите диапазон от 1 до 366 дней.
+        </p>
+      )}
+      <section
+        aria-label="Отчёт"
+        className="bg-surface-container-low rounded-2xl p-4 sm:p-6 space-y-5"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-outline">
+            {selected ? 'Сохранённая сводка' : 'Сводка выбранного периода'}
+          </p>
+          <button
+            type="button"
+            className="bg-primary text-on-primary rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+            disabled={!valid || generating || !!selected}
+            onClick={() => void state.generate()}
+          >
+            {state.generating
+              ? 'Генерация…'
+              : report
+                ? 'Обновить сводку'
+                : 'Сформировать сводку'}
+          </button>
+        </div>
+        {state.error &&
+          !selected &&
+          (report && /проверку источников|формата/.test(state.error) ? (
+            <details className="text-xs text-outline">
+              <summary className="cursor-pointer py-2">
+                ИИ-сводка недоступна. Показаны данные записей.
+              </summary>
+              <p className="mt-2" role="alert">
+                {state.error}
+              </p>
+            </details>
+          ) : (
+            <p role="alert" className="text-error text-sm">
+              {state.error}
+            </p>
+          ))}
+        {state.offline && !selected && (
+          <p role="status" className="text-sm text-outline">
+            Нет связи. Показан сохранённый снимок.
+          </p>
+        )}
+        {displayedMetrics && !report && (
+          <div>
+            <p className="text-xs text-outline">
+              {`Данные на ${new Date(state.data!.asOf).toLocaleString('ru-RU', { timeZone: zone })}`}
+            </p>
+            <SummaryMetricsRow metrics={displayedMetrics} />
+          </div>
+        )}
+        {state.loading && (
+          <p role="status" className="text-xs text-outline">
+            Загрузка фактов…
+          </p>
+        )}
+        {report ? (
+          <SummaryReportView key={report.id} report={report} />
+        ) : state.generating ? (
+          <div role="status" className="space-y-3 motion-safe:animate-pulse">
+            <p className="text-sm text-outline">ИИ готовит наблюдения…</p>
+            <div className="h-4 bg-surface-container-high rounded w-3/4" />
+            <div className="h-4 bg-surface-container-high rounded w-1/2" />
+          </div>
+        ) : (
+          state.data && (
+            <p className="text-sm text-on-surface-variant">
+              {state.data.coverage.total
+                ? 'Факты готовы. Сформируйте сводку, чтобы выбрать результаты и источники.'
+                : 'В периоде нет записей и текущих сроков для внимания.'}
+            </p>
+          )
+        )}
+        {state.data &&
+          !report &&
+          state.data.facts
+            .filter((f) => f.kind === 'overdue' && f.value > 0)
+            .map((f) => (
+              <p className="text-sm text-error" key={f.id}>
+                {f.text}
+              </p>
+            ))}
+        {displayedMetrics && !report && (
+          <p className="text-xs text-outline">
+            План: {displayedMetrics.plannedMinutes} мин; оценки у{' '}
+            {displayedMetrics.estimatedCount} из{' '}
+            {displayedMetrics.scheduledCount} записей. Фактическое время
+            неизвестно.
+          </p>
+        )}
+        {!report && displayedMetrics?.comparison && (
+          <p className="text-xs text-outline">
+            Изменение закрытий в сопоставимом срезе:{' '}
+            {displayedMetrics.comparison.delta}. Это не оценка продуктивности.
+          </p>
+        )}
+        {comparison && displayedMetrics && !displayedMetrics.comparison && (
+          <p className="text-xs text-outline">
+            Для этого среза нет сопоставимого периода одинаковой длительности.
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          {selected && (
+            <button
+              className="text-primary text-sm rounded-lg px-3 py-2 hover:bg-surface-container-high"
+              onClick={() => setSelectedReport(null)}
+            >
+              Вернуться к выбранному периоду
+            </button>
+          )}
+          {!selected && (
+            <button
+              className="text-primary text-sm rounded-lg px-3 py-2 hover:bg-surface-container-high"
+              onClick={() => void state.load()}
+              disabled={state.loading}
+            >
+              Обновить данные
+            </button>
           )}
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md">
-          {/* Today Digest Card */}
-          <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between gap-3 shadow-xs">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="material-symbols-outlined text-secondary text-2xl">today</span>
-                <span className="px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary text-[10px] font-semibold">
-                  AI Сводка
-                </span>
-              </div>
-              <h3 className="text-body-md font-semibold text-on-surface">Сводка за сегодня</h3>
-              <p className="text-xs text-outline mt-1 leading-relaxed">
-                Анализ закрытых дел, текущих блокеров и фокуса дня
-              </p>
-              <div className="text-[11px] text-on-surface-variant mt-2">
-                К анализу: {tasksCount} задач и {notesCount} заметок
-              </div>
-              {todayReport && (
-                <div className="text-[11px] text-secondary mt-1 flex items-center gap-1 font-medium">
-                  <span className="material-symbols-outlined text-xs">check</span>
-                  <span>Обновлено в {todayReport.updatedAtTime}</span>
-                </div>
-              )}
-            </div>
-
-            <button
-              type="button"
-              disabled={cooldownSeconds > 0}
-              onClick={() => handleGenerate('today')}
-              className="w-full py-2 px-3 rounded-xl bg-secondary text-on-secondary hover:bg-secondary/90 font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs glow-emerald"
-            >
-              <span className={`material-symbols-outlined text-sm `}>
-                auto_awesome
-              </span>
-              <span>
-                {todayReport
-                  ? 'Обновить сводку за сегодня'
-                  : 'Сформировать за сегодня'}
-              </span>
-            </button>
-          </div>
-
-          {/* Weekly Retrospective Card */}
-          <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between gap-3 shadow-xs">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="material-symbols-outlined text-primary text-2xl">date_range</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-semibold">
-                  AI Ретро
-                </span>
-              </div>
-              <h3 className="text-body-md font-semibold text-on-surface">Еженедельная ретроспектива</h3>
-              <p className="text-xs text-outline mt-1 leading-relaxed">
-                Сводка результатов за последние 7 дней, тренды и победы
-              </p>
-              <div className="text-[11px] text-on-surface-variant mt-2">
-                Глубокий анализ истории
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={cooldownSeconds > 0}
-              onClick={() => handleGenerate('weekly')}
-              className="w-full py-2 px-3 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs glow-violet"
-            >
-              <span className={`material-symbols-outlined text-sm `}>
-                auto_awesome
-              </span>
-              <span>
-                Сформировать ретро недели
-              </span>
-            </button>
-          </div>
-
-          {/* Project Tag Analysis Card */}
-          <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between gap-3 shadow-xs">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="material-symbols-outlined text-[#4fc3f7] text-2xl">tag</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#4fc3f7]/20 text-[#4fc3f7] text-[10px] font-semibold">
-                  AI Срез
-                </span>
-              </div>
-              <h3 className="text-body-md font-semibold text-on-surface">Анализ проекта по тегу</h3>
-              <p className="text-xs text-outline mt-1 leading-relaxed">
-                Детальный отчет по выбранному направлению деятельности
-              </p>
-              <div className="flex items-center gap-1.5 mt-2">
-                {['#Разработка', '#Дизайн', '#Финансы'].map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSelectedTag(tag)}
-                    className={`px-2 py-0.5 rounded-md text-[11px] transition-colors cursor-pointer ${
-                      selectedTag === tag
-                        ? 'bg-surface-container-highest text-primary font-semibold border border-primary/40'
-                        : 'bg-surface-container text-outline hover:text-on-surface'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={cooldownSeconds > 0}
-              onClick={() => handleGenerate('tag')}
-              className="w-full py-2 px-3 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-            >
-              <span className={`material-symbols-outlined text-sm `}>
-                analytics
-              </span>
-              <span>
-                {`Сформировать отчет ${selectedTag}`}
-              </span>
-            </button>
-          </div>
-        </div>
       </section>
-
-      {/* SECTION 2: Saved Reports & Archive */}
-      <section className="flex flex-col gap-space-md mt-4">
-        <h2 className="text-title-md font-semibold text-on-surface flex items-center gap-2">
-          <span className="material-symbols-outlined text-outline">history</span>
-          <span>Архив и сохраненные отчеты ({reports.length})</span>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-on-surface">
+          Архив и сохранённые отчёты
         </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
-          {reports.map((report) => (
-            <article
-              key={report.id}
-              className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex flex-col justify-between gap-4 shadow-sm"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="font-semibold text-title-md text-on-surface">
-                    {report.title}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-label-sm font-medium">
-                    {report.period}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {report.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-xs font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <p className="text-body-sm text-on-surface-variant leading-relaxed mb-3">
-                  {report.rawText}
-                </p>
-
-                {/* Structured Sections */}
-                <div className="space-y-2 text-xs bg-surface-container-high/30 p-3 rounded-xl border border-outline-variant/15">
-                  <div>
-                    <span className="text-secondary font-semibold uppercase tracking-wider block mb-1">
-                      ✓ Главные результаты:
-                    </span>
-                    <ul className="list-disc list-inside space-y-0.5 text-on-surface">
-                      {report.achievements.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-1.5 border-t border-outline-variant/15">
-                    <span className="text-error font-semibold uppercase tracking-wider block mb-1">
-                      ! Блокеры и открытые дела:
-                    </span>
-                    <ul className="list-disc list-inside space-y-0.5 text-on-surface">
-                      {report.bottlenecks.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-1.5 border-t border-outline-variant/15">
-                    <span className="text-primary font-semibold uppercase tracking-wider block mb-1">
-                      → План и рекомендации:
-                    </span>
-                    <ul className="list-disc list-inside space-y-0.5 text-on-surface">
-                      {report.recommendations.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-outline-variant/15 text-xs text-outline">
-                <span>{report.date}</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCopyReport(report)}
-                    className="hover:text-on-surface text-outline transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {copiedId === report.id ? 'check' : 'content_copy'}
-                    </span>
-                    <span>{copiedId === report.id ? 'Скопировано!' : 'Копировать'}</span>
-                  </button>
-                  <span>•</span>
-                  <button
-                    type="button"
-                    onClick={() => handleExportReport(report)}
-                    className="text-primary hover:underline cursor-pointer flex items-center gap-0.5"
-                  >
-                    <span className="material-symbols-outlined text-sm">download</span>
-                    <span>Экспорт в .md</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+        {archiveError && (
+          <p role="alert" className="text-error">
+            {archiveError}
+          </p>
+        )}
+        <div className="divide-y divide-outline-variant/30">
+          {archiveOwner === owner &&
+            archive.map((r) => (
+              <button
+                key={r.slotKey}
+                className="w-full text-left flex flex-wrap justify-between gap-2 py-3 text-sm text-on-surface-variant hover:text-primary"
+                onClick={() => void select(r.id)}
+              >
+                <span>
+                  {summaryPeriodLabel(r)}
+                  {r.period.tags.length ? ` · ${r.period.tags.join(', ')}` : ''}
+                </span>
+                <span className="text-xs text-outline">
+                  {r.generationMode === 'ai' ? 'ИИ' : 'Факты'} · версия{' '}
+                  {r.version}
+                </span>
+              </button>
+            ))}
         </div>
+        {next !== null && (
+          <button
+            className="text-primary text-sm"
+            disabled={archiveLoading}
+            onClick={() => void loadMore()}
+          >
+            {archiveLoading ? 'Загрузка…' : 'Загрузить ещё'}
+          </button>
+        )}
       </section>
+      {archiveOwner === owner && legacy.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg text-on-surface font-semibold">
+            Локальные отчёты прежней версии
+          </h2>
+          {legacy.map((r) => (
+            <details key={r.id} className="text-sm text-on-surface-variant">
+              <summary className="cursor-pointer py-2">
+                {r.title} · {r.date}
+              </summary>
+              <pre className="whitespace-pre-wrap font-sans text-xs">
+                {formatLegacySummary(r)}
+              </pre>
+              <button
+                className="text-primary py-2"
+                onClick={() => {
+                  try {
+                    triggerDownload(
+                      formatLegacySummary(r),
+                      `legacy-summary-${r.id.replace(/[^a-zA-Z0-9-]/g, '')}.md`,
+                    )
+                  } catch {
+                    setArchiveError('Не удалось скачать локальный отчёт.')
+                  }
+                }}
+              >
+                Экспорт в .md
+              </button>
+            </details>
+          ))}
+        </section>
+      )}
     </div>
   )
 }

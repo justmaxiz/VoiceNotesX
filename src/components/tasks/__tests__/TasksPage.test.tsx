@@ -68,6 +68,6 @@ describe('TasksPage - Focus Task & Kanban Streamline (TASK-36)', () => {
     fireEvent.click(targetBtn)
 
     // Task becomes focused with badge
-    expect(screen.getByText('🎯 В фокусе')).toBeInTheDocument()
+    expect(await screen.findByText('🎯 В фокусе')).toBeInTheDocument()
   })
 })

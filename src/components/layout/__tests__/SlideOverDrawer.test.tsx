@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { SlideOverDrawer } from '../SlideOverDrawer'
 import { useDrawerStore } from '../../../store/useDrawerStore'
@@ -52,7 +52,7 @@ describe('SlideOverDrawer - Task Details, Tags & Reminders (TASK-37)', () => {
     expect(screen.getByText('+ Тег')).toBeInTheDocument()
   })
 
-  it('renders reminders selector and allows changing reminder time', () => {
+  it('renders reminders selector and allows changing reminder time', async () => {
     render(<SlideOverDrawer />)
 
     expect(screen.getByText('Напоминание')).toBeInTheDocument()
@@ -61,25 +61,25 @@ describe('SlideOverDrawer - Task Details, Tags & Reminders (TASK-37)', () => {
 
     fireEvent.click(reminderButton)
     fireEvent.click(screen.getByRole('option', { name: /За 1 час до начала/i }))
-    expect(useAppStore.getState().items[0].reminderMinutesBefore).toBe(60)
+    await waitFor(() => expect(useAppStore.getState().items[0].reminderMinutesBefore).toBe(60))
   })
 
-  it('toggles focus state when target button is clicked', () => {
+  it('toggles focus state when target button is clicked', async () => {
     render(<SlideOverDrawer />)
 
     const focusBtn = screen.getByText('Сделать главной')
     fireEvent.click(focusBtn)
 
-    expect(screen.getByText('В фокусе дня')).toBeInTheDocument()
+    expect(await screen.findByText('В фокусе дня')).toBeInTheDocument()
   })
 
-  it('toggles checklist item completion with custom Checkbox', () => {
+  it('toggles checklist item completion with custom Checkbox', async () => {
     render(<SlideOverDrawer />)
 
     const itemCheckbox = screen.getByRole('checkbox', { name: 'Пункт: Подпункт 1' })
     expect(itemCheckbox).toHaveAttribute('aria-checked', 'false')
 
     fireEvent.click(itemCheckbox)
-    expect(useAppStore.getState().items[0].checklist?.[0].isCompleted).toBe(true)
+    await waitFor(() => expect(useAppStore.getState().items[0].checklist?.[0].isCompleted).toBe(true))
   })
 })

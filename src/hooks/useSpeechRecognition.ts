@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useLiveDictation } from './useLiveDictation'
 
 export interface SpeechRecognitionHook {
   transcript: string
@@ -7,140 +8,150 @@ export interface SpeechRecognitionHook {
   isSupported: boolean
   error: string | null
   startListening: () => void
-  stopListening: () => void
+  stopListening: () => Promise<string>
+  abortListening: () => void
   resetTranscript: () => void
 }
 
 export function useSpeechRecognition(lang = 'ru-RU'): SpeechRecognitionHook {
+  const live = useLiveDictation(lang)
+  const browser = useBrowserSpeechRecognition(lang)
+  return live.isSupported ? live : browser
+}
+
+function useBrowserSpeechRecognition(lang: string): SpeechRecognitionHook {
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const isSupported =
-    typeof window !== 'undefined' &&
-    Boolean(
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    )
-
   const recognitionRef = useRef<any>(null)
-  const isListeningRef = useRef(false)
+  const listeningRef = useRef(false)
+  const finalRef = useRef('')
+  const interimRef = useRef('')
+  const finishingRef = useRef<((text: string) => void) | null>(null)
+  const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isSupported = typeof window !== 'undefined' && Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
 
-  const stopListening = useCallback(() => {
-    isListeningRef.current = false
+  const complete = useCallback(() => {
+    if (finishTimer.current) clearTimeout(finishTimer.current)
+    finishTimer.current = null
+    const text = `${finalRef.current} ${interimRef.current}`.trim()
+    const resolve = finishingRef.current
+    finishingRef.current = null
     setIsListening(false)
-    setInterimTranscript('')
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop()
-      } catch {
-        // ignore
-      }
-    }
+    resolve?.(text)
   }, [])
 
+  const abortListening = useCallback(() => {
+    listeningRef.current = false
+    const recognition = recognitionRef.current
+    recognitionRef.current = null // Ignore late results from a cancelled session.
+    recognition?.abort()
+    complete()
+  }, [complete])
+
   const resetTranscript = useCallback(() => {
+    finalRef.current = ''
+    interimRef.current = ''
     setTranscript('')
     setInterimTranscript('')
   }, [])
 
+  const stopListening = useCallback((): Promise<string> => {
+    listeningRef.current = false
+    if (!recognitionRef.current) return Promise.resolve(`${finalRef.current} ${interimRef.current}`.trim())
+    return new Promise(resolve => {
+      finishingRef.current = resolve
+      // Some browsers do not emit onend after stop. Keep the last visible words.
+      finishTimer.current = setTimeout(() => {
+        const recognition = recognitionRef.current
+        recognitionRef.current = null
+        recognition?.abort()
+        complete()
+      }, 1500)
+      try { recognitionRef.current.stop() } catch { complete() }
+    })
+  }, [complete])
+
   const startListening = useCallback(() => {
+    if (listeningRef.current || finishingRef.current) return
     setError(null)
     if (!isSupported) {
-      setError('Web Speech API не поддерживается в данном браузере')
+      setError('Распознавание речи не поддерживается этим браузером. Откройте сайт в Chrome или Edge.')
       return
     }
-
-    const SpeechRecognitionClass =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-
-    if (!recognitionRef.current) {
-      const recognition = new SpeechRecognitionClass()
-      recognition.continuous = true
-      recognition.interimResults = true
-      recognition.lang = lang
-
-      recognition.onresult = (event: any) => {
-        let finalChunk = ''
-        let interimChunk = ''
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i]
-          const text = result[0]?.transcript || ''
-          if (result.isFinal) {
-            finalChunk += text + ' '
-          } else {
-            interimChunk += text
-          }
-        }
-
-        if (finalChunk) {
-          setTranscript((prev) => (prev ? `${prev.trim()} ${finalChunk.trim()}` : finalChunk.trim()))
-        }
-        setInterimTranscript(interimChunk)
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const recognition = new Recognition()
+    recognitionRef.current = recognition
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = lang === 'auto' ? navigator.language : lang
+    let prefix = finalRef.current
+    recognition.onresult = (event: any) => {
+      if (recognitionRef.current !== recognition) return
+      const final: string[] = []
+      const interim: string[] = []
+      // Results are cumulative within a session; rebuilding avoids duplicates.
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i]
+        ;(result.isFinal ? final : interim).push(result[0]?.transcript || '')
       }
-
-      recognition.onerror = (event: any) => {
-        if (event.error === 'no-speech') {
-          // ignore silence
-          return
-        }
-        setError(event.error || 'Ошибка распознавания речи')
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          isListeningRef.current = false
-          setIsListening(false)
-        }
-      }
-
-      recognition.onend = () => {
-        // Auto-restart continuous recognition if listening flag is still true
-        if (isListeningRef.current) {
-          try {
-            recognition.start()
-          } catch {
-            isListeningRef.current = false
-            setIsListening(false)
-          }
-        } else {
-          setIsListening(false)
-        }
-      }
-
-      recognitionRef.current = recognition
+      finalRef.current = [prefix, ...final].filter(Boolean).join(' ').trim()
+      interimRef.current = interim.join(' ').trim()
+      setTranscript(finalRef.current)
+      setInterimTranscript(interimRef.current)
     }
-
-    isListeningRef.current = true
-    setIsListening(true)
-
-    try {
-      recognitionRef.current.start()
-    } catch {
-      // might already be started
+    recognition.onerror = (event: any) => {
+      if (recognitionRef.current !== recognition || event.error === 'no-speech') return
+      listeningRef.current = false
+      const messages: Record<string, string> = {
+        'not-allowed': 'Разрешите доступ к микрофону в браузере.',
+        'service-not-allowed': 'Браузер запретил распознавание речи.',
+        network: 'Сервис распознавания речи недоступен. Проверьте соединение.',
+        'audio-capture': 'Микрофон недоступен. Проверьте его подключение.',
+      }
+      setError(messages[event.error] || 'Не удалось распознать речь. Повторите диктовку.')
+      recognitionRef.current = null
+      recognition.abort()
+      complete()
     }
-  }, [isSupported, lang])
-
-  useEffect(() => {
-    return () => {
-      isListeningRef.current = false
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort()
-        } catch {
-          // ignore
+    recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return
+      if (listeningRef.current) {
+        prefix = `${finalRef.current} ${interimRef.current}`.trim()
+        finalRef.current = prefix
+        interimRef.current = ''
+        setTranscript(prefix)
+        setInterimTranscript('')
+        try { recognition.start() } catch {
+          listeningRef.current = false
+          setError('Распознавание остановлено. Можно отправить уже распознанный текст.')
+          complete()
         }
+      } else {
         recognitionRef.current = null
+        complete()
       }
     }
+    listeningRef.current = true
+    setIsListening(true)
+    try { recognition.start() } catch {
+      listeningRef.current = false
+      recognitionRef.current = null
+      setError('Не удалось начать диктовку. Повторите попытку.')
+      complete()
+    }
+  }, [isSupported, lang, complete])
+
+  useEffect(() => () => {
+    listeningRef.current = false
+    const recognition = recognitionRef.current
+    recognitionRef.current = null
+    recognition?.abort()
+    if (finishTimer.current) clearTimeout(finishTimer.current)
+    finishingRef.current?.(`${finalRef.current} ${interimRef.current}`.trim())
+    finishingRef.current = null
   }, [])
 
-  return {
-    transcript,
-    interimTranscript,
-    isListening,
-    isSupported,
-    error,
-    startListening,
-    stopListening,
-    resetTranscript,
-  }
+  return { transcript, interimTranscript, isListening, isSupported, error, startListening, stopListening, abortListening, resetTranscript }
 }

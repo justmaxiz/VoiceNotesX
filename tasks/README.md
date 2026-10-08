@@ -61,4 +61,52 @@
 * [TASK-39: AI Сводки: разделение действий и архива, лимиты и вечерний автодайджест (AI Summaries UX & Limits)](TASK-39-ai-summaries-ux-and-rate-limiting.md)
 * [TASK-40: Главный экран: устранение дублирования инпута и единый Quick Capture (Single Unified Quick Capture)](TASK-40-dashboard-single-quick-capture.md)
 * [TASK-41: Современные чекбоксы Linear/Things 3, тактильный отклик и мультиселект (Modern Checkboxes & Multiselect)](TASK-41-modern-checkboxes-and-multiselect.md)
+* [TASK-42: Поля и правила глобального поиска (Global Search Fields & Query Rules)](TASK-42-search-index-fields-and-query-rules.md)
+* [TASK-43: Выдача результатов в командной палитре (Command Palette Search Results)](TASK-43-command-palette-search-results.md)
+* [TASK-44: Доступность и проверка поиска в командной палитре (Command Palette Search Accessibility & Tests)](TASK-44-command-palette-search-accessibility-and-tests.md)
 
+## ☁️ Блок 9. Облачный backend и ИИ-обработка пользовательского ввода
+
+Реализация 45–59 и автоматическая приёмка 60 завершены. Результаты, инструкции и оставшийся live/staging smoke описаны в [отчёте приёмки 45–60](ACCEPTANCE-45-60.md).
+
+Целевой стек: Node.js + PostgreSQL, авторизация через Node API, исходное аудио в закрытой папке backend. Production-база, аудио и backups размещаются в РФ. Следующий список задаёт порядок выполнения; `TASK-47` можно подготовить независимо от серверного подключения. `TASK-45A` нужен перед авторизацией, а `TASK-48A` — перед файловыми потоками клиента и аудиообработкой.
+
+* [TASK-45: Базовый Node.js backend и API-каркас](TASK-45-node-backend-bootstrap.md)
+* [TASK-45A: Подключение PostgreSQL и миграции](TASK-45A-postgresql-connection-and-migrations.md)
+* [TASK-46: Аутентификация и идентичность клиента](TASK-46-node-auth-and-client-identity.md)
+* [TASK-47: Единая модель заметки и API-контракт](TASK-47-unified-note-contract.md)
+* [TASK-48: Схема PostgreSQL и изоляция данных](TASK-48-postgresql-schema-and-isolation.md)
+* [TASK-48A: Закрытое файловое хранилище аудио](TASK-48A-private-audio-file-storage.md)
+* [TASK-49: REST API для заметок и аудиометаданных](TASK-49-notes-rest-api.md)
+* [TASK-50: Вход в веб-клиент и сессия пользователя](TASK-50-web-auth-session.md)
+* [TASK-51: Перевод веб-клиента на backend-репозитории](TASK-51-web-remote-data-repository.md)
+* [TASK-52: Однократный перенос локальных заметок в аккаунт](TASK-52-migrate-local-data.md)
+* [TASK-53: Единые заметки и представления по расписанию](TASK-53-schedule-driven-note-views.md)
+* [TASK-54: Серверное структурирование текста через ИИ](TASK-54-server-ai-structuring.md)
+* [TASK-55: Быстрый ввод с AI-панелью и повтором обработки](TASK-55-text-ai-capture-flow.md)
+* [TASK-56: Backend загрузки и анализа аудиофайлов](TASK-56-audio-upload-processing-api.md)
+* [TASK-57: Удаление аудио по сроку хранения](TASK-57-audio-retention-cleanup.md)
+* [TASK-58: Компактный прогресс загрузки и анализа аудио](TASK-58-audio-processing-widget.md)
+* [TASK-59: Просмотр и утверждение действий из аудио](TASK-59-audio-action-review.md)
+* [TASK-60: Сквозная приёмка ИИ-ввода и облачной синхронизации](TASK-60-ai-input-acceptance.md)
+
+## 📊 Блок 10. ИИ-сводки с проверяемыми наблюдениями
+
+Согласован вариант 2: backend рассчитывает факты, ИИ формирует компактные наблюдения со ссылками на записи. Генерация выполняется по кнопке и вечером на сервере даже при закрытом приложении; отчёты сохраняются в PostgreSQL. Модели доступны названия, описания и чек-листы, без полных транскриптов. Историю изменений задач и выводы о повторных переносах в этой версии не добавляем.
+
+Задачи 61–71 реализованы; автоматическая приёмка 72 выполнена. Результаты и оставшийся live/staging smoke описаны в [отчёте приёмки 61–72](ACCEPTANCE-61-72.md). Контракты и расчёты задают основу, хранение и LLM сходятся в едином API, затем подключаются расписание и клиент. При реализации отдельных задач действуют ограничения тестирования и запрет автоматических коммитов из `AGENTS.md`.
+
+* [TASK-61: Контракты ИИ-сводок и единая модель периода](TASK-61-summary-contracts-and-periods.md)
+* [TASK-62: Серверные метрики и проверяемые факты сводки](TASK-62-summary-metrics-and-facts.md)
+* [TASK-63: Отбор контекста и источников для ИИ-сводки](TASK-63-summary-ai-context-and-evidence.md)
+* [TASK-64: PostgreSQL-хранилище отчётов, настроек и заданий](TASK-64-summary-storage-and-jobs.md)
+* [TASK-65: Генерация ИИ-наблюдений и проверка достоверности](TASK-65-summary-llm-generation-and-validation.md)
+* [TASK-66: API сводок, кеш, актуальность и лимиты](TASK-66-summary-api-cache-and-freshness.md)
+* [TASK-67: Вечерняя генерация на сервере и настройки расписания](TASK-67-summary-evening-scheduler.md)
+* [TASK-68: Клиентский репозиторий сводок и общее состояние](TASK-68-summary-client-repository-and-state.md)
+* [TASK-69: Компактный интерфейс сводок и переходы к источникам](TASK-69-summary-page-and-source-links.md)
+* [TASK-70: Сохранённая ИИ-сводка в карточке главной страницы](TASK-70-dashboard-shared-summary.md)
+* [TASK-71: Экспорт новых сводок и сохранение старого локального архива](TASK-71-summary-export-and-legacy-archive.md)
+* [TASK-72: Сквозная приёмка ИИ-сводок варианта 2](TASK-72-ai-summaries-acceptance.md)
+
+Порядок зависимостей: `61 → 62 → 63 → 65`; `61 → 64`; `62–65 → 66`; `66 → 67, 68`; `68 → 69 → 70 → 71`; `61–71 → 72`. Удаление браузерного планировщика в TASK-67 выполняется после подключения клиентского репозитория TASK-68.

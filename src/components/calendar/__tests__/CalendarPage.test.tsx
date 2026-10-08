@@ -71,4 +71,17 @@ describe('CalendarPage - Real Due Dates & Backlog (TASK-38)', () => {
     const calendarHeader = screen.getByText('Календарная сетка').parentElement!
     expect(within(calendarHeader).getByText(/понедельник, 5 октября 2026/i)).toBeInTheDocument()
   })
+
+  it('shows the full 00:00–23:59 time range in week and day views', () => {
+    render(<CalendarPage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Неделя' }))
+    expect(screen.getByRole('button', { name: 'Создать задачу 2026-10-05 0:00' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Создать задачу 2026-10-05 23:00' })).toBeInTheDocument()
+    expect(screen.getByText('23:59')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'День' }))
+    expect(screen.getByRole('button', { name: 'Создать задачу 2026-10-05 0:00' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Создать задачу 2026-10-05 23:00' })).toBeInTheDocument()
+  })
 })
